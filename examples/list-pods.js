@@ -7,8 +7,12 @@ export default function () {
   })
   const pods = kubernetes.pods.list()
   console.log(`${pods.length} Pods found:`)
-  const names = pods.map(function(pod){
-    return pod.object_meta.name
+  const info = pods.map(function(pod){
+    return {
+      namespace: pod.namespace,
+      name: pod.name,
+      status: pod.status.phase
+    } 
   })
-  console.log(JSON.stringify(names, null, 2))
+  console.log(JSON.stringify(info, null, 2))
 }
