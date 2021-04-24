@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 
 	"github.com/loadimpact/k6/js/modules"
-	k8sTypes "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -18,8 +17,9 @@ const version = "v0.0.1"
 type Kubernetes struct {
 	Version     string
 	Client      *kubernetes.Clientset
-	meraOptions metav1.ListOptions
+	metaOptions metav1.ListOptions
 	ctx         context.Context
+	Pods        *PodsNamespace
 }
 
 type KubernetesOptions struct {
@@ -47,10 +47,13 @@ func (obj *Kubernetes) XKubernetes(ctx *context.Context, options KubernetesOptio
 		return nil, err
 	}
 	obj.Client = clientset
-	obj.meraOptions = metav1.ListOptions{}
-	obj.ctx = context.Background()
-	return nil
-}
+	obj.metaOptions = metav1.ListOptions{}
+	obj.ctx = *ctx
+	obj.Pods = &PodsNamespace{
+		Client:      obj.Client,
+		metaOptions: obj.metaOptions,
+		ctx:         obj.ctx,
+	}
 
 	return obj, nil
 }
