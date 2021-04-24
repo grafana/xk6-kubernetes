@@ -1,9 +1,8 @@
 
-import kubernetes from 'k6/x/kubernetes';
+import { Kubernetes } from 'k6/x/kubernetes';
 
 export default function () {
-  console.log("K8s version " + kubernetes.version);
-  kubernetes.init({
+  const kubernetes = new Kubernetes({
     // config_path: "/path/to/kube/config", ~/.kube/config by default
   })
   const pods = kubernetes.getPods()

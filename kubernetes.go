@@ -26,25 +26,25 @@ type KubernetesOptions struct {
 	ConfigPath string
 }
 
-func (obj *Kubernetes) Init(options KubernetesOptions) error {
+func (obj *Kubernetes) XKubernetes(ctx *context.Context, options KubernetesOptions) (*Kubernetes, error) {
 	kubeconfig := options.ConfigPath
 	if kubeconfig == "" {
 		home := homedir.HomeDir()
 		if home == "" {
-			return errors.New("Home dir not found")
+			return nil, errors.New("Home dir not found")
 		}
 		kubeconfig = filepath.Join(home, ".kube", "config")
 	}
 
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// create the clientset
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	obj.Client = clientset
 	obj.meraOptions = metav1.ListOptions{}
@@ -52,12 +52,7 @@ func (obj *Kubernetes) Init(options KubernetesOptions) error {
 	return nil
 }
 
-func (obj *Kubernetes) GetPods() ([]k8sTypes.Pod, error) {
-	pods, err := obj.Client.CoreV1().Pods("").List(obj.ctx, obj.meraOptions)
-	if err != nil {
-		return []k8sTypes.Pod{}, err
-	}
-	return pods.Items, nil
+	return obj, nil
 }
 
 func init() {

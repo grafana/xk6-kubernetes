@@ -36,11 +36,10 @@ Then:
 ## Example
 
 ```javascript
-import kubernetes from 'k6/x/kubernetes';
+import { Kubernetes } from 'k6/x/kubernetes';
 
 export default function () {
-  kubernetes.init()
-  console.log(`${kubernetes.getPods()} Pods found:`)
+  kubernetes = new Kubernetes()
 }
 ```
 
