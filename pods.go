@@ -10,13 +10,13 @@ import (
 )
 
 type PodsNamespace struct {
-	Client      *kubernetes.Clientset
+	client      *kubernetes.Clientset
 	metaOptions metav1.ListOptions
 	ctx         context.Context
 }
 
 func (obj *PodsNamespace) List(namespace string) ([]k8sTypes.Pod, error) {
-	pods, err := obj.Client.CoreV1().Pods(namespace).List(obj.ctx, obj.metaOptions)
+	pods, err := obj.client.CoreV1().Pods(namespace).List(obj.ctx, obj.metaOptions)
 	if err != nil {
 		return []k8sTypes.Pod{}, err
 	}
@@ -24,7 +24,7 @@ func (obj *PodsNamespace) List(namespace string) ([]k8sTypes.Pod, error) {
 }
 
 func (obj *PodsNamespace) Kill(name, namespace string, opts metav1.DeleteOptions) error {
-	return obj.Client.CoreV1().Pods(namespace).Delete(obj.ctx, name, opts)
+	return obj.client.CoreV1().Pods(namespace).Delete(obj.ctx, name, opts)
 }
 
 func (obj *PodsNamespace) Get(name, namespace string) (k8sTypes.Pod, error) {

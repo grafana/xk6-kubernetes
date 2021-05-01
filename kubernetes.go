@@ -16,7 +16,7 @@ const version = "v0.0.1"
 
 type Kubernetes struct {
 	Version     string
-	Client      *kubernetes.Clientset
+	client      *kubernetes.Clientset
 	metaOptions metav1.ListOptions
 	ctx         context.Context
 	Pods        *PodsNamespace
@@ -46,11 +46,11 @@ func (obj *Kubernetes) XKubernetes(ctx *context.Context, options KubernetesOptio
 	if err != nil {
 		return nil, err
 	}
-	obj.Client = clientset
+	obj.client = clientset
 	obj.metaOptions = metav1.ListOptions{}
 	obj.ctx = *ctx
 	obj.Pods = &PodsNamespace{
-		Client:      obj.Client,
+		client:      obj.client,
 		metaOptions: obj.metaOptions,
 		ctx:         obj.ctx,
 	}
