@@ -39,3 +39,11 @@ func (obj *PodsNamespace) Get(name, namespace string) (k8sTypes.Pod, error) {
 	}
 	return k8sTypes.Pod{}, errors.New(name + " pod not found")
 }
+
+func (obj *PodsNamespace) IsTerminating(name, namespace string) (bool, error) {
+	pod, err := obj.Get(name, namespace)
+	if err != nil {
+		return false, err
+	}
+	return (pod.ObjectMeta.DeletionTimestamp != nil), nil
+}
