@@ -10,7 +10,7 @@
 <div align="center">
 
 # xk6-kubernetes
-A k6 extension for using of K8s in testing. Built for [k6](https://github.com/loadimpact/k6) using [xk6](https://github.com/k6io/xk6).
+A k6 extension for interacting with Kubernetes clusters while testing. Built for [k6](https://github.com/loadimpact/k6) using [xk6](https://github.com/k6io/xk6).
 
 </div>
 
