@@ -20,6 +20,7 @@ type Kubernetes struct {
 	metaOptions metav1.ListOptions
 	ctx         context.Context
 	Pods        *PodsNamespace
+	Jobs        *JobsNamespace
 }
 
 type KubernetesOptions struct {
@@ -50,6 +51,12 @@ func (obj *Kubernetes) XKubernetes(ctx *context.Context, options KubernetesOptio
 	obj.metaOptions = metav1.ListOptions{}
 	obj.ctx = *ctx
 	obj.Pods = &PodsNamespace{
+		client:      obj.client,
+		metaOptions: obj.metaOptions,
+		ctx:         obj.ctx,
+	}
+
+	obj.Jobs = &JobsNamespace{
 		client:      obj.client,
 		metaOptions: obj.metaOptions,
 		ctx:         obj.ctx,
