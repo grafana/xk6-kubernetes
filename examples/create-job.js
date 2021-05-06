@@ -12,32 +12,22 @@ export default function () {
   const kubernetes = new Kubernetes({
     // config_path: "/path/to/kube/config", ~/.kube/config by default
   })
-  const nameSpace = "default"
-  const newJob = {
-    TypeMeta:{
-      ApiVersion: "batch/v1",
-      Kind: "Job"
-    },
-    ObjectMeta: {
-      Name: "pi"
-    },
-    Spec: {
-      Template: {
-        Spec: {
-          Containers: [
-            { 
-              Name: "pi",
-              Image: "perl",
-              Command: ["perl",  "-Mbignum=bpi", "-wle", "print bpi(2000)"]
-            }
-          ],
-          restartPolicy: "Never"
-        }
-      },
-      BackoffLimit: 4
-    }
-  }
+  const namespace = "default"
+  const jobName = "new-job"
+  const image = "perl"
+  const command = ["perl",  "-Mbignum=bpi", "-wle", "print bpi(2000)"]
 
-  kubernetes.jobs.create(nameSpace, newJob)
-  console.log(getJobNames(nameSpace, kubernetes))
+  kubernetes.jobs.create({
+    namespace: namespace,
+    name: jobName,
+    image: image,
+    command: command
+  })
+  sleep(1)
+  const jobsList = getJobNames(namespace, kubernetes)
+  if(jobsList.indexOf(jobName) != -1) {
+    console.log(jobName + " job has been created successfully")
+  } else {
+    throw jobName + " job was not created"
+  }
 }
