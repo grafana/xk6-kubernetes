@@ -20,6 +20,6 @@ export default function () {
   if (kubernetes.pods.isTerminating(podName, nameSpace)) {
     console.log(podName + " pod has been killed successfully")
   } else {
-    throw `${podName} POD WAS NOT KILLED! ${podsList[podName]}`
+    throw `${podName} Pod was not killed ${podsList[podName]}`
   }
 }
