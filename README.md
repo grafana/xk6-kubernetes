@@ -33,6 +33,14 @@ Then:
   $ xk6 build --with github.com/k6io/xk6-kubernetes
   ```
 
+## Development
+
+To make development a little smoother, you may run the build script provided in the root folder. It will create a k6 binary with your local code rather than from GitHub.
+
+```bash
+$ ./make.sh && ./k6 run my-test-script.js
+```
+
 ## Example
 
 ```javascript

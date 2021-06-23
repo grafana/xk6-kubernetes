@@ -5,7 +5,7 @@ import (
 	"errors"
 	"path/filepath"
 
-	"github.com/loadimpact/k6/js/modules"
+	"go.k6.io/k6/js/modules"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
