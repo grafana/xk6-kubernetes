@@ -1,4 +1,4 @@
-package kubernetes
+package jobs
 
 import (
 	"context"
@@ -9,7 +9,15 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-type JobsNamespace struct {
+func New(client *kubernetes.Clientset, metaOptions metav1.ListOptions, ctx context.Context) *Jobs {
+	return &Jobs{
+		client,
+		metaOptions,
+		ctx,
+	}
+}
+
+type Jobs struct {
 	client      *kubernetes.Clientset
 	metaOptions metav1.ListOptions
 	ctx         context.Context
@@ -23,22 +31,22 @@ type JobOptions struct {
 	RestartPolicy coreV1.RestartPolicy
 }
 
-func (obj *JobsNamespace) List(namespace string) ([]v1.Job, error) {
+func (obj *Jobs) List(namespace string) ([]v1.Job, error) {
 	result, err := obj.client.BatchV1().Jobs(namespace).List(obj.ctx, obj.metaOptions)
 	return result.Items, err
 }
 
-func (obj *JobsNamespace) Get(name, namespace string) (v1.Job, error) {
+func (obj *Jobs) Get(name, namespace string) (v1.Job, error) {
 	result, err := obj.client.BatchV1().Jobs(namespace).Get(obj.ctx, name, metav1.GetOptions{})
 	return *result, err
 }
 
-func (obj *JobsNamespace) Kill(name, namespace string) error {
+func (obj *Jobs) Kill(name, namespace string) error {
 	err := obj.client.BatchV1().Jobs(namespace).Delete(obj.ctx, name, metav1.DeleteOptions{})
 	return err
 }
 
-func (obj *JobsNamespace) Create(options JobOptions) (v1.Job, error) {
+func (obj *Jobs) Create(options JobOptions) (v1.Job, error) {
 	container := coreV1.Container{
 		Name:    options.Name,
 		Image:   options.Image,

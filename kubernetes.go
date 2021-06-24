@@ -3,6 +3,8 @@ package kubernetes
 import (
 	"context"
 	"errors"
+	"github.com/k6io/xk6-kubernetes/pkg/jobs"
+	"github.com/k6io/xk6-kubernetes/pkg/pods"
 	"path/filepath"
 
 	"go.k6.io/k6/js/modules"
@@ -19,8 +21,8 @@ type Kubernetes struct {
 	client      *kubernetes.Clientset
 	metaOptions metav1.ListOptions
 	ctx         context.Context
-	Pods        *PodsNamespace
-	Jobs        *JobsNamespace
+	Pods        *pods.Pods
+	Jobs        *jobs.Jobs
 }
 
 type KubernetesOptions struct {
@@ -42,7 +44,6 @@ func (obj *Kubernetes) XKubernetes(ctx *context.Context, options KubernetesOptio
 		return nil, err
 	}
 
-	// create the clientset
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return nil, err
@@ -50,17 +51,9 @@ func (obj *Kubernetes) XKubernetes(ctx *context.Context, options KubernetesOptio
 	obj.client = clientset
 	obj.metaOptions = metav1.ListOptions{}
 	obj.ctx = *ctx
-	obj.Pods = &PodsNamespace{
-		client:      obj.client,
-		metaOptions: obj.metaOptions,
-		ctx:         obj.ctx,
-	}
 
-	obj.Jobs = &JobsNamespace{
-		client:      obj.client,
-		metaOptions: obj.metaOptions,
-		ctx:         obj.ctx,
-	}
+	obj.Pods = pods.New(obj.client, obj.metaOptions, obj.ctx)
+	obj.Jobs = jobs.New(obj.client, obj.metaOptions, obj.ctx)
 
 	return obj, nil
 }
