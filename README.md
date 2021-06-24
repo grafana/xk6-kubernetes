@@ -38,7 +38,7 @@ Then:
 To make development a little smoother, you may run the build script provided in the root folder. It will create a k6 binary with your local code rather than from GitHub.
 
 ```bash
-$ ./make.sh && ./k6 run my-test-script.js
+$ ./build.sh && ./k6 run my-test-script.js
 ```
 
 ## Example
