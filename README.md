@@ -10,7 +10,7 @@
 <div align="center">
 
 # xk6-kubernetes
-A k6 extension for interacting with Kubernetes clusters while testing. Built for [k6](https://github.com/loadimpact/k6) using [xk6](https://github.com/k6io/xk6).
+A k6 extension for interacting with Kubernetes clusters while testing. Built for [k6](https://github.com/loadimpact/k6) using [xk6](https://github.com/grafana/xk6).
 
 </div>
 
@@ -25,7 +25,7 @@ Then:
 
 1. Download `xk6`:
   ```bash
-  $ go get -u github.com/k6io/xk6
+  $ go install go.k6.io/xk6/cmd/xk6@latest
   ```
 
 2. Build the binary:
