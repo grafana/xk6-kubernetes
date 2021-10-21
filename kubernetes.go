@@ -9,6 +9,7 @@ import (
 	"github.com/k6io/xk6-kubernetes/pkg/jobs"
 	"github.com/k6io/xk6-kubernetes/pkg/namespaces"
 	"github.com/k6io/xk6-kubernetes/pkg/pods"
+	"github.com/k6io/xk6-kubernetes/pkg/secrets"
 	"github.com/k6io/xk6-kubernetes/pkg/services"
 	"path/filepath"
 
@@ -33,6 +34,7 @@ type Kubernetes struct {
 	Namespaces  *namespaces.Namespaces
 	Jobs        *jobs.Jobs
 	Services    *services.Services
+	Secrets     *secrets.Secrets
 }
 
 type KubernetesOptions struct {
@@ -69,6 +71,7 @@ func (obj *Kubernetes) XKubernetes(ctx *context.Context, options KubernetesOptio
 	obj.Namespaces = namespaces.New(obj.client, obj.metaOptions, obj.ctx)
 	obj.Jobs = jobs.New(obj.client, obj.metaOptions, obj.ctx)
 	obj.Services = services.New(obj.client, obj.metaOptions, obj.ctx)
+	obj.Secrets = secrets.New(obj.client, obj.metaOptions, obj.ctx)
 
 	return obj, nil
 }
