@@ -4,9 +4,12 @@ import (
 	"context"
 	"errors"
 	"github.com/k6io/xk6-kubernetes/pkg/configmaps"
+	"github.com/k6io/xk6-kubernetes/pkg/deployments"
+	"github.com/k6io/xk6-kubernetes/pkg/ingresses"
 	"github.com/k6io/xk6-kubernetes/pkg/jobs"
 	"github.com/k6io/xk6-kubernetes/pkg/namespaces"
 	"github.com/k6io/xk6-kubernetes/pkg/pods"
+	"github.com/k6io/xk6-kubernetes/pkg/secrets"
 	"github.com/k6io/xk6-kubernetes/pkg/services"
 	"path/filepath"
 
@@ -25,10 +28,13 @@ type Kubernetes struct {
 	metaOptions metav1.ListOptions
 	ctx         context.Context
 	ConfigMaps  *configmaps.ConfigMaps
+	Ingresses   *ingresses.Ingresses
+	Deployments *deployments.Deployments
 	Pods        *pods.Pods
 	Namespaces  *namespaces.Namespaces
 	Jobs        *jobs.Jobs
 	Services    *services.Services
+	Secrets     *secrets.Secrets
 }
 
 type KubernetesOptions struct {
@@ -59,10 +65,13 @@ func (obj *Kubernetes) XKubernetes(ctx *context.Context, options KubernetesOptio
 	obj.ctx = *ctx
 
 	obj.ConfigMaps = configmaps.New(obj.client, obj.metaOptions, obj.ctx)
+	obj.Ingresses = ingresses.New(obj.client, obj.metaOptions, obj.ctx)
+	obj.Deployments = deployments.New(obj.client, obj.metaOptions, obj.ctx)
 	obj.Pods = pods.New(obj.client, obj.metaOptions, obj.ctx)
 	obj.Namespaces = namespaces.New(obj.client, obj.metaOptions, obj.ctx)
 	obj.Jobs = jobs.New(obj.client, obj.metaOptions, obj.ctx)
 	obj.Services = services.New(obj.client, obj.metaOptions, obj.ctx)
+	obj.Secrets = secrets.New(obj.client, obj.metaOptions, obj.ctx)
 
 	return obj, nil
 }
