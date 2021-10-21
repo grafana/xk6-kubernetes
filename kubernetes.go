@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/k6io/xk6-kubernetes/pkg/configmaps"
+	"github.com/k6io/xk6-kubernetes/pkg/deployments"
 	"github.com/k6io/xk6-kubernetes/pkg/ingresses"
 	"github.com/k6io/xk6-kubernetes/pkg/jobs"
 	"github.com/k6io/xk6-kubernetes/pkg/namespaces"
@@ -27,6 +28,7 @@ type Kubernetes struct {
 	ctx         context.Context
 	ConfigMaps  *configmaps.ConfigMaps
 	Ingresses   *ingresses.Ingresses
+	Deployments *deployments.Deployments
 	Pods        *pods.Pods
 	Namespaces  *namespaces.Namespaces
 	Jobs        *jobs.Jobs
@@ -62,6 +64,7 @@ func (obj *Kubernetes) XKubernetes(ctx *context.Context, options KubernetesOptio
 
 	obj.ConfigMaps = configmaps.New(obj.client, obj.metaOptions, obj.ctx)
 	obj.Ingresses = ingresses.New(obj.client, obj.metaOptions, obj.ctx)
+	obj.Deployments = deployments.New(obj.client, obj.metaOptions, obj.ctx)
 	obj.Pods = pods.New(obj.client, obj.metaOptions, obj.ctx)
 	obj.Namespaces = namespaces.New(obj.client, obj.metaOptions, obj.ctx)
 	obj.Jobs = jobs.New(obj.client, obj.metaOptions, obj.ctx)
