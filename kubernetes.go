@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/k6io/xk6-kubernetes/pkg/jobs"
+	"github.com/k6io/xk6-kubernetes/pkg/namespaces"
 	"github.com/k6io/xk6-kubernetes/pkg/pods"
 	"github.com/k6io/xk6-kubernetes/pkg/services"
 	"path/filepath"
@@ -23,6 +24,7 @@ type Kubernetes struct {
 	metaOptions metav1.ListOptions
 	ctx         context.Context
 	Pods        *pods.Pods
+	Namespaces  *namespaces.Namespaces
 	Jobs        *jobs.Jobs
 	Services    *services.Services
 }
@@ -55,6 +57,7 @@ func (obj *Kubernetes) XKubernetes(ctx *context.Context, options KubernetesOptio
 	obj.ctx = *ctx
 
 	obj.Pods = pods.New(obj.client, obj.metaOptions, obj.ctx)
+	obj.Namespaces = namespaces.New(obj.client, obj.metaOptions, obj.ctx)
 	obj.Jobs = jobs.New(obj.client, obj.metaOptions, obj.ctx)
 	obj.Services = services.New(obj.client, obj.metaOptions, obj.ctx)
 
