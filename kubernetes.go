@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/k6io/xk6-kubernetes/pkg/jobs"
 	"github.com/k6io/xk6-kubernetes/pkg/pods"
+	"github.com/k6io/xk6-kubernetes/pkg/services"
 	"path/filepath"
 
 	"go.k6.io/k6/js/modules"
@@ -23,6 +24,7 @@ type Kubernetes struct {
 	ctx         context.Context
 	Pods        *pods.Pods
 	Jobs        *jobs.Jobs
+	Services    *services.Services
 }
 
 type KubernetesOptions struct {
@@ -54,6 +56,7 @@ func (obj *Kubernetes) XKubernetes(ctx *context.Context, options KubernetesOptio
 
 	obj.Pods = pods.New(obj.client, obj.metaOptions, obj.ctx)
 	obj.Jobs = jobs.New(obj.client, obj.metaOptions, obj.ctx)
+	obj.Services = services.New(obj.client, obj.metaOptions, obj.ctx)
 
 	return obj, nil
 }
