@@ -5,7 +5,7 @@ export default function () {
   const kubernetes = new Kubernetes({
     // config_path: "/path/to/kube/config", ~/.kube/config by default
   })
-  const ingresses = kubernetes.pods.list()
+  const ingresses = kubernetes.ingresses.list()
   console.log(`${ingresses.length} Ingresses found:`)
   const info = ingresses.map(function (ingress) {
     return {
