@@ -2,7 +2,7 @@
 >
 > As this is a proof of concept,  it won't be supported by the k6 team.
 > It may also break in the future as xk6 evolves. USE AT YOUR OWN RISK!
-> Any issues with the tool should be raised [here](https://github.com/k6io/xk6-kubernetes/issues).
+> Any issues with the tool should be raised [here](https://github.com/grafana/xk6-kubernetes/issues).
 
 </br>
 </br>
@@ -30,7 +30,7 @@ Then:
 
 2. Build the binary:
   ```bash
-  $ xk6 build --with github.com/k6io/xk6-kubernetes
+  $ xk6 build --with github.com/grafana/xk6-kubernetes
   ```
 
 ## Development
