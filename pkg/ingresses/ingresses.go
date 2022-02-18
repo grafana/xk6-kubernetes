@@ -2,9 +2,11 @@ package ingresses
 
 import (
 	"context"
+	"errors"
 
 	k8sTypes "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -20,6 +22,26 @@ type Ingresses struct {
 	client      *kubernetes.Clientset
 	metaOptions metav1.ListOptions
 	ctx         context.Context
+}
+
+func (obj *Ingresses) Apply(yaml string, namespace string) (k8sTypes.Ingress, error) {
+	decode := scheme.Codecs.UniversalDeserializer().Decode
+	yamlobj, _, err := decode([]byte(yaml), nil, nil)
+	ingress := k8sTypes.Ingress{}
+
+	if err != nil {
+		return ingress, err;
+	}
+
+	switch yamlobj.(type) {
+	case *k8sTypes.Ingress:
+		ingress = *yamlobj.(*k8sTypes.Ingress)
+	default:
+		return ingress, errors.New("Yaml was not an Ingress")
+	}
+
+	ing, err := obj.client.NetworkingV1().Ingresses(namespace).Create(obj.ctx, &ingress, metav1.CreateOptions{})
+	return *ing, err
 }
 
 func (obj *Ingresses) Create(
