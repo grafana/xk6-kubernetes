@@ -2,9 +2,11 @@ package deployments
 
 import (
 	"context"
+	"errors"
 
 	k8sTypes "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -20,6 +22,26 @@ type Deployments struct {
 	client      *kubernetes.Clientset
 	metaOptions metav1.ListOptions
 	ctx         context.Context
+}
+
+func (obj *Deployments) Apply(yaml string, namespace string) (k8sTypes.Deployment, error) {
+	decode := scheme.Codecs.UniversalDeserializer().Decode
+	yamlobj, _, err := decode([]byte(yaml), nil, nil)
+	deployment := k8sTypes.Deployment{}
+
+	if err != nil {
+		return deployment, err;
+	}
+
+	switch yamlobj.(type) {
+	case *k8sTypes.Deployment:
+		deployment = *yamlobj.(*k8sTypes.Deployment)
+	default:
+		return deployment, errors.New("Yaml was not a Deployment")
+	}
+
+	dep, err := obj.client.AppsV1().Deployments(namespace).Create(obj.ctx, &deployment, metav1.CreateOptions{})
+	return *dep, err
 }
 
 func (obj *Deployments) Create(

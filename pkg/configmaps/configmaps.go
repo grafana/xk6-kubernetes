@@ -2,9 +2,11 @@ package configmaps
 
 import (
 	"context"
+	"errors"
 
 	k8sTypes "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -20,6 +22,26 @@ type ConfigMaps struct {
 	client      *kubernetes.Clientset
 	metaOptions metav1.ListOptions
 	ctx         context.Context
+}
+
+func (obj *ConfigMaps) Apply(yaml string, namespace string) (k8sTypes.ConfigMap, error) {
+	decode := scheme.Codecs.UniversalDeserializer().Decode
+	yamlobj, _, err := decode([]byte(yaml), nil, nil)
+	configmap := k8sTypes.ConfigMap{}
+
+	if err != nil {
+		return configmap, err;
+	}
+
+	switch yamlobj.(type) {
+	case *k8sTypes.ConfigMap:
+		configmap = *yamlobj.(*k8sTypes.ConfigMap)
+	default:
+		return configmap, errors.New("Yaml was not a ConfigMap")
+	}
+
+	cm, err := obj.client.CoreV1().ConfigMaps(namespace).Create(obj.ctx, &configmap, metav1.CreateOptions{})
+	return *cm, err
 }
 
 func (obj *ConfigMaps) Create(

@@ -2,9 +2,11 @@ package secrets
 
 import (
 	"context"
+	"errors"
 
 	k8sTypes "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -20,6 +22,26 @@ type Secrets struct {
 	client      *kubernetes.Clientset
 	metaOptions metav1.ListOptions
 	ctx         context.Context
+}
+
+func (obj *Secrets) Apply(yaml string, namespace string) (k8sTypes.Secret, error) {
+	decode := scheme.Codecs.UniversalDeserializer().Decode
+	yamlobj, _, err := decode([]byte(yaml), nil, nil)
+	secret := k8sTypes.Secret{}
+
+	if err != nil {
+		return secret, err;
+	}
+
+	switch yamlobj.(type) {
+	case *k8sTypes.Secret:
+		secret = *yamlobj.(*k8sTypes.Secret)
+	default:
+		return secret, errors.New("Yaml was not a Secret")
+	}
+
+	scrt, err := obj.client.CoreV1().Secrets(namespace).Create(obj.ctx, &secret, metav1.CreateOptions{})
+	return *scrt, err
 }
 
 func (obj *Secrets) Create(

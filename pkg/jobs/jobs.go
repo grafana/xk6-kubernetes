@@ -2,10 +2,12 @@ package jobs
 
 import (
 	"context"
+	"errors"
 
 	v1 "k8s.io/api/batch/v1"
 	coreV1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -44,6 +46,26 @@ func (obj *Jobs) Get(name, namespace string) (v1.Job, error) {
 func (obj *Jobs) Kill(name, namespace string) error {
 	err := obj.client.BatchV1().Jobs(namespace).Delete(obj.ctx, name, metav1.DeleteOptions{})
 	return err
+}
+
+func (obj *Jobs) Apply(yaml string, namespace string) (v1.Job, error) {
+	decode := scheme.Codecs.UniversalDeserializer().Decode
+	yamlobj, _, err := decode([]byte(yaml), nil, nil)
+	job := v1.Job{}
+
+	if err != nil {
+		return job, err;
+	}
+
+	switch yamlobj.(type) {
+	case *v1.Job:
+		job = *yamlobj.(*v1.Job)
+	default:
+		return job, errors.New("Yaml was not a Job")
+	}
+
+	jb, err := obj.client.BatchV1().Jobs(namespace).Create(obj.ctx, &job, metav1.CreateOptions{})
+	return *jb, err
 }
 
 func (obj *Jobs) Create(options JobOptions) (v1.Job, error) {

@@ -2,9 +2,11 @@ package services
 
 import (
 	"context"
+	"errors"
 
 	k8sTypes "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -20,6 +22,26 @@ type Services struct {
 	client      *kubernetes.Clientset
 	metaOptions metav1.ListOptions
 	ctx         context.Context
+}
+
+func (obj *Services) Apply(yaml string, namespace string) (k8sTypes.Service, error) {
+	decode := scheme.Codecs.UniversalDeserializer().Decode
+	yamlobj, _, err := decode([]byte(yaml), nil, nil)
+	service := k8sTypes.Service{}
+
+	if err != nil {
+		return service, err;
+	}
+
+	switch yamlobj.(type) {
+	case *k8sTypes.Service:
+		service = *yamlobj.(*k8sTypes.Service)
+	default:
+		return service, errors.New("Yaml was not a Service")
+	}
+
+	svc, err := obj.client.CoreV1().Services(namespace).Create(obj.ctx, &service, metav1.CreateOptions{})
+	return *svc, err
 }
 
 func (obj *Services) Create(
