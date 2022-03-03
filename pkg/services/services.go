@@ -6,8 +6,8 @@ import (
 
 	k8sTypes "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/scheme"
 )
 
 func New(client *kubernetes.Clientset, metaOptions metav1.ListOptions, ctx context.Context) *Services {
@@ -30,7 +30,7 @@ func (obj *Services) Apply(yaml string, namespace string) (k8sTypes.Service, err
 	service := k8sTypes.Service{}
 
 	if err != nil {
-		return service, err;
+		return service, err
 	}
 
 	switch yamlobj.(type) {
@@ -64,8 +64,13 @@ func (obj *Services) List(namespace string) ([]k8sTypes.Service, error) {
 	return svcs.Items, nil
 }
 
-func (obj *Services) Kill(name, namespace string, opts metav1.DeleteOptions) error {
+func (obj *Services) Delete(name, namespace string, opts metav1.DeleteOptions) error {
 	return obj.client.CoreV1().Services(namespace).Delete(obj.ctx, name, opts)
+}
+
+// Deprecated: Use Delete instead.
+func (obj *Services) Kill(name, namespace string, opts metav1.DeleteOptions) error {
+	return obj.Delete(name, namespace, opts)
 }
 
 func (obj *Services) Get(name, namespace string, opts metav1.GetOptions) (k8sTypes.Service, error) {

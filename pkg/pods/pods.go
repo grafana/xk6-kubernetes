@@ -31,8 +31,13 @@ func (obj *Pods) List(namespace string) ([]k8sTypes.Pod, error) {
 	return pods.Items, nil
 }
 
-func (obj *Pods) Kill(name, namespace string, opts metav1.DeleteOptions) error {
+func (obj *Pods) Delete(name, namespace string, opts metav1.DeleteOptions) error {
 	return obj.client.CoreV1().Pods(namespace).Delete(obj.ctx, name, opts)
+}
+
+// Deprecated: Use Delete instead.
+func (obj *Pods) Kill(name, namespace string, opts metav1.DeleteOptions) error {
+	return obj.Delete(name, namespace, opts)
 }
 
 func (obj *Pods) Get(name, namespace string) (k8sTypes.Pod, error) {

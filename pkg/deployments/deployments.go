@@ -6,8 +6,8 @@ import (
 
 	k8sTypes "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/scheme"
 )
 
 func New(client *kubernetes.Clientset, metaOptions metav1.ListOptions, ctx context.Context) *Deployments {
@@ -30,7 +30,7 @@ func (obj *Deployments) Apply(yaml string, namespace string) (k8sTypes.Deploymen
 	deployment := k8sTypes.Deployment{}
 
 	if err != nil {
-		return deployment, err;
+		return deployment, err
 	}
 
 	switch yamlobj.(type) {
@@ -64,8 +64,13 @@ func (obj *Deployments) List(namespace string) ([]k8sTypes.Deployment, error) {
 	return dps.Items, nil
 }
 
-func (obj *Deployments) Kill(name, namespace string, opts metav1.DeleteOptions) error {
+func (obj *Deployments) Delete(name, namespace string, opts metav1.DeleteOptions) error {
 	return obj.client.AppsV1().Deployments(namespace).Delete(obj.ctx, name, opts)
+}
+
+// Deprecated: Use Delete instead.
+func (obj *Deployments) Kill(name, namespace string, opts metav1.DeleteOptions) error {
+	return obj.Delete(name, namespace, opts)
 }
 
 func (obj *Deployments) Get(name, namespace string, opts metav1.GetOptions) (k8sTypes.Deployment, error) {

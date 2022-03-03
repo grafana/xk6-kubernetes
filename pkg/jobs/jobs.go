@@ -7,8 +7,8 @@ import (
 	v1 "k8s.io/api/batch/v1"
 	coreV1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/scheme"
 )
 
 func New(client *kubernetes.Clientset, metaOptions metav1.ListOptions, ctx context.Context) *Jobs {
@@ -43,9 +43,13 @@ func (obj *Jobs) Get(name, namespace string) (v1.Job, error) {
 	return *result, err
 }
 
+func (obj *Jobs) Delete(name, namespace string) error {
+	return obj.client.BatchV1().Jobs(namespace).Delete(obj.ctx, name, metav1.DeleteOptions{})
+}
+
+// Deprecated: Use Delete instead.
 func (obj *Jobs) Kill(name, namespace string) error {
-	err := obj.client.BatchV1().Jobs(namespace).Delete(obj.ctx, name, metav1.DeleteOptions{})
-	return err
+	return obj.Delete(name, namespace)
 }
 
 func (obj *Jobs) Apply(yaml string, namespace string) (v1.Job, error) {
@@ -54,7 +58,7 @@ func (obj *Jobs) Apply(yaml string, namespace string) (v1.Job, error) {
 	job := v1.Job{}
 
 	if err != nil {
-		return job, err;
+		return job, err
 	}
 
 	switch yamlobj.(type) {
