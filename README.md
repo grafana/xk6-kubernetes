@@ -21,12 +21,12 @@ Then:
 
 1. Download `xk6`:
   ```bash
-  $ go install go.k6.io/xk6/cmd/xk6@latest
+  go install go.k6.io/xk6/cmd/xk6@latest
   ```
 
 2. Build the binary:
   ```bash
-  $ xk6 build --with github.com/grafana/xk6-kubernetes
+  xk6 build --with github.com/grafana/xk6-kubernetes
   ```
 
 ## Development
@@ -85,7 +85,8 @@ default ✓ [======================================] 1 VUs  00m00.0s/10m0s  1/1 
 
 ```
 
-Inspect [example](#example) folder for more details.
+Inspect [examples](./examples) folder for more details.
+
 
 ## If things go wrong
 
