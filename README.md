@@ -1,22 +1,18 @@
 > ### ⚠️ This is a proof of concept
 >
-> As this is a proof of concept,  it won't be supported by the k6 team.
+> As this is a proof of concept, it won't be supported by the k6 team.
 > It may also break in the future as xk6 evolves. USE AT YOUR OWN RISK!
 > Any issues with the tool should be raised [here](https://github.com/grafana/xk6-kubernetes/issues).
 
 </br>
 </br>
 
-<div align="center">
-
 # xk6-kubernetes
-A k6 extension for interacting with Kubernetes clusters while testing. Built for [k6](https://github.com/loadimpact/k6) using [xk6](https://github.com/grafana/xk6).
-
-</div>
+A k6 extension for interacting with Kubernetes clusters while testing. Built for [k6](https://github.com/grafana/k6) using [xk6](https://github.com/grafana/xk6).
 
 ## Build
 
-To build a `k6` binary with this extension, first ensure you have the prerequisites:
+To build a custom `k6` binary with this extension, first ensure you have the prerequisites:
 
 - [Go toolchain](https://go101.org/article/go-toolchain.html)
 - Git
@@ -35,7 +31,7 @@ Then:
 
 ## Development
 
-To make development a little smoother, you may run the build script provided in the root folder. It will create a k6 binary with your local code rather than from GitHub.
+To make development a little smoother, you may run the build script provided in the root folder. It will create a `k6` binary with your local code rather than from GitHub.
 
 ```bash
 $ ./build.sh && ./k6 run my-test-script.js
@@ -45,17 +41,23 @@ $ ./build.sh && ./k6 run my-test-script.js
 
 ```javascript
 import { Kubernetes } from 'k6/x/kubernetes';
-
+  
 export default function () {
-  kubernetes = new Kubernetes()
-  console.log(`${kubernetes.pods.list()} Pods found:`)
+    const kubernetes = new Kubernetes({
+        // config_path: "/path/to/kube/config", ~/.kube/config by default
+      })
+    const pods = kubernetes.pods.list()
+    console.log(`${kubernetes.pods.list().length} Pods found:`)
+    pods.map(function(pod) {
+        console.log(`  ${pod.name}`)
+    })
 }
 ```
 
 Result output:
 
 ```plain
-$ ./k6 run script.js
+$ ./k6 run my-test-script.js
 
           /\      |‾‾| /‾‾/   /‾‾/   
      /\  /  \     |  |/  /   /  /    
@@ -64,13 +66,14 @@ $ ./k6 run script.js
   / __________ \  |__| \__\ \_____/ .io
 
   execution: local
-     script: ../xk6-kubernetes/script.js
+     script: my-test-script.js
      output: -
 
   scenarios: (100.00%) 1 scenario, 1 max VUs, 10m30s max duration (incl. graceful stop):
            * default: 1 iterations for each of 1 VUs (maxDuration: 10m0s, gracefulStop: 30s)
 
 INFO[0001] 16 Pods found:                                source=console
+... snipped for brevity ...
 
 running (00m00.0s), 0/1 VUs, 1 complete and 0 interrupted iterations
 default ✓ [======================================] 1 VUs  00m00.0s/10m0s  1/1 iters, 1 per VU
@@ -82,4 +85,13 @@ default ✓ [======================================] 1 VUs  00m00.0s/10m0s  1/1 
 
 ```
 
-Inspect examples folder for more details.
+Inspect [example](#example) folder for more details.
+
+## If things go wrong
+
+### Are you using the custom binary?
+An easy mistake--which happens often--is to forget that `xk6` is generating a new executable. You may be accustomed to simply running `k6` from the command-line which probably isn't your new build. Make sure to use `./k6` after building your extended version otherwise you can expect to see an error similar to:
+
+```bash
+ERRO[0000] The moduleSpecifier "my-test-script.js" couldn't be found on local disk. Make sure that you've specified the right path to the file. If you're running k6 using the Docker image make sure you have mounted the local directory (-v /local/path/:/inside/docker/path) containing your script and modules so that they're accessible by k6 from inside of the container, see https://k6.io/docs/using-k6/modules#using-local-modules-with-docker. Additionally it was tried to be loaded as remote module by prepending "https://" to it, which also didn't work. Remote resolution error: "Get "https://my-test-script.js": dial tcp: lookup my-test-script.js: no such host" 
+```
