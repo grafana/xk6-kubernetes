@@ -13,6 +13,8 @@ import (
 	"github.com/grafana/xk6-kubernetes/pkg/pods"
 	"github.com/grafana/xk6-kubernetes/pkg/secrets"
 	"github.com/grafana/xk6-kubernetes/pkg/services"
+	"github.com/grafana/xk6-kubernetes/pkg/persistentvolumes"
+	"github.com/grafana/xk6-kubernetes/pkg/persistentvolumeclaims"
 
 	"go.k6.io/k6/js/modules"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,18 +26,20 @@ import (
 const version = "v0.0.1"
 
 type Kubernetes struct {
-	Version     string
-	client      *kubernetes.Clientset
-	metaOptions metav1.ListOptions
-	ctx         context.Context
-	ConfigMaps  *configmaps.ConfigMaps
-	Ingresses   *ingresses.Ingresses
-	Deployments *deployments.Deployments
-	Pods        *pods.Pods
-	Namespaces  *namespaces.Namespaces
-	Jobs        *jobs.Jobs
-	Services    *services.Services
-	Secrets     *secrets.Secrets
+	Version                string
+	client                 *kubernetes.Clientset
+	metaOptions            metav1.ListOptions
+	ctx                    context.Context
+	ConfigMaps             *configmaps.ConfigMaps
+	Ingresses              *ingresses.Ingresses
+	Deployments            *deployments.Deployments
+	Pods                   *pods.Pods
+	Namespaces             *namespaces.Namespaces
+	Jobs                   *jobs.Jobs
+	Services               *services.Services
+	Secrets                *secrets.Secrets
+	PersistentVolumes      *persistentvolumes.PersistentVolumes
+	PersistentVolumeClaims *persistentvolumeclaims.PersistentVolumeClaims
 }
 
 type KubernetesOptions struct {
@@ -73,6 +77,8 @@ func (obj *Kubernetes) XKubernetes(ctx *context.Context, options KubernetesOptio
 	obj.Jobs = jobs.New(obj.client, obj.metaOptions, obj.ctx)
 	obj.Services = services.New(obj.client, obj.metaOptions, obj.ctx)
 	obj.Secrets = secrets.New(obj.client, obj.metaOptions, obj.ctx)
+	obj.PersistentVolumes = persistentvolumes.New(obj.client, obj.metaOptions, obj.ctx)
+	obj.PersistentVolumeClaims = persistentvolumeclaims.New(obj.client, obj.metaOptions, obj.ctx)
 
 	return obj, nil
 }
