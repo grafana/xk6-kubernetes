@@ -6,8 +6,8 @@ import (
 
 	k8sTypes "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/scheme"
 )
 
 func New(client *kubernetes.Clientset, metaOptions metav1.ListOptions, ctx context.Context) *PersistentVolumes {
@@ -30,7 +30,7 @@ func (obj *PersistentVolumes) Apply(yaml string) (k8sTypes.PersistentVolume, err
 	persistentvolume := k8sTypes.PersistentVolume{}
 
 	if err != nil {
-		return persistentvolume, err;
+		return persistentvolume, err
 	}
 
 	switch yamlobj.(type) {

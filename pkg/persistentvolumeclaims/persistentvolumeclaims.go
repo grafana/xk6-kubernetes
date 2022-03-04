@@ -30,7 +30,7 @@ func (obj *PersistentVolumeClaims) Apply(yaml string, namespace string) (k8sType
 	persistentvolumeclaim := k8sTypes.PersistentVolumeClaim{}
 
 	if err != nil {
-		return persistentvolumeclaim, err;
+		return persistentvolumeclaim, err
 	}
 
 	switch yamlobj.(type) {

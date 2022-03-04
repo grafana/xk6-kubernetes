@@ -10,11 +10,11 @@ import (
 	"github.com/grafana/xk6-kubernetes/pkg/ingresses"
 	"github.com/grafana/xk6-kubernetes/pkg/jobs"
 	"github.com/grafana/xk6-kubernetes/pkg/namespaces"
+	"github.com/grafana/xk6-kubernetes/pkg/persistentvolumeclaims"
+	"github.com/grafana/xk6-kubernetes/pkg/persistentvolumes"
 	"github.com/grafana/xk6-kubernetes/pkg/pods"
 	"github.com/grafana/xk6-kubernetes/pkg/secrets"
 	"github.com/grafana/xk6-kubernetes/pkg/services"
-	"github.com/grafana/xk6-kubernetes/pkg/persistentvolumes"
-	"github.com/grafana/xk6-kubernetes/pkg/persistentvolumeclaims"
 
 	"go.k6.io/k6/js/modules"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
