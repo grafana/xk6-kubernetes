@@ -1,14 +1,5 @@
-> ### ⚠️ This is a proof of concept
->
-> As this is a proof of concept, it won't be supported by the k6 team.
-> It may also break in the future as xk6 evolves. USE AT YOUR OWN RISK!
-> Any issues with the tool should be raised [here](https://github.com/grafana/xk6-kubernetes/issues).
-
-</br>
-</br>
-
 # xk6-kubernetes
-A k6 extension for interacting with Kubernetes clusters while testing. Built for [k6](https://github.com/grafana/k6) using [xk6](https://github.com/grafana/xk6).
+A k6 extension for interacting with Kubernetes clusters while testing.
 
 ## Build
 
@@ -30,12 +21,15 @@ Then:
   ```
 
 ## Development
-
-To make development a little smoother, you may run the build script provided in the root folder. It will create a `k6` binary with your local code rather than from GitHub.
+To make development a little smoother, use the `Makefile` in the root folder. The default target will format your code, run tests, and create a `k6` binary with your local code rather than from GitHub.
 
 ```bash
-$ ./build.sh && ./k6 run my-test-script.js
+make
 ```
+Once built, you can run your newly extended `k6` using:
+```shell
+ ./k6 run my-test-script.js
+ ```
 
 ## Example
 
