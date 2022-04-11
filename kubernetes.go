@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/xk6-kubernetes/pkg/ingresses"
 	"github.com/grafana/xk6-kubernetes/pkg/jobs"
 	"github.com/grafana/xk6-kubernetes/pkg/namespaces"
+	"github.com/grafana/xk6-kubernetes/pkg/nodes"
 	"github.com/grafana/xk6-kubernetes/pkg/persistentvolumeclaims"
 	"github.com/grafana/xk6-kubernetes/pkg/persistentvolumes"
 	"github.com/grafana/xk6-kubernetes/pkg/pods"
@@ -35,6 +36,7 @@ type Kubernetes struct {
 	Deployments            *deployments.Deployments
 	Pods                   *pods.Pods
 	Namespaces             *namespaces.Namespaces
+	Nodes                  *nodes.Nodes
 	Jobs                   *jobs.Jobs
 	Services               *services.Services
 	Secrets                *secrets.Secrets
@@ -74,6 +76,7 @@ func (obj *Kubernetes) XKubernetes(ctx *context.Context, options KubernetesOptio
 	obj.Deployments = deployments.New(obj.client, obj.metaOptions, obj.ctx)
 	obj.Pods = pods.New(obj.client, obj.metaOptions, obj.ctx)
 	obj.Namespaces = namespaces.New(obj.client, obj.metaOptions, obj.ctx)
+	obj.Nodes = nodes.New(obj.client, obj.metaOptions, obj.ctx)
 	obj.Jobs = jobs.New(obj.client, obj.metaOptions, obj.ctx)
 	obj.Services = services.New(obj.client, obj.metaOptions, obj.ctx)
 	obj.Secrets = secrets.New(obj.client, obj.metaOptions, obj.ctx)
