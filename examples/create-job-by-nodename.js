@@ -2,19 +2,15 @@
 import { sleep } from 'k6';
 import { Kubernetes } from 'k6/x/kubernetes';
 
-function getJobNodeNames(nameSpace, kubernetes) {
-  return kubernetes.jobs.list(nameSpace).map(function(job){
-    return job.spec.template.spec.node_name
-  })
-}
-
 export default function () {
   const kubernetes = new Kubernetes({
     // config_path: "/path/to/kube/config", ~/.kube/config by default
   })
+
+  const nodes = kubernetes.nodes.list();
+  const nodeName = nodes[0].namespace;
   const namespace = "default"
   const jobName = "new-nodename-job"
-  const nodeName = "my-node-name"
   const image = "perl"
   const command = ["perl",  "-Mbignum=bpi", "-wle", "print bpi(2000)"]
 
@@ -26,10 +22,13 @@ export default function () {
     command: command
   })
   sleep(1)
-  const jobsList = getJobNodeNames(namespace, kubernetes)
-  console.log(jobsList);
-  if(jobsList.indexOf(nodeName) != -1) {
-    console.log(jobName + " job has been created successfully")
+
+  const job = kubernetes.jobs.list(namespace).find((job) => {
+    return job.spec.template.spec.node_name === nodeName
+  });
+
+  if(job) {
+    console.log(job.name + " job has been created successfully")
   } else {
     throw jobName + " job was not created"
   }
