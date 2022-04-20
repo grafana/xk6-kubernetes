@@ -3,6 +3,9 @@ package kubernetes
 import (
 	"context"
 	"errors"
+	"fmt"
+	"github.com/dop251/goja"
+	"go.k6.io/k6/js/common"
 	"path/filepath"
 
 	"github.com/grafana/xk6-kubernetes/pkg/configmaps"
@@ -24,10 +27,25 @@ import (
 	"k8s.io/client-go/util/homedir"
 )
 
-const version = "v0.0.1"
+const version = "v0.2.0"
 
+func init() {
+	modules.Register("k6/x/kubernetes", new(RootModule))
+}
+
+// RootModule is the global module object type. It is instantiated once per test
+// run and will be used to create `k6/x/kubernetes` module instances for each VU.
+type RootModule struct{}
+
+// ModuleInstance represents an instance of the JS module.
+type ModuleInstance struct {
+	Version string
+	vu      modules.VU
+	exports map[string]interface{}
+}
+
+// Kubernetes is the exported object used within JavaScript.
 type Kubernetes struct {
-	Version                string
 	client                 *kubernetes.Clientset
 	metaOptions            metav1.ListOptions
 	ctx                    context.Context
@@ -44,32 +62,71 @@ type Kubernetes struct {
 	PersistentVolumeClaims *persistentvolumeclaims.PersistentVolumeClaims
 }
 
-type KubernetesOptions struct {
+// KubeConfig represents the initialization settings for the kubernetes api client.
+type KubeConfig struct {
 	ConfigPath string
 }
 
-func (obj *Kubernetes) XKubernetes(ctx *context.Context, options KubernetesOptions) (*Kubernetes, error) {
+// Ensure the interfaces are implemented correctly.
+var (
+	_ modules.Module   = &RootModule{}
+	_ modules.Instance = &ModuleInstance{}
+)
+
+// NewModuleInstance implements the modules.Module interface to return
+// a new instance for each VU.
+func (*RootModule) NewModuleInstance(vu modules.VU) modules.Instance {
+	mi := &ModuleInstance{
+		Version: version,
+		vu:      vu,
+		exports: make(map[string]interface{}),
+	}
+	mi.exports["Kubernetes"] = mi.newClient
+
+	return mi
+}
+
+// Exports implements the modules.Instance interface and returns the exports
+// of the JS module.
+func (mi *ModuleInstance) Exports() modules.Exports {
+	return modules.Exports{
+		Named: mi.exports,
+	}
+}
+
+func (mi *ModuleInstance) newClient(c goja.ConstructorCall) *goja.Object {
+	rt := mi.vu.Runtime()
+	ctx := mi.vu.Context()
+
+	var options KubeConfig
+	err := rt.ExportTo(c.Argument(0), &options)
+	if err != nil {
+		common.Throw(rt, fmt.Errorf("Kubernetes constructor expect KubernetesOption as it's argument: %w", err))
+	}
+
 	kubeconfig := options.ConfigPath
 	if kubeconfig == "" {
 		home := homedir.HomeDir()
 		if home == "" {
-			return nil, errors.New("Home dir not found")
+			common.Throw(rt, errors.New("Home dir not found"))
 		}
 		kubeconfig = filepath.Join(home, ".kube", "config")
 	}
 
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
-		return nil, err
+		common.Throw(rt, err)
 	}
 
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		return nil, err
+		common.Throw(rt, err)
 	}
+
+	obj := &Kubernetes{}
 	obj.client = clientset
 	obj.metaOptions = metav1.ListOptions{}
-	obj.ctx = *ctx
+	obj.ctx = ctx
 
 	obj.ConfigMaps = configmaps.New(obj.client, obj.metaOptions, obj.ctx)
 	obj.Ingresses = ingresses.New(obj.client, obj.metaOptions, obj.ctx)
@@ -83,12 +140,5 @@ func (obj *Kubernetes) XKubernetes(ctx *context.Context, options KubernetesOptio
 	obj.PersistentVolumes = persistentvolumes.New(obj.client, obj.metaOptions, obj.ctx)
 	obj.PersistentVolumeClaims = persistentvolumeclaims.New(obj.client, obj.metaOptions, obj.ctx)
 
-	return obj, nil
-}
-
-func init() {
-	k8s := &Kubernetes{
-		Version: version,
-	}
-	modules.Register("k6/x/kubernetes", k8s)
+	return rt.ToValue(obj).ToObject(rt)
 }
