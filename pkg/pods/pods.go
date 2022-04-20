@@ -2,10 +2,13 @@ package pods
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 
 	k8sTypes "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -15,6 +18,12 @@ func New(client *kubernetes.Clientset, metaOptions metav1.ListOptions, ctx conte
 		metaOptions,
 		ctx,
 	}
+}
+
+type ContainerOptions struct {
+	Name    string
+	Image   string
+	Command []string
 }
 
 type Pods struct {
@@ -97,4 +106,47 @@ func (obj *Pods) Create(options PodOptions) (k8sTypes.Pod, error) {
 
 	pod, err := obj.client.CoreV1().Pods(options.Namespace).Create(obj.ctx, &newPod, metav1.CreateOptions{})
 	return *pod, err
+}
+
+func (obj *Pods) AddEphemeralContainer(name, namespace string, options ContainerOptions) error {
+	pod, err := obj.Get(name, namespace)
+	if err != nil {
+		return err
+	}
+	podJson, err := json.Marshal(pod)
+	if err != nil {
+		return err
+	}
+	container, err := generateEphemeralContainer(options)
+	if err != nil {
+		return err
+	}
+
+	updatedPod := pod.DeepCopy()
+	updatedPod.Spec.EphemeralContainers = append(updatedPod.Spec.EphemeralContainers, *container)
+	updateJson, err := json.Marshal(updatedPod)
+	if err != nil {
+		return err
+	}
+
+	patch, err := strategicpatch.CreateTwoWayMergePatch(podJson, updateJson, pod)
+	if err != nil {
+		return err
+	}
+
+	_, err = obj.client.CoreV1().Pods(namespace).Patch(obj.ctx, pod.Name, types.StrategicMergePatchType, patch, metav1.PatchOptions{}, "ephemeralcontainers")
+
+	return err
+
+}
+
+func generateEphemeralContainer(o ContainerOptions) (*k8sTypes.EphemeralContainer, error) {
+
+	return &k8sTypes.EphemeralContainer{
+		EphemeralContainerCommon: k8sTypes.EphemeralContainerCommon{
+			Name:    o.Name,
+			Image:   o.Image,
+			Command: o.Command,
+		},
+	}, nil
 }
