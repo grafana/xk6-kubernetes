@@ -27,8 +27,6 @@ import (
 	"k8s.io/client-go/util/homedir"
 )
 
-const version = "v0.2.0"
-
 func init() {
 	modules.Register("k6/x/kubernetes", new(RootModule))
 }
@@ -39,9 +37,7 @@ type RootModule struct{}
 
 // ModuleInstance represents an instance of the JS module.
 type ModuleInstance struct {
-	Version string
-	vu      modules.VU
-	exports map[string]interface{}
+	vu modules.VU
 }
 
 // Kubernetes is the exported object used within JavaScript.
@@ -76,21 +72,18 @@ var (
 // NewModuleInstance implements the modules.Module interface to return
 // a new instance for each VU.
 func (*RootModule) NewModuleInstance(vu modules.VU) modules.Instance {
-	mi := &ModuleInstance{
-		Version: version,
-		vu:      vu,
-		exports: make(map[string]interface{}),
+	return &ModuleInstance{
+		vu: vu,
 	}
-	mi.exports["Kubernetes"] = mi.newClient
-
-	return mi
 }
 
 // Exports implements the modules.Instance interface and returns the exports
 // of the JS module.
 func (mi *ModuleInstance) Exports() modules.Exports {
 	return modules.Exports{
-		Named: mi.exports,
+		Named: map[string]interface{}{
+			"Kubernetes": mi.newClient,
+		},
 	}
 }
 
