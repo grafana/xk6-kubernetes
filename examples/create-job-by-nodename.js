@@ -8,7 +8,7 @@ export default function () {
   })
 
   const nodes = kubernetes.nodes.list();
-  const nodeName = nodes[0].namespace;
+  const nodeName = nodes[0].name;
   const namespace = "default"
   const jobName = "new-nodename-job"
   const image = "perl"
