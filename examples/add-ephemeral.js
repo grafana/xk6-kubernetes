@@ -12,6 +12,7 @@ export default function () {
   const containerName = "ephemeral"
   const containerImage = "busybox" 
   const containerCommand = ["sh", "-c", "sleep 300"]
+  const containerCapabilities = ["NET_ADMIN","NET_RAW"]
 
   kubernetes.pods.create({
     namespace: namespace,
@@ -28,6 +29,7 @@ export default function () {
       name: containerName,
       image: containerImage,
       command: containerCommand,
+      capabilities: containerCapabilities,
     }   
   )
   sleep(1)

@@ -21,9 +21,10 @@ func New(client *kubernetes.Clientset, metaOptions metav1.ListOptions, ctx conte
 }
 
 type ContainerOptions struct {
-	Name    string
-	Image   string
-	Command []string
+	Name         string
+	Image        string
+	Command      []string
+	Capabilities []string
 }
 
 type Pods struct {
@@ -141,12 +142,21 @@ func (obj *Pods) AddEphemeralContainer(name, namespace string, options Container
 }
 
 func generateEphemeralContainer(o ContainerOptions) (*k8sTypes.EphemeralContainer, error) {
+	var capabilities []k8sTypes.Capability
+	for _, capability := range o.Capabilities {
+		capabilities = append(capabilities, k8sTypes.Capability(capability))
+	}
 
 	return &k8sTypes.EphemeralContainer{
 		EphemeralContainerCommon: k8sTypes.EphemeralContainerCommon{
 			Name:    o.Name,
 			Image:   o.Image,
 			Command: o.Command,
+			SecurityContext: &k8sTypes.SecurityContext{
+				Capabilities: &k8sTypes.Capabilities{
+					Add: capabilities,
+				},
+			},
 		},
 	}, nil
 }
