@@ -28,6 +28,7 @@ type Jobs struct {
 type JobOptions struct {
 	Namespace     string
 	Name          string
+	NodeName      string
 	Image         string
 	Command       []string
 	RestartPolicy coreV1.RestartPolicy
@@ -96,6 +97,7 @@ func (obj *Jobs) Create(options JobOptions) (v1.Job, error) {
 			Template: coreV1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{},
 				Spec: coreV1.PodSpec{
+					NodeName:      options.NodeName,
 					Containers:    containers,
 					RestartPolicy: restartPolicy,
 				},
