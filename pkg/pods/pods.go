@@ -20,11 +20,12 @@ func New(client *kubernetes.Clientset, metaOptions metav1.ListOptions, ctx conte
 	}
 }
 
+// ContainerOptions describes a container to be started in a pod
 type ContainerOptions struct {
-	Name         string
-	Image        string
-	Command      []string
-	Capabilities []string
+	Name         string	// name of the container
+	Image        string	// image to be attached
+	Command      []string	// command to be executed by the container
+	Capabilities []string	// capabilities to be added to the container's security context
 }
 
 type Pods struct {
@@ -33,12 +34,13 @@ type Pods struct {
 	ctx         context.Context
 }
 
+// PodOptions describe a Pod to be executed
 type PodOptions struct {
-	Namespace     string
-	Name          string
-	Image         string
-	Command       []string
-	RestartPolicy k8sTypes.RestartPolicy
+	Namespace     string			// namespace where the pod will be executed
+	Name          string			// name of the pod
+	Image         string			// image to be executed by the pod's container
+	Command       []string			// command to be executed by the pod's container and its arguments
+	RestartPolicy k8sTypes.RestartPolicy	// policy for restarting containers in the pod. One of One of Always, OnFailure, Never
 }
 
 func (obj *Pods) List(namespace string) ([]k8sTypes.Pod, error) {
@@ -79,6 +81,7 @@ func (obj *Pods) IsTerminating(name, namespace string) (bool, error) {
 	return (pod.ObjectMeta.DeletionTimestamp != nil), nil
 }
 
+// Create runs a pod specified by the options
 func (obj *Pods) Create(options PodOptions) (k8sTypes.Pod, error) {
 	container := k8sTypes.Container{
 		Name:    options.Name,
@@ -109,6 +112,8 @@ func (obj *Pods) Create(options PodOptions) (k8sTypes.Pod, error) {
 	return *pod, err
 }
 
+// AddEphemeralContainer adds an ephemeral container to a running pod. The Pod is identified by name and namespace.
+// The container is described by options
 func (obj *Pods) AddEphemeralContainer(name, namespace string, options ContainerOptions) error {
 	pod, err := obj.Get(name, namespace)
 	if err != nil {
