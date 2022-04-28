@@ -8,7 +8,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func New(client *kubernetes.Clientset, metaOptions metav1.ListOptions, ctx context.Context) *Nodes {
+func New(client kubernetes.Interface, metaOptions metav1.ListOptions, ctx context.Context) *Nodes {
 	return &Nodes{
 		client,
 		metaOptions,
@@ -17,7 +17,7 @@ func New(client *kubernetes.Clientset, metaOptions metav1.ListOptions, ctx conte
 }
 
 type Nodes struct {
-	client      *kubernetes.Clientset
+	client      kubernetes.Interface
 	metaOptions metav1.ListOptions
 	ctx         context.Context
 }

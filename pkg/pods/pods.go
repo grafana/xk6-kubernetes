@@ -16,7 +16,7 @@ import (
 	"k8s.io/client-go/tools/remotecommand"
 )
 
-func New(client *kubernetes.Clientset, config *rest.Config, metaOptions metav1.ListOptions, ctx context.Context) *Pods {
+func New(client kubernetes.Interface, config *rest.Config, metaOptions metav1.ListOptions, ctx context.Context) *Pods {
 	return &Pods{
 		client,
 		config,
@@ -49,7 +49,7 @@ type ContainerOptions struct {
 }
 
 type Pods struct {
-	client      *kubernetes.Clientset
+	client      kubernetes.Interface
 	config      *rest.Config
 	metaOptions metav1.ListOptions
 	ctx         context.Context
