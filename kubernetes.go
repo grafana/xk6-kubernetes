@@ -124,7 +124,7 @@ func (mi *ModuleInstance) newClient(c goja.ConstructorCall) *goja.Object {
 	obj.ConfigMaps = configmaps.New(obj.client, obj.metaOptions, obj.ctx)
 	obj.Ingresses = ingresses.New(obj.client, obj.metaOptions, obj.ctx)
 	obj.Deployments = deployments.New(obj.client, obj.metaOptions, obj.ctx)
-	obj.Pods = pods.New(obj.client, obj.metaOptions, obj.ctx)
+	obj.Pods = pods.New(obj.client, config, obj.metaOptions, obj.ctx)
 	obj.Namespaces = namespaces.New(obj.client, obj.metaOptions, obj.ctx)
 	obj.Nodes = nodes.New(obj.client, obj.metaOptions, obj.ctx)
 	obj.Jobs = jobs.New(obj.client, obj.metaOptions, obj.ctx)
