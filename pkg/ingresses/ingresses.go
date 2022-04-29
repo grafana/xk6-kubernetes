@@ -41,7 +41,10 @@ func (obj *Ingresses) Apply(yaml string, namespace string) (k8sTypes.Ingress, er
 	}
 
 	ing, err := obj.client.NetworkingV1().Ingresses(namespace).Create(obj.ctx, &ingress, metav1.CreateOptions{})
-	return *ing, err
+	if err != nil {
+		return k8sTypes.Ingress{}, err
+	}
+	return *ing, nil
 }
 
 func (obj *Ingresses) Create(

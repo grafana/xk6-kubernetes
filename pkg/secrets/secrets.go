@@ -41,7 +41,10 @@ func (obj *Secrets) Apply(yaml string, namespace string) (k8sTypes.Secret, error
 	}
 
 	scrt, err := obj.client.CoreV1().Secrets(namespace).Create(obj.ctx, &secret, metav1.CreateOptions{})
-	return *scrt, err
+	if err != nil {
+		return k8sTypes.Secret{}, err
+	}
+	return *scrt, nil
 }
 
 func (obj *Secrets) Create(

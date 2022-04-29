@@ -41,7 +41,10 @@ func (obj *Namespaces) Apply(yaml string) (k8sTypes.Namespace, error) {
 	}
 
 	ns, err := obj.client.CoreV1().Namespaces().Create(obj.ctx, &namespace, metav1.CreateOptions{})
-	return *ns, err
+	if err != nil {
+		return k8sTypes.Namespace{}, err
+	}
+	return *ns, nil
 }
 
 func (obj *Namespaces) Create(

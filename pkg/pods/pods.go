@@ -130,7 +130,10 @@ func (obj *Pods) Create(options PodOptions) (k8sTypes.Pod, error) {
 	}
 
 	pod, err := obj.client.CoreV1().Pods(options.Namespace).Create(obj.ctx, &newPod, metav1.CreateOptions{})
-	return *pod, err
+	if err != nil {
+		return k8sTypes.Pod{}, err
+	}
+	return *pod, nil
 }
 
 // Exec executes a non-interactive command described in options and returns the stdout and stderr outputs

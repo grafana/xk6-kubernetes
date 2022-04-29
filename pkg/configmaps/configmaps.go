@@ -41,7 +41,10 @@ func (obj *ConfigMaps) Apply(yaml string, namespace string) (k8sTypes.ConfigMap,
 	}
 
 	cm, err := obj.client.CoreV1().ConfigMaps(namespace).Create(obj.ctx, &configmap, metav1.CreateOptions{})
-	return *cm, err
+	if err != nil {
+		return k8sTypes.ConfigMap{}, err
+	}
+	return *cm, nil
 }
 
 func (obj *ConfigMaps) Create(

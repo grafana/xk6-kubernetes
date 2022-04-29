@@ -41,7 +41,10 @@ func (obj *PersistentVolumeClaims) Apply(yaml string, namespace string) (k8sType
 	}
 
 	pvc, err := obj.client.CoreV1().PersistentVolumeClaims(namespace).Create(obj.ctx, &persistentvolumeclaim, metav1.CreateOptions{})
-	return *pvc, err
+	if err != nil {
+		return k8sTypes.PersistentVolumeClaim{}, err
+	}
+	return *pvc, nil
 }
 
 func (obj *PersistentVolumeClaims) Create(

@@ -41,7 +41,10 @@ func (obj *Deployments) Apply(yaml string, namespace string) (k8sTypes.Deploymen
 	}
 
 	dep, err := obj.client.AppsV1().Deployments(namespace).Create(obj.ctx, &deployment, metav1.CreateOptions{})
-	return *dep, err
+	if err != nil {
+		return k8sTypes.Deployment{}, err
+	}
+	return *dep, nil
 }
 
 func (obj *Deployments) Create(

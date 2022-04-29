@@ -41,7 +41,10 @@ func (obj *PersistentVolumes) Apply(yaml string) (k8sTypes.PersistentVolume, err
 	}
 
 	pv, err := obj.client.CoreV1().PersistentVolumes().Create(obj.ctx, &persistentvolume, metav1.CreateOptions{})
-	return *pv, err
+	if err != nil {
+		return k8sTypes.PersistentVolume{}, err
+	}
+	return *pv, nil
 }
 
 func (obj *PersistentVolumes) Create(

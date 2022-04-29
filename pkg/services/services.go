@@ -41,7 +41,10 @@ func (obj *Services) Apply(yaml string, namespace string) (k8sTypes.Service, err
 	}
 
 	svc, err := obj.client.CoreV1().Services(namespace).Create(obj.ctx, &service, metav1.CreateOptions{})
-	return *svc, err
+	if err != nil {
+		return k8sTypes.Service{}, err
+	}
+	return *svc, nil
 }
 
 func (obj *Services) Create(
