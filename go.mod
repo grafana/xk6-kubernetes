@@ -9,7 +9,11 @@ require (
 	k8s.io/client-go v0.19.2
 )
 
-require github.com/dop251/goja v0.0.0-20220405120441-9037c2b61cbf
+require (
+	github.com/dop251/goja v0.0.0-20220405120441-9037c2b61cbf
+	github.com/sirupsen/logrus v1.8.1
+	github.com/stretchr/testify v1.7.0
+)
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -34,8 +38,8 @@ require (
 	github.com/nxadm/tail v1.4.4 // indirect
 	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/serenize/snaker v0.0.0-20201027110005-a7ad2135616e // indirect
-	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/spf13/afero v1.2.2 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd // indirect
@@ -50,6 +54,7 @@ require (
 	gopkg.in/guregu/null.v3 v3.3.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
+	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c // indirect
 	k8s.io/klog/v2 v2.8.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20210305001622-591a79e4bda7 // indirect
 	k8s.io/utils v0.0.0-20200729134348-d5654de09c73 // indirect
