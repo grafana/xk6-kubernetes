@@ -10,7 +10,7 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
-func New(client *kubernetes.Clientset, metaOptions metav1.ListOptions, ctx context.Context) *PersistentVolumeClaims {
+func New(client kubernetes.Interface, metaOptions metav1.ListOptions, ctx context.Context) *PersistentVolumeClaims {
 	return &PersistentVolumeClaims{
 		client,
 		metaOptions,
@@ -19,7 +19,7 @@ func New(client *kubernetes.Clientset, metaOptions metav1.ListOptions, ctx conte
 }
 
 type PersistentVolumeClaims struct {
-	client      *kubernetes.Clientset
+	client      kubernetes.Interface
 	metaOptions metav1.ListOptions
 	ctx         context.Context
 }
@@ -41,7 +41,10 @@ func (obj *PersistentVolumeClaims) Apply(yaml string, namespace string) (k8sType
 	}
 
 	pvc, err := obj.client.CoreV1().PersistentVolumeClaims(namespace).Create(obj.ctx, &persistentvolumeclaim, metav1.CreateOptions{})
-	return *pvc, err
+	if err != nil {
+		return k8sTypes.PersistentVolumeClaim{}, err
+	}
+	return *pvc, nil
 }
 
 func (obj *PersistentVolumeClaims) Create(

@@ -10,7 +10,7 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
-func New(client *kubernetes.Clientset, metaOptions metav1.ListOptions, ctx context.Context) *ConfigMaps {
+func New(client kubernetes.Interface, metaOptions metav1.ListOptions, ctx context.Context) *ConfigMaps {
 	return &ConfigMaps{
 		client,
 		metaOptions,
@@ -19,7 +19,7 @@ func New(client *kubernetes.Clientset, metaOptions metav1.ListOptions, ctx conte
 }
 
 type ConfigMaps struct {
-	client      *kubernetes.Clientset
+	client      kubernetes.Interface
 	metaOptions metav1.ListOptions
 	ctx         context.Context
 }
@@ -41,7 +41,10 @@ func (obj *ConfigMaps) Apply(yaml string, namespace string) (k8sTypes.ConfigMap,
 	}
 
 	cm, err := obj.client.CoreV1().ConfigMaps(namespace).Create(obj.ctx, &configmap, metav1.CreateOptions{})
-	return *cm, err
+	if err != nil {
+		return k8sTypes.ConfigMap{}, err
+	}
+	return *cm, nil
 }
 
 func (obj *ConfigMaps) Create(

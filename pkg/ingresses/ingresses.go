@@ -10,7 +10,7 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
-func New(client *kubernetes.Clientset, metaOptions metav1.ListOptions, ctx context.Context) *Ingresses {
+func New(client kubernetes.Interface, metaOptions metav1.ListOptions, ctx context.Context) *Ingresses {
 	return &Ingresses{
 		client,
 		metaOptions,
@@ -19,7 +19,7 @@ func New(client *kubernetes.Clientset, metaOptions metav1.ListOptions, ctx conte
 }
 
 type Ingresses struct {
-	client      *kubernetes.Clientset
+	client      kubernetes.Interface
 	metaOptions metav1.ListOptions
 	ctx         context.Context
 }
@@ -41,7 +41,10 @@ func (obj *Ingresses) Apply(yaml string, namespace string) (k8sTypes.Ingress, er
 	}
 
 	ing, err := obj.client.NetworkingV1().Ingresses(namespace).Create(obj.ctx, &ingress, metav1.CreateOptions{})
-	return *ing, err
+	if err != nil {
+		return k8sTypes.Ingress{}, err
+	}
+	return *ing, nil
 }
 
 func (obj *Ingresses) Create(

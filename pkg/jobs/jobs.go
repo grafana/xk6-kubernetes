@@ -11,7 +11,7 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
-func New(client *kubernetes.Clientset, metaOptions metav1.ListOptions, ctx context.Context) *Jobs {
+func New(client kubernetes.Interface, metaOptions metav1.ListOptions, ctx context.Context) *Jobs {
 	return &Jobs{
 		client,
 		metaOptions,
@@ -20,7 +20,7 @@ func New(client *kubernetes.Clientset, metaOptions metav1.ListOptions, ctx conte
 }
 
 type Jobs struct {
-	client      *kubernetes.Clientset
+	client      kubernetes.Interface
 	metaOptions metav1.ListOptions
 	ctx         context.Context
 }
@@ -36,12 +36,18 @@ type JobOptions struct {
 
 func (obj *Jobs) List(namespace string) ([]v1.Job, error) {
 	result, err := obj.client.BatchV1().Jobs(namespace).List(obj.ctx, obj.metaOptions)
-	return result.Items, err
+	if err != nil {
+		return []v1.Job{}, err
+	}
+	return result.Items, nil
 }
 
 func (obj *Jobs) Get(name, namespace string) (v1.Job, error) {
 	result, err := obj.client.BatchV1().Jobs(namespace).Get(obj.ctx, name, metav1.GetOptions{})
-	return *result, err
+	if err != nil {
+		return v1.Job{}, err
+	}
+	return *result, nil
 }
 
 func (obj *Jobs) Delete(name, namespace string) error {
@@ -70,7 +76,10 @@ func (obj *Jobs) Apply(yaml string, namespace string) (v1.Job, error) {
 	}
 
 	jb, err := obj.client.BatchV1().Jobs(namespace).Create(obj.ctx, &job, metav1.CreateOptions{})
-	return *jb, err
+	if err != nil {
+		return v1.Job{}, err
+	}
+	return *jb, nil
 }
 
 func (obj *Jobs) Create(options JobOptions) (v1.Job, error) {
@@ -106,5 +115,8 @@ func (obj *Jobs) Create(options JobOptions) (v1.Job, error) {
 	}
 
 	job, err := obj.client.BatchV1().Jobs(options.Namespace).Create(obj.ctx, &newJob, metav1.CreateOptions{})
-	return *job, err
+	if err != nil {
+		return v1.Job{}, err
+	}
+	return *job, nil
 }

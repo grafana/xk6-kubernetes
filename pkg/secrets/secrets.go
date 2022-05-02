@@ -10,7 +10,7 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
-func New(client *kubernetes.Clientset, metaOptions metav1.ListOptions, ctx context.Context) *Secrets {
+func New(client kubernetes.Interface, metaOptions metav1.ListOptions, ctx context.Context) *Secrets {
 	return &Secrets{
 		client,
 		metaOptions,
@@ -19,7 +19,7 @@ func New(client *kubernetes.Clientset, metaOptions metav1.ListOptions, ctx conte
 }
 
 type Secrets struct {
-	client      *kubernetes.Clientset
+	client      kubernetes.Interface
 	metaOptions metav1.ListOptions
 	ctx         context.Context
 }
@@ -41,7 +41,10 @@ func (obj *Secrets) Apply(yaml string, namespace string) (k8sTypes.Secret, error
 	}
 
 	scrt, err := obj.client.CoreV1().Secrets(namespace).Create(obj.ctx, &secret, metav1.CreateOptions{})
-	return *scrt, err
+	if err != nil {
+		return k8sTypes.Secret{}, err
+	}
+	return *scrt, nil
 }
 
 func (obj *Secrets) Create(

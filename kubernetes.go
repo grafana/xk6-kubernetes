@@ -21,7 +21,7 @@ import (
 	"github.com/grafana/xk6-kubernetes/pkg/services"
 
 	"go.k6.io/k6/js/modules"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
@@ -38,12 +38,14 @@ type RootModule struct{}
 // ModuleInstance represents an instance of the JS module.
 type ModuleInstance struct {
 	vu modules.VU
+	// clientset enables injection of a pre-configured Kubernetes environment for unit tests
+	clientset kubernetes.Interface
 }
 
 // Kubernetes is the exported object used within JavaScript.
 type Kubernetes struct {
-	client                 *kubernetes.Clientset
-	metaOptions            metav1.ListOptions
+	client                 kubernetes.Interface
+	metaOptions            metaV1.ListOptions
 	ctx                    context.Context
 	ConfigMaps             *configmaps.ConfigMaps
 	Ingresses              *ingresses.Ingresses
@@ -111,14 +113,18 @@ func (mi *ModuleInstance) newClient(c goja.ConstructorCall) *goja.Object {
 		common.Throw(rt, err)
 	}
 
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		common.Throw(rt, err)
-	}
-
 	obj := &Kubernetes{}
-	obj.client = clientset
-	obj.metaOptions = metav1.ListOptions{}
+	if mi.clientset == nil {
+		clientset, err := kubernetes.NewForConfig(config)
+		if err != nil {
+			common.Throw(rt, err)
+		}
+		obj.client = clientset
+	} else {
+		// Clientset is being injected for unit testing
+		obj.client = mi.clientset
+	}
+	obj.metaOptions = metaV1.ListOptions{}
 	obj.ctx = ctx
 
 	obj.ConfigMaps = configmaps.New(obj.client, obj.metaOptions, obj.ctx)

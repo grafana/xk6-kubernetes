@@ -10,7 +10,7 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
-func New(client *kubernetes.Clientset, metaOptions metav1.ListOptions, ctx context.Context) *Deployments {
+func New(client kubernetes.Interface, metaOptions metav1.ListOptions, ctx context.Context) *Deployments {
 	return &Deployments{
 		client,
 		metaOptions,
@@ -19,7 +19,7 @@ func New(client *kubernetes.Clientset, metaOptions metav1.ListOptions, ctx conte
 }
 
 type Deployments struct {
-	client      *kubernetes.Clientset
+	client      kubernetes.Interface
 	metaOptions metav1.ListOptions
 	ctx         context.Context
 }
@@ -41,7 +41,10 @@ func (obj *Deployments) Apply(yaml string, namespace string) (k8sTypes.Deploymen
 	}
 
 	dep, err := obj.client.AppsV1().Deployments(namespace).Create(obj.ctx, &deployment, metav1.CreateOptions{})
-	return *dep, err
+	if err != nil {
+		return k8sTypes.Deployment{}, err
+	}
+	return *dep, nil
 }
 
 func (obj *Deployments) Create(

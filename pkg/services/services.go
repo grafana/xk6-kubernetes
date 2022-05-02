@@ -10,7 +10,7 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
-func New(client *kubernetes.Clientset, metaOptions metav1.ListOptions, ctx context.Context) *Services {
+func New(client kubernetes.Interface, metaOptions metav1.ListOptions, ctx context.Context) *Services {
 	return &Services{
 		client,
 		metaOptions,
@@ -19,7 +19,7 @@ func New(client *kubernetes.Clientset, metaOptions metav1.ListOptions, ctx conte
 }
 
 type Services struct {
-	client      *kubernetes.Clientset
+	client      kubernetes.Interface
 	metaOptions metav1.ListOptions
 	ctx         context.Context
 }
@@ -41,7 +41,10 @@ func (obj *Services) Apply(yaml string, namespace string) (k8sTypes.Service, err
 	}
 
 	svc, err := obj.client.CoreV1().Services(namespace).Create(obj.ctx, &service, metav1.CreateOptions{})
-	return *svc, err
+	if err != nil {
+		return k8sTypes.Service{}, err
+	}
+	return *svc, nil
 }
 
 func (obj *Services) Create(

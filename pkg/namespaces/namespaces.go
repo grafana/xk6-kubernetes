@@ -10,7 +10,7 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
-func New(client *kubernetes.Clientset, metaOptions metav1.ListOptions, ctx context.Context) *Namespaces {
+func New(client kubernetes.Interface, metaOptions metav1.ListOptions, ctx context.Context) *Namespaces {
 	return &Namespaces{
 		client,
 		metaOptions,
@@ -19,7 +19,7 @@ func New(client *kubernetes.Clientset, metaOptions metav1.ListOptions, ctx conte
 }
 
 type Namespaces struct {
-	client      *kubernetes.Clientset
+	client      kubernetes.Interface
 	metaOptions metav1.ListOptions
 	ctx         context.Context
 }
@@ -41,7 +41,10 @@ func (obj *Namespaces) Apply(yaml string) (k8sTypes.Namespace, error) {
 	}
 
 	ns, err := obj.client.CoreV1().Namespaces().Create(obj.ctx, &namespace, metav1.CreateOptions{})
-	return *ns, err
+	if err != nil {
+		return k8sTypes.Namespace{}, err
+	}
+	return *ns, nil
 }
 
 func (obj *Namespaces) Create(

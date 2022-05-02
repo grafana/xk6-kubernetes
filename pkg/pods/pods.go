@@ -16,7 +16,7 @@ import (
 	"k8s.io/client-go/tools/remotecommand"
 )
 
-func New(client *kubernetes.Clientset, config *rest.Config, metaOptions metav1.ListOptions, ctx context.Context) *Pods {
+func New(client kubernetes.Interface, config *rest.Config, metaOptions metav1.ListOptions, ctx context.Context) *Pods {
 	return &Pods{
 		client,
 		config,
@@ -49,7 +49,7 @@ type ContainerOptions struct {
 }
 
 type Pods struct {
-	client      *kubernetes.Clientset
+	client      kubernetes.Interface
 	config      *rest.Config
 	metaOptions metav1.ListOptions
 	ctx         context.Context
@@ -130,7 +130,10 @@ func (obj *Pods) Create(options PodOptions) (k8sTypes.Pod, error) {
 	}
 
 	pod, err := obj.client.CoreV1().Pods(options.Namespace).Create(obj.ctx, &newPod, metav1.CreateOptions{})
-	return *pod, err
+	if err != nil {
+		return k8sTypes.Pod{}, err
+	}
+	return *pod, nil
 }
 
 // Exec executes a non-interactive command described in options and returns the stdout and stderr outputs
