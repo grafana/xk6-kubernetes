@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/dop251/goja"
 	"go.k6.io/k6/js/common"
+	"k8s.io/client-go/rest"
 	"path/filepath"
 
 	"github.com/grafana/xk6-kubernetes/pkg/configmaps"
@@ -93,37 +94,30 @@ func (mi *ModuleInstance) newClient(c goja.ConstructorCall) *goja.Object {
 	rt := mi.vu.Runtime()
 	ctx := mi.vu.Context()
 
-	var options KubeConfig
-	err := rt.ExportTo(c.Argument(0), &options)
-	if err != nil {
-		common.Throw(rt, fmt.Errorf("Kubernetes constructor expect KubernetesOption as it's argument: %w", err))
-	}
-
-	kubeconfig := options.ConfigPath
-	if kubeconfig == "" {
-		home := homedir.HomeDir()
-		if home == "" {
-			common.Throw(rt, errors.New("Home dir not found"))
-		}
-		kubeconfig = filepath.Join(home, ".kube", "config")
-	}
-
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
-	if err != nil {
-		common.Throw(rt, err)
-	}
-
 	obj := &Kubernetes{}
+	var config *rest.Config
+
 	if mi.clientset == nil {
+		var options KubeConfig
+		err := rt.ExportTo(c.Argument(0), &options)
+		if err != nil {
+			common.Throw(rt,
+				fmt.Errorf("Kubernetes constructor expects KubeConfig as it's argument: %w", err))
+		}
+		config, err = getClientConfig(options)
+		if err != nil {
+			common.Throw(rt, err)
+		}
 		clientset, err := kubernetes.NewForConfig(config)
 		if err != nil {
 			common.Throw(rt, err)
 		}
 		obj.client = clientset
 	} else {
-		// Clientset is being injected for unit testing
+		// Pre-configured clientset is being injected for unit testing
 		obj.client = mi.clientset
 	}
+
 	obj.metaOptions = metaV1.ListOptions{}
 	obj.ctx = ctx
 
@@ -140,4 +134,16 @@ func (mi *ModuleInstance) newClient(c goja.ConstructorCall) *goja.Object {
 	obj.PersistentVolumeClaims = persistentvolumeclaims.New(obj.client, obj.metaOptions, obj.ctx)
 
 	return rt.ToValue(obj).ToObject(rt)
+}
+
+func getClientConfig(options KubeConfig) (*rest.Config, error) {
+	kubeconfig := options.ConfigPath
+	if kubeconfig == "" {
+		home := homedir.HomeDir()
+		if home == "" {
+			return nil, errors.New("home directory not found")
+		}
+		kubeconfig = filepath.Join(home, ".kube", "config")
+	}
+	return clientcmd.BuildConfigFromFlags("", kubeconfig)
 }
