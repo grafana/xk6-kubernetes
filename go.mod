@@ -3,7 +3,7 @@ module github.com/grafana/xk6-kubernetes
 go 1.17
 
 require (
-	go.k6.io/k6 v0.37.0
+	go.k6.io/k6 v0.38.0
 	k8s.io/api v0.19.2
 	k8s.io/apimachinery v0.21.0
 	k8s.io/client-go v0.19.2
@@ -12,7 +12,7 @@ require (
 require (
 	github.com/dop251/goja v0.0.0-20220405120441-9037c2b61cbf
 	github.com/sirupsen/logrus v1.8.1
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.7.1
 )
 
 require (

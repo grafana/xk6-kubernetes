@@ -10,7 +10,7 @@ import (
 	"go.k6.io/k6/js/modulestest"
 	"go.k6.io/k6/lib"
 	"go.k6.io/k6/lib/testutils"
-	"go.k6.io/k6/stats"
+	"go.k6.io/k6/metrics"
 	"io/ioutil"
 	"k8s.io/client-go/kubernetes/fake"
 	"testing"
@@ -34,7 +34,7 @@ func setupTestEnv(t *testing.T) testEnv {
 
 	state := &lib.State{
 		Options: lib.Options{
-			SystemTags: stats.NewSystemTagSet(stats.TagVU),
+			SystemTags: metrics.NewSystemTagSet(metrics.TagVU),
 		},
 		Logger: testLog,
 		Tags:   lib.NewTagMap(nil),
