@@ -20,7 +20,7 @@ jobs:
         uses: actions/setup-go@v3
         with:
           go-version: 1.17.x
-      - name: Retrieve get module name
+      - name: Get module name
         run: |
           echo "::set-output name=Module::$(go list -m)"
         id: module-name
