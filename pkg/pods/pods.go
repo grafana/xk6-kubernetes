@@ -20,10 +20,10 @@ import (
 	"k8s.io/client-go/tools/remotecommand"
 )
 
-// ValidPod status 
+// ValidPod status
 const (
-      Running string = "Running"
-      Succeeded string = "Succeeded"
+	Running   string = "Running"
+	Succeeded string = "Succeeded"
 )
 
 func New(client kubernetes.Interface, config *rest.Config, metaOptions metav1.ListOptions, ctx context.Context) *Pods {
@@ -72,6 +72,7 @@ type PodOptions struct {
 	Image         string                 // image to be executed by the pod's container
 	Command       []string               // command to be executed by the pod's container and its arguments
 	RestartPolicy k8sTypes.RestartPolicy // policy for restarting containers in the pod. One of One of Always, OnFailure, Never
+	Wait          string                 // timeout for waiting until the pod is running
 }
 
 func (obj *Pods) List(namespace string) ([]k8sTypes.Pod, error) {
@@ -143,15 +144,33 @@ func (obj *Pods) Create(options PodOptions) (k8sTypes.Pod, error) {
 	if err != nil {
 		return k8sTypes.Pod{}, err
 	}
-	return *pod, nil
+
+	if options.Wait == "" {
+		return *pod, nil
+	}
+	waitOpts := WaitOptions{
+		Name:      options.Name,
+		Namespace: options.Namespace,
+		Status:    Running,
+		Timeout:   options.Wait,
+	}
+	status, err := obj.Wait(waitOpts)
+	if err != nil {
+		return k8sTypes.Pod{}, err
+	}
+	if !status {
+		return k8sTypes.Pod{}, errors.New("timeout exceeded waiting for pod to be running")
+	}
+
+	return obj.Get(options.Name, options.Namespace)
 }
 
 // Options for waiting for a Pod status
 type WaitOptions struct {
-	Name string		// Pod name
-	Namespace string	// Namespace where the pod is running
-	Status string           // Wait until pod reaches the specified status. Must be one of "Running" or "Succeeded".
-	Timeout string		// Timeout for waiting condition to be true
+	Name      string // Pod name
+	Namespace string // Namespace where the pod is running
+	Status    string // Wait until pod reaches the specified status. Must be one of "Running" or "Succeeded".
+	Timeout   string // Timeout for waiting condition to be true
 }
 
 // Wait for the Pod to be in a given status up to given timeout and returns a boolean indicating if the staus was reached. If the pod is Failed returns error.
@@ -170,11 +189,11 @@ func (obj *Pods) Wait(options WaitOptions) (bool, error) {
 		obj.ctx,
 		metav1.ListOptions{
 			FieldSelector: selector.String(),
-                },
+		},
 	)
-        if err != nil {
+	if err != nil {
 		return false, err
-        }
+	}
 	defer watcher.Stop()
 
 	for {
@@ -193,7 +212,7 @@ func (obj *Pods) Wait(options WaitOptions) (bool, error) {
 				if pod.Status.Phase == k8sTypes.PodFailed {
 					return false, errors.New("Pod has failed")
 				}
-				if string(pod.Status.Phase) ==  options.Status {
+				if string(pod.Status.Phase) == options.Status {
 					return true, nil
 				}
 			}
