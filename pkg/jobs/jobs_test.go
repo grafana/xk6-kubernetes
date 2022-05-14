@@ -1,13 +1,17 @@
 package jobs
 
 import (
+	"strings"
+	"testing"
+	"time"
+
 	"github.com/grafana/xk6-kubernetes/internal/testutils"
 	k8sTypes "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes/fake"
-	"strings"
-	"testing"
+	k8stest "k8s.io/client-go/testing"
 )
 
 var (
@@ -264,6 +268,84 @@ func TestJobs_Get(t *testing.T) {
 			}
 			if tc.expectToFind && result.Namespace != tc.namespace {
 				t.Errorf("received job with namespace %v, expected %v", result.Name, tc.name)
+				return
+			}
+		})
+	}
+}
+
+func TestJobs_Wait(t *testing.T) {
+	t.Parallel()
+	type TestCase struct {
+		test           string
+		name           string
+		namespace      string
+		status         string
+		delay          time.Duration
+		expectError    bool
+		expectedResult bool
+		timeout        string
+	}
+
+	testCases := []TestCase{
+		{
+			test:           "wait job complete",
+			name:           "pod-running",
+			namespace:      testNamespace,
+			status:         "Complete",
+			delay:          1 * time.Second,
+			expectError:    false,
+			expectedResult: true,
+			timeout:        "5s",
+		},
+		{
+			test:           "timeout waiting job complete",
+			name:           "pod-running",
+			namespace:      testNamespace,
+			status:         "Complete",
+			delay:          10 * time.Second,
+			expectError:    false,
+			expectedResult: false,
+			timeout:        "5s",
+		},
+		{
+			test:           "wait job failed",
+			name:           "pod-running",
+			namespace:      testNamespace,
+			status:         "Failed",
+			delay:          1 * time.Second,
+			expectError:    true,
+			expectedResult: false,
+			timeout:        "5s",
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.test, func(t *testing.T) {
+			client := fake.NewSimpleClientset()
+			watcher := watch.NewFake()
+			client.PrependWatchReactor("jobs", k8stest.DefaultWatchReactor(watcher, nil))
+			fixture := New(client, metav1.ListOptions{}, nil)
+			go func(tc TestCase) {
+				time.Sleep(tc.delay)
+				watcher.Modify(testutils.NewJobWithStatus(tc.name, tc.namespace, tc.status))
+			}(tc)
+
+			result, err := fixture.Wait(WaitOptions{
+				Name:      tc.name,
+				Namespace: tc.namespace,
+				Timeout:   tc.timeout,
+			})
+
+			if !tc.expectError && err != nil {
+				t.Errorf("unexpected error: %v", err)
+				return
+			}
+			if tc.expectError && err == nil {
+				t.Errorf("Expected an error but none returned")
+				return
+			}
+			if result != tc.expectedResult {
+				t.Errorf("expected result %t but %t returned", tc.expectedResult, result)
 				return
 			}
 		})
