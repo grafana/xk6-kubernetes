@@ -36,6 +36,7 @@ type JobOptions struct {
 	Image         string
 	Command       []string
 	RestartPolicy coreV1.RestartPolicy
+	Wait          string
 }
 
 func (obj *Jobs) List(namespace string) ([]v1.Job, error) {
@@ -122,7 +123,22 @@ func (obj *Jobs) Create(options JobOptions) (v1.Job, error) {
 	if err != nil {
 		return v1.Job{}, err
 	}
-	return *job, nil
+	if options.Wait == "" {
+		return *job, nil
+	}
+	waitOpts := WaitOptions{
+		Name:      options.Name,
+		Namespace: options.Namespace,
+		Timeout:   options.Wait,
+	}
+	status, err := obj.Wait(waitOpts)
+	if err != nil {
+		return v1.Job{}, err
+	}
+	if !status {
+		return v1.Job{}, errors.New("timeout exceeded waiting for job to complete")
+	}
+	return obj.Get(options.Name, options.Namespace)
 }
 
 // WaitOptions specify the options for waiting for a Job to complete
