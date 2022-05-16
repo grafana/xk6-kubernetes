@@ -176,7 +176,7 @@ type WaitOptions struct {
 // Wait for the Pod to be in a given status up to given timeout and returns a boolean indicating if the staus was reached. If the pod is Failed returns error.
 func (obj *Pods) Wait(options WaitOptions) (bool, error) {
 	if options.Status != Running && options.Status != Succeeded {
-		return false, errors.New("Wait condition must be 'Running' or 'Succeeded'")
+		return false, errors.New("wait condition must be 'Running' or 'Succeeded'")
 	}
 	timeout, err := time.ParseDuration(options.Timeout)
 	if err != nil {

@@ -10,13 +10,16 @@ export default function () {
   const image = "busybox"
   const command = ["sh",  "-c", "/bin/false"]
 
+try {  
   kubernetes.pods.create({
     namespace: namespace,
     name: podName,
     image: image,
     command: command,
-    wait: "10s"
+    wait: "5s"
   })
-  
-  console.log(podName + " pod is running")
+  console.log(podName + " has been created")
+} catch (err) {
+  console.log("error creating pod " + podName + ": " + err)
+}
 }

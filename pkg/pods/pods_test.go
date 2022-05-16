@@ -101,7 +101,7 @@ func TestPods_Create(t *testing.T) {
 				return
 			}
 			if tc.expectError && err == nil {
-				t.Errorf("Expected an error but none returned")
+				t.Error("expected an error but none returned")
 				return
 			}
 			// error expected and returned, it is ok
@@ -110,7 +110,7 @@ func TestPods_Create(t *testing.T) {
 			}
 			// error is not expected and none returned, result must be valid
 			if result.Name != tc.name || result.Namespace != tc.namespace {
-				t.Errorf("incorrect instance was returned")
+				t.Error("incorrect instance was returned")
 				return
 			}
 			// FIXME: The fake client does not update the pod object in response to update
@@ -196,7 +196,7 @@ func TestPods_Wait(t *testing.T) {
 				return
 			}
 			if tc.expectError && err == nil {
-				t.Errorf("Expected an error but none returned")
+				t.Error("expected an error but none returned")
 				return
 			}
 			if result != tc.expectedResult {
