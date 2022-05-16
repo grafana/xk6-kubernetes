@@ -4,9 +4,12 @@ import (
 	"github.com/grafana/xk6-kubernetes/internal/testutils"
 	k8sTypes "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes/fake"
+	k8stest "k8s.io/client-go/testing"
 	"strings"
 	"testing"
+	"time"
 )
 
 var (
@@ -16,32 +19,191 @@ var (
 
 func TestPods_Create(t *testing.T) {
 	t.Parallel()
-	// TODO Figure out the rest.Config
-	fixture := New(fake.NewSimpleClientset(
-		testutils.NewPod("existing", testNamespace),
-	), nil, metav1.ListOptions{}, nil)
+	type TestCase struct {
+		test        string
+		name        string
+		namespace   string
+		status      string
+		delay       time.Duration
+		expectError bool
+		wait        string
+	}
 
-	options := PodOptions{
-		Name:          testName,
-		Namespace:     testNamespace,
-		Image:         "busybox",
-		Command:       []string{"sh", "-c", "sleep 300"},
-		RestartPolicy: k8sTypes.RestartPolicyNever,
+	testCases := []TestCase{
+		{
+			test:        "create pod not waiting",
+			name:        "pod-running",
+			namespace:   testNamespace,
+			status:      "Running",
+			delay:       1 * time.Second,
+			expectError: false,
+			wait:        "",
+		},
+		{
+			test:        "create failed pod not waiting",
+			name:        "pod-running",
+			namespace:   testNamespace,
+			status:      "Failed",
+			delay:       1 * time.Second,
+			expectError: false,
+			wait:        "",
+		}, {
+			test:        "wait for pod running",
+			name:        "pod-running",
+			namespace:   testNamespace,
+			status:      "Running",
+			delay:       1 * time.Second,
+			expectError: false,
+			wait:        "2s",
+		},
+		{
+			test:        "timeout waiting pod running",
+			name:        "pod-running",
+			namespace:   testNamespace,
+			status:      "Running",
+			delay:       10 * time.Second,
+			expectError: true,
+			wait:        "2s",
+		},
+		{
+			test:        "wait failed pod",
+			name:        "pod-running",
+			namespace:   testNamespace,
+			status:      "Failed",
+			delay:       1 * time.Second,
+			expectError: true,
+			wait:        "2s",
+		},
 	}
-	result, err := fixture.Create(options)
+	for _, tc := range testCases {
+		t.Run(tc.test, func(t *testing.T) {
+			// TODO Figure out the rest.Config
+			client := fake.NewSimpleClientset()
+			watcher := watch.NewFake()
+			client.PrependWatchReactor("pods", k8stest.DefaultWatchReactor(watcher, nil))
+			fixture := New(client, nil, metav1.ListOptions{}, nil)
+			go func(tc TestCase) {
+				time.Sleep(tc.delay)
+				watcher.Modify(testutils.NewPodWithStatus(tc.name, tc.namespace, tc.status))
+			}(tc)
 
-	if err != nil {
-		t.Errorf("encountered an error: %v", err)
-		return
+			result, err := fixture.Create(PodOptions{
+				Name:          tc.name,
+				Namespace:     tc.namespace,
+				Image:         "busybox",
+				Command:       []string{"sh", "-c", "sleep 300"},
+				RestartPolicy: k8sTypes.RestartPolicyNever,
+				Wait:          tc.wait,
+			})
+
+			if !tc.expectError && err != nil {
+				t.Errorf("unexpected error: %v", err)
+				return
+			}
+			if tc.expectError && err == nil {
+				t.Error("expected an error but none returned")
+				return
+			}
+			// error expected and returned, it is ok
+			if tc.expectError && err != nil {
+				return
+			}
+			// error is not expected and none returned, result must be valid
+			if result.Name != tc.name || result.Namespace != tc.namespace {
+				t.Error("incorrect instance was returned")
+				return
+			}
+			// FIXME: The fake client does not update the pod object in response to update
+			// events added to the watcher. Checking the status fails
+			//if string(result.Status.Phase) != "Running"  {
+			//	t.Errorf("pod is in incorrect state returned: %v", result)
+			//	return
+			//}
+		})
 	}
-	if result.Name != options.Name || result.Namespace != options.Namespace {
-		t.Errorf("incorrect instance was returned")
-		return
+}
+
+func TestPods_Wait(t *testing.T) {
+	t.Parallel()
+	type TestCase struct {
+		test           string
+		name           string
+		namespace      string
+		status         string
+		delay          time.Duration
+		expectedStatus string
+		expectError    bool
+		expectedResult bool
+		timeout        string
 	}
-	pods, _ := fixture.List(testNamespace)
-	if len(pods) != 2 {
-		t.Errorf("expecting 2 pods in namespace, listing returned %v", len(pods))
-		return
+
+	testCases := []TestCase{
+		{
+			test:           "wait pod running",
+			name:           "pod-running",
+			namespace:      testNamespace,
+			status:         "Running",
+			delay:          1 * time.Second,
+			expectedStatus: "Running",
+			expectError:    false,
+			expectedResult: true,
+			timeout:        "5s",
+		},
+		{
+			test:           "timeout waiting pod running",
+			name:           "pod-running",
+			namespace:      testNamespace,
+			status:         "Running",
+			delay:          10 * time.Second,
+			expectedStatus: "Running",
+			expectError:    false,
+			expectedResult: false,
+			timeout:        "5s",
+		},
+		{
+			test:           "wait failed pod",
+			name:           "pod-running",
+			namespace:      testNamespace,
+			status:         "Failed",
+			delay:          1 * time.Second,
+			expectedStatus: "Running",
+			expectError:    true,
+			expectedResult: false,
+			timeout:        "5s",
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.test, func(t *testing.T) {
+			// TODO Figure out the rest.Config
+			client := fake.NewSimpleClientset()
+			watcher := watch.NewFake()
+			client.PrependWatchReactor("pods", k8stest.DefaultWatchReactor(watcher, nil))
+			fixture := New(client, nil, metav1.ListOptions{}, nil)
+			go func(tc TestCase) {
+				time.Sleep(tc.delay)
+				watcher.Modify(testutils.NewPodWithStatus(tc.name, tc.namespace, tc.status))
+			}(tc)
+
+			result, err := fixture.Wait(WaitOptions{
+				Name:      tc.name,
+				Namespace: tc.namespace,
+				Status:    tc.expectedStatus,
+				Timeout:   tc.timeout,
+			})
+
+			if !tc.expectError && err != nil {
+				t.Errorf("unexpected error: %v", err)
+				return
+			}
+			if tc.expectError && err == nil {
+				t.Error("expected an error but none returned")
+				return
+			}
+			if result != tc.expectedResult {
+				t.Errorf("expected result %t but %t returned", tc.expectedResult, result)
+				return
+			}
+		})
 	}
 }
 

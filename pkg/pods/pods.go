@@ -5,15 +5,25 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"time"
 
 	k8sTypes "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/remotecommand"
+)
+
+// ValidPod status
+const (
+	Running   string = "Running"
+	Succeeded string = "Succeeded"
 )
 
 func New(client kubernetes.Interface, config *rest.Config, metaOptions metav1.ListOptions, ctx context.Context) *Pods {
@@ -62,6 +72,7 @@ type PodOptions struct {
 	Image         string                 // image to be executed by the pod's container
 	Command       []string               // command to be executed by the pod's container and its arguments
 	RestartPolicy k8sTypes.RestartPolicy // policy for restarting containers in the pod. One of One of Always, OnFailure, Never
+	Wait          string                 // timeout for waiting until the pod is running
 }
 
 func (obj *Pods) List(namespace string) ([]k8sTypes.Pod, error) {
@@ -133,7 +144,81 @@ func (obj *Pods) Create(options PodOptions) (k8sTypes.Pod, error) {
 	if err != nil {
 		return k8sTypes.Pod{}, err
 	}
-	return *pod, nil
+
+	if options.Wait == "" {
+		return *pod, nil
+	}
+	waitOpts := WaitOptions{
+		Name:      options.Name,
+		Namespace: options.Namespace,
+		Status:    Running,
+		Timeout:   options.Wait,
+	}
+	status, err := obj.Wait(waitOpts)
+	if err != nil {
+		return k8sTypes.Pod{}, err
+	}
+	if !status {
+		return k8sTypes.Pod{}, errors.New("timeout exceeded waiting for pod to be running")
+	}
+
+	return obj.Get(options.Name, options.Namespace)
+}
+
+// Options for waiting for a Pod status
+type WaitOptions struct {
+	Name      string // Pod name
+	Namespace string // Namespace where the pod is running
+	Status    string // Wait until pod reaches the specified status. Must be one of "Running" or "Succeeded".
+	Timeout   string // Timeout for waiting condition to be true
+}
+
+// Wait for the Pod to be in a given status up to given timeout and returns a boolean indicating if the staus was reached. If the pod is Failed returns error.
+func (obj *Pods) Wait(options WaitOptions) (bool, error) {
+	if options.Status != Running && options.Status != Succeeded {
+		return false, errors.New("wait condition must be 'Running' or 'Succeeded'")
+	}
+	timeout, err := time.ParseDuration(options.Timeout)
+	if err != nil {
+		return false, err
+	}
+	selector := fields.Set{
+		"metadata.name": options.Name,
+	}.AsSelector()
+	watcher, err := obj.client.CoreV1().Pods(options.Namespace).Watch(
+		obj.ctx,
+		metav1.ListOptions{
+			FieldSelector: selector.String(),
+		},
+	)
+	if err != nil {
+		return false, err
+	}
+	defer watcher.Stop()
+
+	for {
+		select {
+		case <-time.After(timeout):
+			return false, nil
+		case event := <-watcher.ResultChan():
+			if event.Type == watch.Error {
+				return false, fmt.Errorf("error watching for pod: %v", event.Object)
+			}
+			if event.Type == watch.Modified {
+				pod, isPod := event.Object.(*k8sTypes.Pod)
+				if !isPod {
+					return false, errors.New("received unknown object while watching for pods")
+				}
+				if pod.Status.Phase == k8sTypes.PodFailed {
+					return false, errors.New("Pod has failed")
+				}
+				if string(pod.Status.Phase) == options.Status {
+					return true, nil
+				}
+			}
+		}
+	}
+	return false, nil
 }
 
 // Exec executes a non-interactive command described in options and returns the stdout and stderr outputs
