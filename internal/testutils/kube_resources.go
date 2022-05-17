@@ -113,7 +113,22 @@ func NewJob(name string, namespace string) *batchv1.Job {
 			BackoffLimit: nil,
 			Template:     coreV1.PodTemplateSpec{},
 		},
+		Status: batchv1.JobStatus{
+			Conditions: []batchv1.JobCondition{},
+		},
 	}
+}
+
+// NewJobWithStatus creates a job with a given condition
+func NewJobWithStatus(name string, namespace string, status string) *batchv1.Job {
+	job := NewJob(name, namespace)
+	job.Status.Conditions = []batchv1.JobCondition{
+		{
+			Type:   batchv1.JobConditionType(status),
+			Status: coreV1.ConditionTrue,
+		},
+	}
+	return job
 }
 
 // NewNamespace is a helper to build a new Namespace instance

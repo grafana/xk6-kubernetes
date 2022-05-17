@@ -3,10 +3,14 @@ package jobs
 import (
 	"context"
 	"errors"
+	"fmt"
+	"time"
 
 	v1 "k8s.io/api/batch/v1"
 	coreV1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 )
@@ -32,6 +36,7 @@ type JobOptions struct {
 	Image         string
 	Command       []string
 	RestartPolicy coreV1.RestartPolicy
+	Wait          string
 }
 
 func (obj *Jobs) List(namespace string) ([]v1.Job, error) {
@@ -118,5 +123,87 @@ func (obj *Jobs) Create(options JobOptions) (v1.Job, error) {
 	if err != nil {
 		return v1.Job{}, err
 	}
-	return *job, nil
+	if options.Wait == "" {
+		return *job, nil
+	}
+	waitOpts := WaitOptions{
+		Name:      options.Name,
+		Namespace: options.Namespace,
+		Timeout:   options.Wait,
+	}
+	status, err := obj.Wait(waitOpts)
+	if err != nil {
+		return v1.Job{}, err
+	}
+	if !status {
+		return v1.Job{}, errors.New("timeout exceeded waiting for job to complete")
+	}
+	return obj.Get(options.Name, options.Namespace)
+}
+
+// WaitOptions specify the options for waiting for a Job to complete
+type WaitOptions struct {
+	Name      string
+	Namespace string
+	Timeout   string
+}
+
+// isCompleted returns if the job is completed or not. Returns an error if the job is failed.
+func isCompleted(job *v1.Job) (bool, error) {
+	for _, condition := range job.Status.Conditions {
+		if condition.Type == v1.JobFailed && condition.Status == coreV1.ConditionTrue {
+			return false, errors.New("Job failed with reason: " + condition.Reason)
+		}
+		if condition.Type == v1.JobComplete && condition.Status == coreV1.ConditionTrue {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+// Wait for all pods to complete
+func (obj *Jobs) Wait(options WaitOptions) (bool, error) {
+	// wait for updates until completion
+	timeout, err := time.ParseDuration(options.Timeout)
+	if err != nil {
+		return false, err
+	}
+	selector := fields.Set{
+		"metadata.name": options.Name,
+	}.AsSelector()
+	watcher, err := obj.client.BatchV1().Jobs(options.Namespace).Watch(
+		obj.ctx,
+		metav1.ListOptions{
+			FieldSelector: selector.String(),
+		},
+	)
+	if err != nil {
+		return false, err
+	}
+	defer watcher.Stop()
+
+	for {
+		select {
+		case <-time.After(timeout):
+			return false, nil
+		case event := <-watcher.ResultChan():
+			if event.Type == watch.Error {
+				return false, fmt.Errorf("error watching for job: %v", event.Object)
+			}
+			if event.Type == watch.Modified {
+				job, isJob := event.Object.(*v1.Job)
+				if !isJob {
+					return false, errors.New("received unknown object while watching for jobs")
+				}
+				completed, err := isCompleted(job)
+				if err != nil {
+					return false, err
+				}
+				if completed {
+					return true, nil
+				}
+			}
+		}
+	}
+	return false, nil
 }
