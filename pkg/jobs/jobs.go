@@ -37,6 +37,7 @@ type JobOptions struct {
 	Command       []string
 	RestartPolicy coreV1.RestartPolicy
 	Wait          string
+	Autodelete    bool
 }
 
 func (obj *Jobs) List(namespace string) ([]v1.Job, error) {
@@ -56,7 +57,12 @@ func (obj *Jobs) Get(name, namespace string) (v1.Job, error) {
 }
 
 func (obj *Jobs) Delete(name, namespace string) error {
-	return obj.client.BatchV1().Jobs(namespace).Delete(obj.ctx, name, metav1.DeleteOptions{})
+
+	propagationPolicy := metav1.DeletePropagationBackground
+	options := metav1.DeleteOptions{
+		PropagationPolicy: &propagationPolicy,
+	}
+	return obj.client.BatchV1().Jobs(namespace).Delete(obj.ctx, name, options)
 }
 
 // Deprecated: Use Delete instead.
@@ -119,6 +125,10 @@ func (obj *Jobs) Create(options JobOptions) (v1.Job, error) {
 		},
 	}
 
+	if options.Autodelete {
+		ttl := int32(0)
+		newJob.Spec.TTLSecondsAfterFinished = &ttl
+	}
 	job, err := obj.client.BatchV1().Jobs(options.Namespace).Create(obj.ctx, &newJob, metav1.CreateOptions{})
 	if err != nil {
 		return v1.Job{}, err

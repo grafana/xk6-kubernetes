@@ -128,6 +128,7 @@ func TestJobs_Create(t *testing.T) {
 		delay       time.Duration
 		expectError bool
 		wait        string
+		autodelete  bool
 	}
 
 	testCases := []TestCase{
@@ -139,6 +140,7 @@ func TestJobs_Create(t *testing.T) {
 			delay:       1 * time.Second,
 			expectError: false,
 			wait:        "",
+			autodelete:  false,
 		},
 		{
 			test:        "create failed job not waiting",
@@ -148,6 +150,7 @@ func TestJobs_Create(t *testing.T) {
 			delay:       1 * time.Second,
 			expectError: false,
 			wait:        "",
+			autodelete:  false,
 		}, {
 			test:        "wait for job to complete",
 			name:        "test-job",
@@ -156,6 +159,7 @@ func TestJobs_Create(t *testing.T) {
 			delay:       1 * time.Second,
 			expectError: false,
 			wait:        "2s",
+			autodelete:  false,
 		},
 		{
 			test:        "timeout waiting job complete",
@@ -165,6 +169,7 @@ func TestJobs_Create(t *testing.T) {
 			delay:       10 * time.Second,
 			expectError: true,
 			wait:        "2s",
+			autodelete:  false,
 		},
 		{
 			test:        "wait failed job",
@@ -174,6 +179,17 @@ func TestJobs_Create(t *testing.T) {
 			delay:       1 * time.Second,
 			expectError: true,
 			wait:        "2s",
+			autodelete:  false,
+		},
+		{
+			test:        "set autodelete options",
+			name:        "pod-running",
+			namespace:   testNamespace,
+			status:      "Complete",
+			delay:       1 * time.Second,
+			expectError: false,
+			wait:        "",
+			autodelete:  true,
 		},
 	}
 	for _, tc := range testCases {
@@ -195,6 +211,7 @@ func TestJobs_Create(t *testing.T) {
 				Command:       []string{"sh", "-c", "sleep 300"},
 				RestartPolicy: k8sTypes.RestartPolicyNever,
 				Wait:          tc.wait,
+				Autodelete:    tc.autodelete,
 			})
 
 			if !tc.expectError && err != nil {
@@ -212,6 +229,11 @@ func TestJobs_Create(t *testing.T) {
 			// error is not expected and none returned, result must be valid
 			if result.Name != tc.name || result.Namespace != tc.namespace {
 				t.Error("incorrect instance was returned")
+				return
+			}
+			ttl := result.Spec.TTLSecondsAfterFinished
+			if (tc.autodelete && (ttl == nil || *ttl != 0)) || (!tc.autodelete && ttl != nil) {
+				t.Error("autodelete option improperly set")
 				return
 			}
 			// FIXME: The fake client does not update the pod object in response to update
