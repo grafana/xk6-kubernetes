@@ -1,25 +1,23 @@
 package persistentvolumeclaims
 
 import (
+	"context"
+	"strings"
+	"testing"
+
 	"github.com/grafana/xk6-kubernetes/internal/testutils"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
-	"strings"
-	"testing"
 )
 
-var (
+const (
 	testName      = "pvc-test"
 	testNamespace = "ns-test"
 )
 
 func TestPersistentVolumeClaims_Apply(t *testing.T) {
 	t.Parallel()
-	fixture := New(fake.NewSimpleClientset(
-		testutils.NewPersistentVolumeClaim("existing", testNamespace),
-	), metav1.ListOptions{}, nil)
-
 	testCases := []struct {
 		testID        string
 		yaml          string
@@ -43,7 +41,7 @@ metadata:
   name: ` + testName + `
 `,
 			namespace:     testNamespace,
-			expectedError: "Yaml was not a PersistentVolumeClaim",
+			expectedError: "YAML was not a PersistentVolumeClaim",
 		},
 		{
 			testID: "create new persistent volume claim from yaml",
@@ -72,7 +70,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: ` + testName + `
+  name: existing
   annotations:
   labels:
     app: xk6-kubernetes/unit-test
@@ -85,12 +83,18 @@ spec:
       storage: 10G
 `,
 			namespace:     testNamespace,
-			expectedError: "persistentvolumeclaims \"" + testName + "\" already exists",
+			expectedError: "persistentvolumeclaims \"existing\" already exists",
 		},
 	}
 
 	for _, tc := range testCases {
+		tc := tc // pin the testcase
 		t.Run(tc.testID, func(t *testing.T) {
+			t.Parallel()
+			fixture := New(context.Background(), fake.NewSimpleClientset(
+				testutils.NewPersistentVolumeClaim("existing", testNamespace),
+			), metav1.ListOptions{})
+
 			result, err := fixture.Apply(tc.yaml, tc.namespace)
 
 			if err != nil && (tc.expectedError == "" || !strings.Contains(err.Error(), tc.expectedError)) {
@@ -111,13 +115,12 @@ spec:
 
 func TestPersistentVolumeClaims_Create(t *testing.T) {
 	t.Parallel()
-	fixture := New(fake.NewSimpleClientset(
+	fixture := New(context.Background(), fake.NewSimpleClientset(
 		testutils.NewPersistentVolumeClaim("existing", testNamespace),
-	), metav1.ListOptions{}, nil)
+	), metav1.ListOptions{})
 
 	newOne := *testutils.NewPersistentVolumeClaim(testName, testNamespace)
 	result, err := fixture.Create(newOne, testNamespace, metav1.CreateOptions{})
-
 	if err != nil {
 		t.Errorf("encountered an error: %v", err)
 		return
@@ -135,12 +138,6 @@ func TestPersistentVolumeClaims_Create(t *testing.T) {
 
 func TestPersistentVolumeClaims_List(t *testing.T) {
 	t.Parallel()
-	fixture := New(fake.NewSimpleClientset(
-		testutils.NewPersistentVolumeClaim("pvc-1", testNamespace),
-		testutils.NewPersistentVolumeClaim("pvc-2", testNamespace),
-		testutils.NewPersistentVolumeClaim("pvc-3", testNamespace),
-	), metav1.ListOptions{}, nil)
-
 	testCases := []struct {
 		testID        string
 		namespace     string
@@ -159,7 +156,15 @@ func TestPersistentVolumeClaims_List(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc // pin the testcase
 		t.Run(tc.testID, func(t *testing.T) {
+			t.Parallel()
+			fixture := New(context.Background(), fake.NewSimpleClientset(
+				testutils.NewPersistentVolumeClaim("pvc-1", testNamespace),
+				testutils.NewPersistentVolumeClaim("pvc-2", testNamespace),
+				testutils.NewPersistentVolumeClaim("pvc-3", testNamespace),
+			), metav1.ListOptions{})
+
 			result, err := fixture.List(tc.namespace)
 			if err != nil {
 				t.Errorf("encountered an error: %v", err)
@@ -181,12 +186,11 @@ func TestPersistentVolumeClaims_List(t *testing.T) {
 
 func TestPersistentVolumeClaims_Delete(t *testing.T) {
 	t.Parallel()
-	fixture := New(fake.NewSimpleClientset(
+	fixture := New(context.Background(), fake.NewSimpleClientset(
 		testutils.NewPersistentVolumeClaim(testName, testNamespace),
-	), metav1.ListOptions{}, nil)
+	), metav1.ListOptions{})
 
 	err := fixture.Delete(testName, testNamespace, metav1.DeleteOptions{})
-
 	if err != nil {
 		t.Errorf("encountered an error: %v", err)
 		return
@@ -200,11 +204,6 @@ func TestPersistentVolumeClaims_Delete(t *testing.T) {
 
 func TestPersistentVolumeClaims_Get(t *testing.T) {
 	t.Parallel()
-	fixture := New(fake.NewSimpleClientset(
-		testutils.NewPersistentVolumeClaim(testName, testNamespace),
-		testutils.NewPersistentVolumeClaim("pvc-other", "ns-2"),
-	), metav1.ListOptions{}, nil)
-
 	testCases := []struct {
 		testID       string
 		name         string
@@ -232,8 +231,16 @@ func TestPersistentVolumeClaims_Get(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc // pin the testcase
 		t.Run(tc.testID, func(t *testing.T) {
+			t.Parallel()
+			fixture := New(context.Background(), fake.NewSimpleClientset(
+				testutils.NewPersistentVolumeClaim(testName, testNamespace),
+				testutils.NewPersistentVolumeClaim("pvc-other", "ns-2"),
+			), metav1.ListOptions{})
+
 			result, err := fixture.Get(tc.name, tc.namespace, metav1.GetOptions{})
+
 			if err != nil && !errors.IsNotFound(err) {
 				t.Errorf("encountered an error: %v", err)
 				return

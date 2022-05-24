@@ -2,6 +2,9 @@ package kubernetes
 
 import (
 	"context"
+	"io/ioutil"
+	"testing"
+
 	"github.com/dop251/goja"
 	localutils "github.com/grafana/xk6-kubernetes/internal/testutils"
 	"github.com/sirupsen/logrus"
@@ -11,9 +14,8 @@ import (
 	"go.k6.io/k6/lib"
 	"go.k6.io/k6/lib/testutils"
 	"go.k6.io/k6/metrics"
-	"io/ioutil"
+
 	"k8s.io/client-go/kubernetes/fake"
-	"testing"
 )
 
 type testEnv struct {
@@ -40,7 +42,7 @@ func setupTestEnv(t *testing.T) testEnv {
 		Tags:   lib.NewTagMap(nil),
 	}
 
-	var root = &RootModule{}
+	root := &RootModule{}
 	m, ok := root.NewModuleInstance(
 		&modulestest.VU{
 			RuntimeField: rt,

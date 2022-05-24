@@ -1,13 +1,15 @@
+// Package kubernetes provides the xk6 Modules implementation for working with Kubernetes resources using Javascript
 package kubernetes
 
 import (
 	"context"
 	"errors"
 	"fmt"
+	"path/filepath"
+
 	"github.com/dop251/goja"
 	"go.k6.io/k6/js/common"
 	"k8s.io/client-go/rest"
-	"path/filepath"
 
 	"github.com/grafana/xk6-kubernetes/pkg/configmaps"
 	"github.com/grafana/xk6-kubernetes/pkg/deployments"
@@ -121,17 +123,17 @@ func (mi *ModuleInstance) newClient(c goja.ConstructorCall) *goja.Object {
 	obj.metaOptions = metaV1.ListOptions{}
 	obj.ctx = ctx
 
-	obj.ConfigMaps = configmaps.New(obj.client, obj.metaOptions, obj.ctx)
-	obj.Ingresses = ingresses.New(obj.client, obj.metaOptions, obj.ctx)
-	obj.Deployments = deployments.New(obj.client, obj.metaOptions, obj.ctx)
-	obj.Pods = pods.New(obj.client, config, obj.metaOptions, obj.ctx)
-	obj.Namespaces = namespaces.New(obj.client, obj.metaOptions, obj.ctx)
-	obj.Nodes = nodes.New(obj.client, obj.metaOptions, obj.ctx)
-	obj.Jobs = jobs.New(obj.client, obj.metaOptions, obj.ctx)
-	obj.Services = services.New(obj.client, obj.metaOptions, obj.ctx)
-	obj.Secrets = secrets.New(obj.client, obj.metaOptions, obj.ctx)
-	obj.PersistentVolumes = persistentvolumes.New(obj.client, obj.metaOptions, obj.ctx)
-	obj.PersistentVolumeClaims = persistentvolumeclaims.New(obj.client, obj.metaOptions, obj.ctx)
+	obj.ConfigMaps = configmaps.New(obj.ctx, obj.client, obj.metaOptions)
+	obj.Ingresses = ingresses.New(obj.ctx, obj.client, obj.metaOptions)
+	obj.Deployments = deployments.New(obj.ctx, obj.client, obj.metaOptions)
+	obj.Pods = pods.New(obj.ctx, obj.client, config, obj.metaOptions)
+	obj.Namespaces = namespaces.New(obj.ctx, obj.client, obj.metaOptions)
+	obj.Nodes = nodes.New(obj.ctx, obj.client, obj.metaOptions)
+	obj.Jobs = jobs.New(obj.ctx, obj.client, obj.metaOptions)
+	obj.Services = services.New(obj.ctx, obj.client, obj.metaOptions)
+	obj.Secrets = secrets.New(obj.ctx, obj.client, obj.metaOptions)
+	obj.PersistentVolumes = persistentvolumes.New(obj.ctx, obj.client, obj.metaOptions)
+	obj.PersistentVolumeClaims = persistentvolumeclaims.New(obj.ctx, obj.client, obj.metaOptions)
 
 	return rt.ToValue(obj).ToObject(rt)
 }

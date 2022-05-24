@@ -1,3 +1,4 @@
+// Package testutils contains shared functionality for unit tests which are not included in build artifacts
 package testutils
 
 import (

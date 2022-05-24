@@ -1,3 +1,4 @@
+// Package persistentvolumes provides implementation of PersistentVolume resources for Kubernetes
 package persistentvolumes
 
 import (
@@ -10,7 +11,8 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
-func New(client kubernetes.Interface, metaOptions metav1.ListOptions, ctx context.Context) *PersistentVolumes {
+// New creates a new instance backed by the provided client
+func New(ctx context.Context, client kubernetes.Interface, metaOptions metav1.ListOptions) *PersistentVolumes {
 	return &PersistentVolumes{
 		client,
 		metaOptions,
@@ -18,12 +20,14 @@ func New(client kubernetes.Interface, metaOptions metav1.ListOptions, ctx contex
 	}
 }
 
+// PersistentVolumes provides API for manipulating PersistentVolume resources within a Kubernetes cluster
 type PersistentVolumes struct {
 	client      kubernetes.Interface
 	metaOptions metav1.ListOptions
 	ctx         context.Context
 }
 
+// Apply creates the Kubernetes resource given the supplied YAML configuration
 func (obj *PersistentVolumes) Apply(yaml string) (k8sTypes.PersistentVolume, error) {
 	decode := scheme.Codecs.UniversalDeserializer().Decode
 	yamlobj, _, err := decode([]byte(yaml), nil, nil)
@@ -33,11 +37,10 @@ func (obj *PersistentVolumes) Apply(yaml string) (k8sTypes.PersistentVolume, err
 		return persistentvolume, err
 	}
 
-	switch yamlobj.(type) {
-	case *k8sTypes.PersistentVolume:
-		persistentvolume = *yamlobj.(*k8sTypes.PersistentVolume)
-	default:
-		return persistentvolume, errors.New("Yaml was not a PersistentVolume")
+	if pv, ok := yamlobj.(*k8sTypes.PersistentVolume); ok {
+		persistentvolume = *pv
+	} else {
+		return persistentvolume, errors.New("YAML was not a PersistentVolume")
 	}
 
 	pv, err := obj.client.CoreV1().PersistentVolumes().Create(obj.ctx, &persistentvolume, metav1.CreateOptions{})
@@ -47,6 +50,7 @@ func (obj *PersistentVolumes) Apply(yaml string) (k8sTypes.PersistentVolume, err
 	return *pv, nil
 }
 
+// Create creates the Kubernetes resource given the supplied object
 func (obj *PersistentVolumes) Create(
 	persistentvolume k8sTypes.PersistentVolume,
 	opts metav1.CreateOptions,
@@ -58,6 +62,7 @@ func (obj *PersistentVolumes) Create(
 	return *pv, nil
 }
 
+// List returns a collection of PersistentVolumes available within the cluster
 func (obj *PersistentVolumes) List() ([]k8sTypes.PersistentVolume, error) {
 	pvs, err := obj.client.CoreV1().PersistentVolumes().List(obj.ctx, obj.metaOptions)
 	if err != nil {
@@ -66,10 +71,12 @@ func (obj *PersistentVolumes) List() ([]k8sTypes.PersistentVolume, error) {
 	return pvs.Items, nil
 }
 
+// Delete removes the named PersistentVolumes from the cluster
 func (obj *PersistentVolumes) Delete(name string, opts metav1.DeleteOptions) error {
 	return obj.client.CoreV1().PersistentVolumes().Delete(obj.ctx, name, opts)
 }
 
+// Get returns the named PersistentVolumes instance within the cluster if available
 func (obj *PersistentVolumes) Get(name string, opts metav1.GetOptions) (k8sTypes.PersistentVolume, error) {
 	pv, err := obj.client.CoreV1().PersistentVolumes().Get(obj.ctx, name, opts)
 	if err != nil {

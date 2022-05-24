@@ -1,3 +1,4 @@
+// Package persistentvolumeclaims provides implementation of PersistentVolumeClaim resources for Kubernetes
 package persistentvolumeclaims
 
 import (
@@ -10,7 +11,8 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
-func New(client kubernetes.Interface, metaOptions metav1.ListOptions, ctx context.Context) *PersistentVolumeClaims {
+// New creates a new instance backed by the provided client
+func New(ctx context.Context, client kubernetes.Interface, metaOptions metav1.ListOptions) *PersistentVolumeClaims {
 	return &PersistentVolumeClaims{
 		client,
 		metaOptions,
@@ -18,12 +20,14 @@ func New(client kubernetes.Interface, metaOptions metav1.ListOptions, ctx contex
 	}
 }
 
+// PersistentVolumeClaims provides API for manipulating PersistentVolumeClaim resources within a Kubernetes cluster
 type PersistentVolumeClaims struct {
 	client      kubernetes.Interface
 	metaOptions metav1.ListOptions
 	ctx         context.Context
 }
 
+// Apply creates the Kubernetes resource given the supplied YAML configuration
 func (obj *PersistentVolumeClaims) Apply(yaml string, namespace string) (k8sTypes.PersistentVolumeClaim, error) {
 	decode := scheme.Codecs.UniversalDeserializer().Decode
 	yamlobj, _, err := decode([]byte(yaml), nil, nil)
@@ -33,20 +37,21 @@ func (obj *PersistentVolumeClaims) Apply(yaml string, namespace string) (k8sType
 		return persistentvolumeclaim, err
 	}
 
-	switch yamlobj.(type) {
-	case *k8sTypes.PersistentVolumeClaim:
-		persistentvolumeclaim = *yamlobj.(*k8sTypes.PersistentVolumeClaim)
-	default:
-		return persistentvolumeclaim, errors.New("Yaml was not a PersistentVolumeClaim")
+	if pvc, ok := yamlobj.(*k8sTypes.PersistentVolumeClaim); ok {
+		persistentvolumeclaim = *pvc
+	} else {
+		return persistentvolumeclaim, errors.New("YAML was not a PersistentVolumeClaim")
 	}
 
-	pvc, err := obj.client.CoreV1().PersistentVolumeClaims(namespace).Create(obj.ctx, &persistentvolumeclaim, metav1.CreateOptions{})
+	pvc, err := obj.client.CoreV1().PersistentVolumeClaims(namespace).Create(
+		obj.ctx, &persistentvolumeclaim, metav1.CreateOptions{})
 	if err != nil {
 		return k8sTypes.PersistentVolumeClaim{}, err
 	}
 	return *pvc, nil
 }
 
+// Create creates the Kubernetes resource given the supplied object
 func (obj *PersistentVolumeClaims) Create(
 	persistentvolumeclaim k8sTypes.PersistentVolumeClaim,
 	namespace string,
@@ -59,6 +64,7 @@ func (obj *PersistentVolumeClaims) Create(
 	return *pvc, nil
 }
 
+// List returns a collection of PersistentVolumeClaims available within the namespace
 func (obj *PersistentVolumeClaims) List(namespace string) ([]k8sTypes.PersistentVolumeClaim, error) {
 	pvcs, err := obj.client.CoreV1().PersistentVolumeClaims(namespace).List(obj.ctx, obj.metaOptions)
 	if err != nil {
@@ -67,11 +73,15 @@ func (obj *PersistentVolumeClaims) List(namespace string) ([]k8sTypes.Persistent
 	return pvcs.Items, nil
 }
 
+// Delete removes the named PersistentVolumeClaims from the namespace
 func (obj *PersistentVolumeClaims) Delete(name, namespace string, opts metav1.DeleteOptions) error {
 	return obj.client.CoreV1().PersistentVolumeClaims(namespace).Delete(obj.ctx, name, opts)
 }
 
-func (obj *PersistentVolumeClaims) Get(name, namespace string, opts metav1.GetOptions) (k8sTypes.PersistentVolumeClaim, error) {
+// Get returns the named PersistentVolumeClaims instance within the namespace if available
+func (obj *PersistentVolumeClaims) Get(
+	name, namespace string, opts metav1.GetOptions,
+) (k8sTypes.PersistentVolumeClaim, error) {
 	pvc, err := obj.client.CoreV1().PersistentVolumeClaims(namespace).Get(obj.ctx, name, opts)
 	if err != nil {
 		return k8sTypes.PersistentVolumeClaim{}, err

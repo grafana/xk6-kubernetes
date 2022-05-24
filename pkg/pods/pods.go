@@ -1,3 +1,4 @@
+// Package pods provides implementation of Pod resources for Kubernetes
 package pods
 
 import (
@@ -26,7 +27,8 @@ const (
 	Succeeded string = "Succeeded"
 )
 
-func New(client kubernetes.Interface, config *rest.Config, metaOptions metav1.ListOptions, ctx context.Context) *Pods {
+// New creates a new instance backed by the provided client
+func New(ctx context.Context, client kubernetes.Interface, config *rest.Config, metaOptions metav1.ListOptions) *Pods {
 	return &Pods{
 		client,
 		config,
@@ -40,7 +42,7 @@ type ExecOptions struct {
 	Namespace string   // namespace where the pod is running
 	Pod       string   // name of the Pod to execute the command in
 	Container string   // name of the container to execute the command in
-	Command   []string // command to be exectued with its parameters
+	Command   []string // command to be executed with its parameters
 	Stdin     []byte   // stdin to be supplied to the command
 }
 
@@ -58,6 +60,7 @@ type ContainerOptions struct {
 	Capabilities []string // capabilities to be added to the container's security context
 }
 
+// Pods provides API for manipulating Pod resources within a Kubernetes cluster
 type Pods struct {
 	client      kubernetes.Interface
 	config      *rest.Config
@@ -71,10 +74,11 @@ type PodOptions struct {
 	Name          string                 // name of the pod
 	Image         string                 // image to be executed by the pod's container
 	Command       []string               // command to be executed by the pod's container and its arguments
-	RestartPolicy k8sTypes.RestartPolicy // policy for restarting containers in the pod. One of One of Always, OnFailure, Never
+	RestartPolicy k8sTypes.RestartPolicy // policy for restarting containers in the pod [Always|OnFailure|Never]
 	Wait          string                 // timeout for waiting until the pod is running
 }
 
+// List returns a collection of Pods available within the namespace
 func (obj *Pods) List(namespace string) ([]k8sTypes.Pod, error) {
 	pods, err := obj.client.CoreV1().Pods(namespace).List(obj.ctx, obj.metaOptions)
 	if err != nil {
@@ -83,15 +87,18 @@ func (obj *Pods) List(namespace string) ([]k8sTypes.Pod, error) {
 	return pods.Items, nil
 }
 
+// Delete removes the named Pod from the namespace
 func (obj *Pods) Delete(name, namespace string, opts metav1.DeleteOptions) error {
 	return obj.client.CoreV1().Pods(namespace).Delete(obj.ctx, name, opts)
 }
 
+// Kill removes the named Pod from the namespace
 // Deprecated: Use Delete instead.
 func (obj *Pods) Kill(name, namespace string, opts metav1.DeleteOptions) error {
 	return obj.Delete(name, namespace, opts)
 }
 
+// Get returns the named Pods instance within the namespace if available
 func (obj *Pods) Get(name, namespace string) (k8sTypes.Pod, error) {
 	pods, err := obj.List(namespace)
 	if err != nil {
@@ -105,6 +112,7 @@ func (obj *Pods) Get(name, namespace string) (k8sTypes.Pod, error) {
 	return k8sTypes.Pod{}, errors.New(name + " pod not found")
 }
 
+// IsTerminating returns if the state of the named pod is currently terminating
 func (obj *Pods) IsTerminating(name, namespace string) (bool, error) {
 	pod, err := obj.Get(name, namespace)
 	if err != nil {
@@ -165,7 +173,7 @@ func (obj *Pods) Create(options PodOptions) (k8sTypes.Pod, error) {
 	return obj.Get(options.Name, options.Namespace)
 }
 
-// Options for waiting for a Pod status
+// WaitOptions for waiting for a Pod status
 type WaitOptions struct {
 	Name      string // Pod name
 	Namespace string // Namespace where the pod is running
@@ -173,7 +181,8 @@ type WaitOptions struct {
 	Timeout   string // Timeout for waiting condition to be true
 }
 
-// Wait for the Pod to be in a given status up to given timeout and returns a boolean indicating if the staus was reached. If the pod is Failed returns error.
+// Wait for the Pod to be in a given status up to given timeout and returns a boolean indicating if the status
+// was reached. If the pod is Failed returns error.
 func (obj *Pods) Wait(options WaitOptions) (bool, error) {
 	if options.Status != Running && options.Status != Succeeded {
 		return false, errors.New("wait condition must be 'Running' or 'Succeeded'")
@@ -210,7 +219,7 @@ func (obj *Pods) Wait(options WaitOptions) (bool, error) {
 					return false, errors.New("received unknown object while watching for pods")
 				}
 				if pod.Status.Phase == k8sTypes.PodFailed {
-					return false, errors.New("Pod has failed")
+					return false, errors.New("pod has failed")
 				}
 				if string(pod.Status.Phase) == options.Status {
 					return true, nil
@@ -218,12 +227,10 @@ func (obj *Pods) Wait(options WaitOptions) (bool, error) {
 			}
 		}
 	}
-	return false, nil
 }
 
 // Exec executes a non-interactive command described in options and returns the stdout and stderr outputs
 func (obj *Pods) Exec(options ExecOptions) (*ExecResult, error) {
-
 	req := obj.client.CoreV1().RESTClient().
 		Post().
 		Namespace(options.Namespace).
@@ -273,35 +280,32 @@ func (obj *Pods) AddEphemeralContainer(name, namespace string, options Container
 	if err != nil {
 		return err
 	}
-	podJson, err := json.Marshal(pod)
+	podJSON, err := json.Marshal(pod)
 	if err != nil {
 		return err
 	}
-	container, err := generateEphemeralContainer(options)
-	if err != nil {
-		return err
-	}
+	container := generateEphemeralContainer(options)
 
 	updatedPod := pod.DeepCopy()
 	updatedPod.Spec.EphemeralContainers = append(updatedPod.Spec.EphemeralContainers, *container)
-	updateJson, err := json.Marshal(updatedPod)
+	updateJSON, err := json.Marshal(updatedPod)
 	if err != nil {
 		return err
 	}
 
-	patch, err := strategicpatch.CreateTwoWayMergePatch(podJson, updateJson, pod)
+	patch, err := strategicpatch.CreateTwoWayMergePatch(podJSON, updateJSON, pod)
 	if err != nil {
 		return err
 	}
 
-	_, err = obj.client.CoreV1().Pods(namespace).Patch(obj.ctx, pod.Name, types.StrategicMergePatchType, patch, metav1.PatchOptions{}, "ephemeralcontainers")
+	_, err = obj.client.CoreV1().Pods(namespace).Patch(
+		obj.ctx, pod.Name, types.StrategicMergePatchType, patch, metav1.PatchOptions{}, "ephemeralcontainers")
 
 	return err
-
 }
 
-func generateEphemeralContainer(o ContainerOptions) (*k8sTypes.EphemeralContainer, error) {
-	var capabilities []k8sTypes.Capability
+func generateEphemeralContainer(o ContainerOptions) *k8sTypes.EphemeralContainer {
+	capabilities := make([]k8sTypes.Capability, 0)
 	for _, capability := range o.Capabilities {
 		capabilities = append(capabilities, k8sTypes.Capability(capability))
 	}
@@ -317,5 +321,5 @@ func generateEphemeralContainer(o ContainerOptions) (*k8sTypes.EphemeralContaine
 				},
 			},
 		},
-	}, nil
+	}
 }

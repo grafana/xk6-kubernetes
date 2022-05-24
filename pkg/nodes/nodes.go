@@ -1,3 +1,4 @@
+// Package nodes provides implementation of Node resources for Kubernetes
 package nodes
 
 import (
@@ -8,7 +9,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func New(client kubernetes.Interface, metaOptions metav1.ListOptions, ctx context.Context) *Nodes {
+// New creates a new instance backed by the provided client
+func New(ctx context.Context, client kubernetes.Interface, metaOptions metav1.ListOptions) *Nodes {
 	return &Nodes{
 		client,
 		metaOptions,
@@ -16,12 +18,14 @@ func New(client kubernetes.Interface, metaOptions metav1.ListOptions, ctx contex
 	}
 }
 
+// Nodes provides API for manipulating Node resources within a Kubernetes cluster
 type Nodes struct {
 	client      kubernetes.Interface
 	metaOptions metav1.ListOptions
 	ctx         context.Context
 }
 
+// List returns a collection of Nodes comprising the cluster
 func (obj *Nodes) List() ([]k8sTypes.Node, error) {
 	nodes, err := obj.client.CoreV1().Nodes().List(obj.ctx, obj.metaOptions)
 	if err != nil {
