@@ -1,3 +1,7 @@
+[![Go Reference](https://pkg.go.dev/badge/github.com/grafana/xk6-kubernetes.svg)](https://pkg.go.dev/github.com/grafana/xk6-kubernetes)
+[![Version Badge](https://img.shields.io/github/v/release/grafana/xk6-kubernetes?style=flat-square)](https://github.com/grafana/xk6-kubernetes/releases)
+![Build Status](https://img.shields.io/github/workflow/status/grafana/xk6-kubernetes/CI?style=flat-square)
+
 # xk6-kubernetes
 A k6 extension for interacting with Kubernetes clusters while testing.
 
