@@ -1,18 +1,20 @@
 package pods
 
 import (
+	"context"
+	"strings"
+	"testing"
+	"time"
+
 	"github.com/grafana/xk6-kubernetes/internal/testutils"
 	k8sTypes "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes/fake"
 	k8stest "k8s.io/client-go/testing"
-	"strings"
-	"testing"
-	"time"
 )
 
-var (
+const (
 	testName      = "pod-test"
 	testNamespace = "ns-test"
 )
@@ -47,7 +49,8 @@ func TestPods_Create(t *testing.T) {
 			delay:       1 * time.Second,
 			expectError: false,
 			wait:        "",
-		}, {
+		},
+		{
 			test:        "wait for pod running",
 			name:        "pod-running",
 			namespace:   testNamespace,
@@ -76,12 +79,14 @@ func TestPods_Create(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc // pin the testcase
 		t.Run(tc.test, func(t *testing.T) {
+			t.Parallel()
 			// TODO Figure out the rest.Config
 			client := fake.NewSimpleClientset()
 			watcher := watch.NewFake()
 			client.PrependWatchReactor("pods", k8stest.DefaultWatchReactor(watcher, nil))
-			fixture := New(client, nil, metav1.ListOptions{}, nil)
+			fixture := New(context.Background(), client, nil, metav1.ListOptions{})
 			go func(tc TestCase) {
 				time.Sleep(tc.delay)
 				watcher.Modify(testutils.NewPodWithStatus(tc.name, tc.namespace, tc.status))
@@ -115,10 +120,10 @@ func TestPods_Create(t *testing.T) {
 			}
 			// FIXME: The fake client does not update the pod object in response to update
 			// events added to the watcher. Checking the status fails
-			//if string(result.Status.Phase) != "Running"  {
+			// if string(result.Status.Phase) != "Running"  {
 			//	t.Errorf("pod is in incorrect state returned: %v", result)
 			//	return
-			//}
+			// }
 		})
 	}
 }
@@ -173,12 +178,14 @@ func TestPods_Wait(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc // pin the testcase
 		t.Run(tc.test, func(t *testing.T) {
+			t.Parallel()
 			// TODO Figure out the rest.Config
 			client := fake.NewSimpleClientset()
 			watcher := watch.NewFake()
 			client.PrependWatchReactor("pods", k8stest.DefaultWatchReactor(watcher, nil))
-			fixture := New(client, nil, metav1.ListOptions{}, nil)
+			fixture := New(context.Background(), client, nil, metav1.ListOptions{})
 			go func(tc TestCase) {
 				time.Sleep(tc.delay)
 				watcher.Modify(testutils.NewPodWithStatus(tc.name, tc.namespace, tc.status))
@@ -209,12 +216,6 @@ func TestPods_Wait(t *testing.T) {
 
 func TestPods_List(t *testing.T) {
 	t.Parallel()
-	fixture := New(fake.NewSimpleClientset(
-		testutils.NewPod("pod-1", testNamespace),
-		testutils.NewPod("pod-2", testNamespace),
-		testutils.NewPod("pod-3", testNamespace),
-	), nil, metav1.ListOptions{}, nil)
-
 	testCases := []struct {
 		testID        string
 		namespace     string
@@ -233,7 +234,15 @@ func TestPods_List(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc // pin the testcase
 		t.Run(tc.testID, func(t *testing.T) {
+			t.Parallel()
+			fixture := New(context.Background(), fake.NewSimpleClientset(
+				testutils.NewPod("pod-1", testNamespace),
+				testutils.NewPod("pod-2", testNamespace),
+				testutils.NewPod("pod-3", testNamespace),
+			), nil, metav1.ListOptions{})
+
 			result, err := fixture.List(tc.namespace)
 			if err != nil {
 				t.Errorf("encountered an error: %v", err)
@@ -255,12 +264,11 @@ func TestPods_List(t *testing.T) {
 
 func TestPods_Delete(t *testing.T) {
 	t.Parallel()
-	fixture := New(fake.NewSimpleClientset(
+	fixture := New(context.Background(), fake.NewSimpleClientset(
 		testutils.NewPod(testName, testNamespace),
-	), nil, metav1.ListOptions{}, nil)
+	), nil, metav1.ListOptions{})
 
 	err := fixture.Delete(testName, testNamespace, metav1.DeleteOptions{})
-
 	if err != nil {
 		t.Errorf("encountered an error: %v", err)
 		return
@@ -274,11 +282,6 @@ func TestPods_Delete(t *testing.T) {
 
 func TestPods_Get(t *testing.T) {
 	t.Parallel()
-	fixture := New(fake.NewSimpleClientset(
-		testutils.NewPod(testName, testNamespace),
-		testutils.NewPod("pod-other", "ns-2"),
-	), nil, metav1.ListOptions{}, nil)
-
 	testCases := []struct {
 		testID       string
 		name         string
@@ -306,8 +309,16 @@ func TestPods_Get(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc // pin the testcase
 		t.Run(tc.testID, func(t *testing.T) {
+			t.Parallel()
+			fixture := New(context.Background(), fake.NewSimpleClientset(
+				testutils.NewPod(testName, testNamespace),
+				testutils.NewPod("pod-other", "ns-2"),
+			), nil, metav1.ListOptions{})
+
 			result, err := fixture.Get(tc.name, tc.namespace)
+
 			if err != nil && !strings.Contains(err.Error(), "pod not found") {
 				t.Errorf("encountered an error: %v", err)
 				return

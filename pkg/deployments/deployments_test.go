@@ -1,25 +1,23 @@
 package deployments
 
 import (
+	"context"
+	"strings"
+	"testing"
+
 	"github.com/grafana/xk6-kubernetes/internal/testutils"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
-	"strings"
-	"testing"
 )
 
-var (
+const (
 	testName      = "deployment-test"
 	testNamespace = "ns-test"
 )
 
 func TestDeployments_Apply(t *testing.T) {
 	t.Parallel()
-	fixture := New(fake.NewSimpleClientset(
-		testutils.NewDeployment("existing", testNamespace),
-	), metav1.ListOptions{}, nil)
-
 	testCases := []struct {
 		testID        string
 		yaml          string
@@ -43,7 +41,7 @@ metadata:
   name: ` + testName + `
 `,
 			namespace:     testNamespace,
-			expectedError: "Yaml was not a Deployment",
+			expectedError: "YAML was not a Deployment",
 		},
 		{
 			testID: "create new deployment from yaml",
@@ -80,7 +78,7 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ` + testName + `
+  name: existing
   annotations:
   labels:
     app: xk6-kubernetes/unit-test
@@ -101,12 +99,18 @@ spec:
         - containerPort: 80
 `,
 			namespace:     testNamespace,
-			expectedError: "deployments.apps \"" + testName + "\" already exists",
+			expectedError: "deployments.apps \"existing\" already exists",
 		},
 	}
 
 	for _, tc := range testCases {
+		tc := tc // pin the testcase
 		t.Run(tc.testID, func(t *testing.T) {
+			t.Parallel()
+			fixture := New(context.Background(), fake.NewSimpleClientset(
+				testutils.NewDeployment("existing", testNamespace),
+			), metav1.ListOptions{})
+
 			result, err := fixture.Apply(tc.yaml, tc.namespace)
 
 			if err != nil && (tc.expectedError == "" || !strings.Contains(err.Error(), tc.expectedError)) {
@@ -127,13 +131,12 @@ spec:
 
 func TestDeployments_Create(t *testing.T) {
 	t.Parallel()
-	fixture := New(fake.NewSimpleClientset(
+	fixture := New(context.Background(), fake.NewSimpleClientset(
 		testutils.NewDeployment("existing", testNamespace),
-	), metav1.ListOptions{}, nil)
+	), metav1.ListOptions{})
 
 	newOne := *testutils.NewDeployment(testName, testNamespace)
 	result, err := fixture.Create(newOne, testNamespace, metav1.CreateOptions{})
-
 	if err != nil {
 		t.Errorf("encountered an error: %v", err)
 		return
@@ -151,12 +154,6 @@ func TestDeployments_Create(t *testing.T) {
 
 func TestDeployments_List(t *testing.T) {
 	t.Parallel()
-	fixture := New(fake.NewSimpleClientset(
-		testutils.NewDeployment("deployment-1", testNamespace),
-		testutils.NewDeployment("deployment-2", testNamespace),
-		testutils.NewDeployment("deployment-3", testNamespace),
-	), metav1.ListOptions{}, nil)
-
 	testCases := []struct {
 		testID        string
 		namespace     string
@@ -175,7 +172,15 @@ func TestDeployments_List(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc // pin the testcase
 		t.Run(tc.testID, func(t *testing.T) {
+			t.Parallel()
+			fixture := New(context.Background(), fake.NewSimpleClientset(
+				testutils.NewDeployment("deployment-1", testNamespace),
+				testutils.NewDeployment("deployment-2", testNamespace),
+				testutils.NewDeployment("deployment-3", testNamespace),
+			), metav1.ListOptions{})
+
 			result, err := fixture.List(tc.namespace)
 			if err != nil {
 				t.Errorf("encountered an error: %v", err)
@@ -197,12 +202,11 @@ func TestDeployments_List(t *testing.T) {
 
 func TestDeployments_Delete(t *testing.T) {
 	t.Parallel()
-	fixture := New(fake.NewSimpleClientset(
+	fixture := New(context.Background(), fake.NewSimpleClientset(
 		testutils.NewDeployment(testName, testNamespace),
-	), metav1.ListOptions{}, nil)
+	), metav1.ListOptions{})
 
 	err := fixture.Delete(testName, testNamespace, metav1.DeleteOptions{})
-
 	if err != nil {
 		t.Errorf("encountered an error: %v", err)
 		return
@@ -216,11 +220,6 @@ func TestDeployments_Delete(t *testing.T) {
 
 func TestDeployments_Get(t *testing.T) {
 	t.Parallel()
-	fixture := New(fake.NewSimpleClientset(
-		testutils.NewDeployment(testName, testNamespace),
-		testutils.NewDeployment("deployment-other", "ns-2"),
-	), metav1.ListOptions{}, nil)
-
 	testCases := []struct {
 		testID       string
 		name         string
@@ -248,8 +247,16 @@ func TestDeployments_Get(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc // pin the testcase
 		t.Run(tc.testID, func(t *testing.T) {
+			t.Parallel()
+			fixture := New(context.Background(), fake.NewSimpleClientset(
+				testutils.NewDeployment(testName, testNamespace),
+				testutils.NewDeployment("deployment-other", "ns-2"),
+			), metav1.ListOptions{})
+
 			result, err := fixture.Get(tc.name, tc.namespace, metav1.GetOptions{})
+
 			if err != nil && !errors.IsNotFound(err) {
 				t.Errorf("encountered an error: %v", err)
 				return

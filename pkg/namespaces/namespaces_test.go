@@ -1,22 +1,22 @@
 package namespaces
 
 import (
+	"context"
+	"strings"
+	"testing"
+
 	"github.com/grafana/xk6-kubernetes/internal/testutils"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
-	"strings"
-	"testing"
 )
 
-var (
+const (
 	testName = "ns-test"
 )
 
 func TestNamespaces_Apply(t *testing.T) {
 	t.Parallel()
-	fixture := New(fake.NewSimpleClientset(testutils.NewNamespace("existing")), metav1.ListOptions{}, nil)
-
 	testCases := []struct {
 		testID        string
 		yaml          string
@@ -39,7 +39,7 @@ metadata:
 data:
   secret-key: MWYyZDFlMmU2N2Rm
 `,
-			expectedError: "Yaml was not a Namespace",
+			expectedError: "YAML was not a Namespace",
 		},
 		{
 			testID: "create new namespace from yaml",
@@ -60,17 +60,23 @@ metadata:
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: ` + testName + `
+  name: existing
   annotations:
   labels:
     app: xk6-kubernetes/unit-test
 `,
-			expectedError: "namespaces \"" + testName + "\" already exists",
+			expectedError: "namespaces \"existing\" already exists",
 		},
 	}
 
 	for _, tc := range testCases {
+		tc := tc // pin the testcase
 		t.Run(tc.testID, func(t *testing.T) {
+			t.Parallel()
+			fixture := New(context.Background(), fake.NewSimpleClientset(
+				testutils.NewNamespace("existing"),
+			), metav1.ListOptions{})
+
 			result, err := fixture.Apply(tc.yaml)
 
 			if err != nil && (tc.expectedError == "" || !strings.Contains(err.Error(), tc.expectedError)) {
@@ -91,11 +97,12 @@ metadata:
 
 func TestNamespaces_Create(t *testing.T) {
 	t.Parallel()
-	fixture := New(fake.NewSimpleClientset(testutils.NewNamespace("existing")), metav1.ListOptions{}, nil)
+	fixture := New(context.Background(), fake.NewSimpleClientset(
+		testutils.NewNamespace("existing"),
+	), metav1.ListOptions{})
 
 	newOne := *testutils.NewNamespace(testName)
 	result, err := fixture.Create(newOne, metav1.CreateOptions{})
-
 	if err != nil {
 		t.Errorf("encountered an error: %v", err)
 		return
@@ -113,11 +120,11 @@ func TestNamespaces_Create(t *testing.T) {
 
 func TestNamespaces_List(t *testing.T) {
 	t.Parallel()
-	fixture := New(fake.NewSimpleClientset(
+	fixture := New(context.Background(), fake.NewSimpleClientset(
 		testutils.NewNamespace("ns-1"),
 		testutils.NewNamespace("ns-2"),
 		testutils.NewNamespace("ns-3"),
-	), metav1.ListOptions{}, nil)
+	), metav1.ListOptions{})
 
 	result, err := fixture.List()
 	if err != nil {
@@ -132,12 +139,11 @@ func TestNamespaces_List(t *testing.T) {
 
 func TestNamespaces_Delete(t *testing.T) {
 	t.Parallel()
-	fixture := New(fake.NewSimpleClientset(
+	fixture := New(context.Background(), fake.NewSimpleClientset(
 		testutils.NewNamespace(testName),
-	), metav1.ListOptions{}, nil)
+	), metav1.ListOptions{})
 
 	err := fixture.Delete(testName, metav1.DeleteOptions{})
-
 	if err != nil {
 		t.Errorf("encountered an error: %v", err)
 		return
@@ -151,8 +157,6 @@ func TestNamespaces_Delete(t *testing.T) {
 
 func TestNamespaces_Get(t *testing.T) {
 	t.Parallel()
-	fixture := New(fake.NewSimpleClientset(testutils.NewNamespace(testName)), metav1.ListOptions{}, nil)
-
 	testCases := []struct {
 		testID       string
 		name         string
@@ -171,8 +175,15 @@ func TestNamespaces_Get(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc // pin the testcase
 		t.Run(tc.testID, func(t *testing.T) {
+			t.Parallel()
+			fixture := New(context.Background(), fake.NewSimpleClientset(
+				testutils.NewNamespace(testName),
+			), metav1.ListOptions{})
+
 			result, err := fixture.Get(tc.name, metav1.GetOptions{})
+
 			if err != nil && !errors.IsNotFound(err) {
 				t.Errorf("encountered an error: %v", err)
 				return

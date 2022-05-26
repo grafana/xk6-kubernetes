@@ -1,3 +1,4 @@
+// Package ingresses provides implementation of Ingress resources for Kubernetes
 package ingresses
 
 import (
@@ -10,7 +11,8 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
-func New(client kubernetes.Interface, metaOptions metav1.ListOptions, ctx context.Context) *Ingresses {
+// New creates a new instance backed by the provided client
+func New(ctx context.Context, client kubernetes.Interface, metaOptions metav1.ListOptions) *Ingresses {
 	return &Ingresses{
 		client,
 		metaOptions,
@@ -18,12 +20,14 @@ func New(client kubernetes.Interface, metaOptions metav1.ListOptions, ctx contex
 	}
 }
 
+// Ingresses provides API for manipulating Ingress resources within a Kubernetes cluster
 type Ingresses struct {
 	client      kubernetes.Interface
 	metaOptions metav1.ListOptions
 	ctx         context.Context
 }
 
+// Apply creates the Kubernetes resource given the supplied YAML configuration
 func (obj *Ingresses) Apply(yaml string, namespace string) (k8sTypes.Ingress, error) {
 	decode := scheme.Codecs.UniversalDeserializer().Decode
 	yamlobj, _, err := decode([]byte(yaml), nil, nil)
@@ -33,11 +37,10 @@ func (obj *Ingresses) Apply(yaml string, namespace string) (k8sTypes.Ingress, er
 		return ingress, err
 	}
 
-	switch yamlobj.(type) {
-	case *k8sTypes.Ingress:
-		ingress = *yamlobj.(*k8sTypes.Ingress)
-	default:
-		return ingress, errors.New("Yaml was not an Ingress")
+	if ing, ok := yamlobj.(*k8sTypes.Ingress); ok {
+		ingress = *ing
+	} else {
+		return ingress, errors.New("YAML was not an Ingress")
 	}
 
 	ing, err := obj.client.NetworkingV1().Ingresses(namespace).Create(obj.ctx, &ingress, metav1.CreateOptions{})
@@ -47,6 +50,7 @@ func (obj *Ingresses) Apply(yaml string, namespace string) (k8sTypes.Ingress, er
 	return *ing, nil
 }
 
+// Create creates the Kubernetes resource given the supplied object
 func (obj *Ingresses) Create(
 	ingress k8sTypes.Ingress,
 	namespace string,
@@ -59,6 +63,7 @@ func (obj *Ingresses) Create(
 	return *ing, nil
 }
 
+// List returns a collection of Ingresses available within the namespace
 func (obj *Ingresses) List(namespace string) ([]k8sTypes.Ingress, error) {
 	ings, err := obj.client.NetworkingV1().Ingresses(namespace).List(obj.ctx, obj.metaOptions)
 	if err != nil {
@@ -67,15 +72,18 @@ func (obj *Ingresses) List(namespace string) ([]k8sTypes.Ingress, error) {
 	return ings.Items, nil
 }
 
+// Delete removes the named Ingress from the namespace
 func (obj *Ingresses) Delete(name, namespace string, opts metav1.DeleteOptions) error {
 	return obj.client.NetworkingV1().Ingresses(namespace).Delete(obj.ctx, name, opts)
 }
 
+// Kill removes the named Ingress from the namespace
 // Deprecated: Use Delete instead.
 func (obj *Ingresses) Kill(name, namespace string, opts metav1.DeleteOptions) error {
 	return obj.Delete(name, namespace, opts)
 }
 
+// Get returns the named Ingresses instance within the namespace if available
 func (obj *Ingresses) Get(name, namespace string, opts metav1.GetOptions) (k8sTypes.Ingress, error) {
 	ing, err := obj.client.NetworkingV1().Ingresses(namespace).Get(obj.ctx, name, opts)
 	if err != nil {

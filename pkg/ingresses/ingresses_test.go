@@ -1,25 +1,23 @@
 package ingresses
 
 import (
+	"context"
+	"strings"
+	"testing"
+
 	"github.com/grafana/xk6-kubernetes/internal/testutils"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
-	"strings"
-	"testing"
 )
 
-var (
+const (
 	testName      = "ingress-test"
 	testNamespace = "ns-test"
 )
 
 func TestIngresses_Apply(t *testing.T) {
 	t.Parallel()
-	fixture := New(fake.NewSimpleClientset(
-		testutils.NewIngress("existing", testNamespace),
-	), metav1.ListOptions{}, nil)
-
 	testCases := []struct {
 		testID        string
 		yaml          string
@@ -43,7 +41,7 @@ metadata:
   name: ` + testName + `
 `,
 			namespace:     testNamespace,
-			expectedError: "Yaml was not an Ingress",
+			expectedError: "YAML was not an Ingress",
 		},
 		{
 			testID: "create new ingress from yaml",
@@ -77,7 +75,7 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: ` + testName + `
+  name: existing
   annotations:
   labels:
     app: xk6-kubernetes/unit-test
@@ -90,17 +88,23 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: ` + testName + `
+            name: existing
             port:
               number: 80
 `,
 			namespace:     testNamespace,
-			expectedError: "ingresses.networking.k8s.io \"" + testName + "\" already exists",
+			expectedError: "ingresses.networking.k8s.io \"existing\" already exists",
 		},
 	}
 
 	for _, tc := range testCases {
+		tc := tc // pin the testcase
 		t.Run(tc.testID, func(t *testing.T) {
+			t.Parallel()
+			fixture := New(context.Background(), fake.NewSimpleClientset(
+				testutils.NewIngress("existing", testNamespace),
+			), metav1.ListOptions{})
+
 			result, err := fixture.Apply(tc.yaml, tc.namespace)
 
 			if err != nil && (tc.expectedError == "" || !strings.Contains(err.Error(), tc.expectedError)) {
@@ -121,13 +125,12 @@ spec:
 
 func TestIngresses_Create(t *testing.T) {
 	t.Parallel()
-	fixture := New(fake.NewSimpleClientset(
+	fixture := New(context.Background(), fake.NewSimpleClientset(
 		testutils.NewIngress("existing", testNamespace),
-	), metav1.ListOptions{}, nil)
+	), metav1.ListOptions{})
 
 	newOne := *testutils.NewIngress(testName, testNamespace)
 	result, err := fixture.Create(newOne, testNamespace, metav1.CreateOptions{})
-
 	if err != nil {
 		t.Errorf("encountered an error: %v", err)
 		return
@@ -145,12 +148,6 @@ func TestIngresses_Create(t *testing.T) {
 
 func TestIngresses_List(t *testing.T) {
 	t.Parallel()
-	fixture := New(fake.NewSimpleClientset(
-		testutils.NewIngress("ingress-1", testNamespace),
-		testutils.NewIngress("ingress-2", testNamespace),
-		testutils.NewIngress("ingress-3", testNamespace),
-	), metav1.ListOptions{}, nil)
-
 	testCases := []struct {
 		testID        string
 		namespace     string
@@ -169,7 +166,15 @@ func TestIngresses_List(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc // pin the testcase
 		t.Run(tc.testID, func(t *testing.T) {
+			t.Parallel()
+			fixture := New(context.Background(), fake.NewSimpleClientset(
+				testutils.NewIngress("ingress-1", testNamespace),
+				testutils.NewIngress("ingress-2", testNamespace),
+				testutils.NewIngress("ingress-3", testNamespace),
+			), metav1.ListOptions{})
+
 			result, err := fixture.List(tc.namespace)
 			if err != nil {
 				t.Errorf("encountered an error: %v", err)
@@ -191,12 +196,11 @@ func TestIngresses_List(t *testing.T) {
 
 func TestIngresses_Delete(t *testing.T) {
 	t.Parallel()
-	fixture := New(fake.NewSimpleClientset(
+	fixture := New(context.Background(), fake.NewSimpleClientset(
 		testutils.NewIngress(testName, testNamespace),
-	), metav1.ListOptions{}, nil)
+	), metav1.ListOptions{})
 
 	err := fixture.Delete(testName, testNamespace, metav1.DeleteOptions{})
-
 	if err != nil {
 		t.Errorf("encountered an error: %v", err)
 		return
@@ -210,11 +214,6 @@ func TestIngresses_Delete(t *testing.T) {
 
 func TestIngresses_Get(t *testing.T) {
 	t.Parallel()
-	fixture := New(fake.NewSimpleClientset(
-		testutils.NewIngress(testName, testNamespace),
-		testutils.NewIngress("ingress-other", "ns-2"),
-	), metav1.ListOptions{}, nil)
-
 	testCases := []struct {
 		testID       string
 		name         string
@@ -242,8 +241,16 @@ func TestIngresses_Get(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc // pin the testcase
 		t.Run(tc.testID, func(t *testing.T) {
+			t.Parallel()
+			fixture := New(context.Background(), fake.NewSimpleClientset(
+				testutils.NewIngress(testName, testNamespace),
+				testutils.NewIngress("ingress-other", "ns-2"),
+			), metav1.ListOptions{})
+
 			result, err := fixture.Get(tc.name, tc.namespace, metav1.GetOptions{})
+
 			if err != nil && !errors.IsNotFound(err) {
 				t.Errorf("encountered an error: %v", err)
 				return

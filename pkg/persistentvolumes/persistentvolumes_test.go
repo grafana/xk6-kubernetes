@@ -1,22 +1,22 @@
 package persistentvolumes
 
 import (
+	"context"
+	"strings"
+	"testing"
+
 	"github.com/grafana/xk6-kubernetes/internal/testutils"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
-	"strings"
-	"testing"
 )
 
-var (
+const (
 	testName = "pv-test"
 )
 
 func TestPersistentVolumes_Apply(t *testing.T) {
 	t.Parallel()
-	fixture := New(fake.NewSimpleClientset(testutils.NewPersistentVolume("existing")), metav1.ListOptions{}, nil)
-
 	testCases := []struct {
 		testID        string
 		yaml          string
@@ -37,7 +37,7 @@ kind: Namespace
 metadata:
   name: ` + testName + `
 `,
-			expectedError: "Yaml was not a PersistentVolume",
+			expectedError: "YAML was not a PersistentVolume",
 		},
 		{
 			testID: "create new persistent volume from yaml",
@@ -66,7 +66,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: ` + testName + `
+  name: existing
   annotations:
   labels:
     app: xk6-kubernetes/unit-test
@@ -79,12 +79,18 @@ spec:
   hostPath:
     path: "/tmp/xk6-test"
 `,
-			expectedError: "persistentvolumes \"" + testName + "\" already exists",
+			expectedError: "persistentvolumes \"existing\" already exists",
 		},
 	}
 
 	for _, tc := range testCases {
+		tc := tc // pin the testcase
 		t.Run(tc.testID, func(t *testing.T) {
+			t.Parallel()
+			fixture := New(context.Background(), fake.NewSimpleClientset(
+				testutils.NewPersistentVolume("existing"),
+			), metav1.ListOptions{})
+
 			result, err := fixture.Apply(tc.yaml)
 
 			if err != nil && (tc.expectedError == "" || !strings.Contains(err.Error(), tc.expectedError)) {
@@ -105,11 +111,12 @@ spec:
 
 func TestPersistentVolumes_Create(t *testing.T) {
 	t.Parallel()
-	fixture := New(fake.NewSimpleClientset(testutils.NewPersistentVolume("existing")), metav1.ListOptions{}, nil)
+	fixture := New(context.Background(), fake.NewSimpleClientset(
+		testutils.NewPersistentVolume("existing"),
+	), metav1.ListOptions{})
 
 	newOne := *testutils.NewPersistentVolume(testName)
 	result, err := fixture.Create(newOne, metav1.CreateOptions{})
-
 	if err != nil {
 		t.Errorf("encountered an error: %v", err)
 		return
@@ -127,11 +134,11 @@ func TestPersistentVolumes_Create(t *testing.T) {
 
 func TestPersistentVolumes_List(t *testing.T) {
 	t.Parallel()
-	fixture := New(fake.NewSimpleClientset(
+	fixture := New(context.Background(), fake.NewSimpleClientset(
 		testutils.NewPersistentVolume("pv-1"),
 		testutils.NewPersistentVolume("pv-2"),
 		testutils.NewPersistentVolume("pv-3"),
-	), metav1.ListOptions{}, nil)
+	), metav1.ListOptions{})
 
 	result, err := fixture.List()
 	if err != nil {
@@ -146,12 +153,11 @@ func TestPersistentVolumes_List(t *testing.T) {
 
 func TestPersistentVolumes_Delete(t *testing.T) {
 	t.Parallel()
-	fixture := New(fake.NewSimpleClientset(
+	fixture := New(context.Background(), fake.NewSimpleClientset(
 		testutils.NewPersistentVolume(testName),
-	), metav1.ListOptions{}, nil)
+	), metav1.ListOptions{})
 
 	err := fixture.Delete(testName, metav1.DeleteOptions{})
-
 	if err != nil {
 		t.Errorf("encountered an error: %v", err)
 		return
@@ -165,8 +171,6 @@ func TestPersistentVolumes_Delete(t *testing.T) {
 
 func TestPersistentVolumes_Get(t *testing.T) {
 	t.Parallel()
-	fixture := New(fake.NewSimpleClientset(testutils.NewPersistentVolume(testName)), metav1.ListOptions{}, nil)
-
 	testCases := []struct {
 		testID       string
 		name         string
@@ -185,8 +189,15 @@ func TestPersistentVolumes_Get(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc // pin the testcase
 		t.Run(tc.testID, func(t *testing.T) {
+			t.Parallel()
+			fixture := New(context.Background(), fake.NewSimpleClientset(
+				testutils.NewPersistentVolume(testName),
+			), metav1.ListOptions{})
+
 			result, err := fixture.Get(tc.name, metav1.GetOptions{})
+
 			if err != nil && !errors.IsNotFound(err) {
 				t.Errorf("encountered an error: %v", err)
 				return

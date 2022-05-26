@@ -1,3 +1,4 @@
+// Package namespaces provides implementation of Namespace resources for Kubernetes
 package namespaces
 
 import (
@@ -10,7 +11,8 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
-func New(client kubernetes.Interface, metaOptions metav1.ListOptions, ctx context.Context) *Namespaces {
+// New creates a new instance backed by the provided client
+func New(ctx context.Context, client kubernetes.Interface, metaOptions metav1.ListOptions) *Namespaces {
 	return &Namespaces{
 		client,
 		metaOptions,
@@ -18,12 +20,14 @@ func New(client kubernetes.Interface, metaOptions metav1.ListOptions, ctx contex
 	}
 }
 
+// Namespaces provides API for manipulating Namespace resources within a Kubernetes cluster
 type Namespaces struct {
 	client      kubernetes.Interface
 	metaOptions metav1.ListOptions
 	ctx         context.Context
 }
 
+// Apply creates the Kubernetes resource given the supplied YAML configuration
 func (obj *Namespaces) Apply(yaml string) (k8sTypes.Namespace, error) {
 	decode := scheme.Codecs.UniversalDeserializer().Decode
 	yamlobj, _, err := decode([]byte(yaml), nil, nil)
@@ -33,11 +37,10 @@ func (obj *Namespaces) Apply(yaml string) (k8sTypes.Namespace, error) {
 		return namespace, err
 	}
 
-	switch yamlobj.(type) {
-	case *k8sTypes.Namespace:
-		namespace = *yamlobj.(*k8sTypes.Namespace)
-	default:
-		return namespace, errors.New("Yaml was not a Namespace")
+	if ns, ok := yamlobj.(*k8sTypes.Namespace); ok {
+		namespace = *ns
+	} else {
+		return namespace, errors.New("YAML was not a Namespace")
 	}
 
 	ns, err := obj.client.CoreV1().Namespaces().Create(obj.ctx, &namespace, metav1.CreateOptions{})
@@ -47,6 +50,7 @@ func (obj *Namespaces) Apply(yaml string) (k8sTypes.Namespace, error) {
 	return *ns, nil
 }
 
+// Create creates the Kubernetes resource given the supplied object
 func (obj *Namespaces) Create(
 	namespace k8sTypes.Namespace,
 	opts metav1.CreateOptions,
@@ -58,6 +62,7 @@ func (obj *Namespaces) Create(
 	return *ns, nil
 }
 
+// List returns a collection of Namespaces available within the cluster
 func (obj *Namespaces) List() ([]k8sTypes.Namespace, error) {
 	nss, err := obj.client.CoreV1().Namespaces().List(obj.ctx, obj.metaOptions)
 	if err != nil {
@@ -66,15 +71,18 @@ func (obj *Namespaces) List() ([]k8sTypes.Namespace, error) {
 	return nss.Items, nil
 }
 
+// Delete removes the named Namespace from the cluster
 func (obj *Namespaces) Delete(name string, opts metav1.DeleteOptions) error {
 	return obj.client.CoreV1().Namespaces().Delete(obj.ctx, name, opts)
 }
 
+// Kill removes the named Namespace from the cluster
 // Deprecated: Use Delete instead.
 func (obj *Namespaces) Kill(name string, opts metav1.DeleteOptions) error {
 	return obj.Delete(name, opts)
 }
 
+// Get returns the named Namespaces instance within the cluster if available
 func (obj *Namespaces) Get(name string, opts metav1.GetOptions) (k8sTypes.Namespace, error) {
 	ns, err := obj.client.CoreV1().Namespaces().Get(obj.ctx, name, opts)
 	if err != nil {

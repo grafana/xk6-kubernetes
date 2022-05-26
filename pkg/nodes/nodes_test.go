@@ -1,23 +1,21 @@
 package nodes
 
 import (
+	"context"
+	"testing"
+
 	"github.com/grafana/xk6-kubernetes/internal/testutils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
-	"testing"
-)
-
-var (
-	testName = "node-test"
 )
 
 func TestNodes_List(t *testing.T) {
 	t.Parallel()
-	fixture := New(fake.NewSimpleClientset(
+	fixture := New(context.Background(), fake.NewSimpleClientset(
 		testutils.NewNodes("node-1"),
 		testutils.NewNodes("node-2"),
 		testutils.NewNodes("node-3"),
-	), metav1.ListOptions{}, nil)
+	), metav1.ListOptions{})
 
 	result, err := fixture.List()
 	if err != nil {

@@ -1,6 +1,7 @@
 package jobs
 
 import (
+	"context"
 	"strings"
 	"testing"
 	"time"
@@ -14,17 +15,13 @@ import (
 	k8stest "k8s.io/client-go/testing"
 )
 
-var (
+const (
 	testName      = "job-test"
 	testNamespace = "ns-test"
 )
 
 func TestJobs_Apply(t *testing.T) {
 	t.Parallel()
-	fixture := New(fake.NewSimpleClientset(
-		testutils.NewJob("existing", testNamespace),
-	), metav1.ListOptions{}, nil)
-
 	testCases := []struct {
 		testID        string
 		yaml          string
@@ -48,7 +45,7 @@ metadata:
   name: ` + testName + `
 `,
 			namespace:     testNamespace,
-			expectedError: "Yaml was not a Job",
+			expectedError: "YAML was not a Job",
 		},
 		{
 			testID: "create new job from yaml",
@@ -79,7 +76,7 @@ spec:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: ` + testName + `
+  name: existing
   annotations:
   labels:
     app: xk6-kubernetes/unit-test
@@ -87,19 +84,25 @@ spec:
   template:
     spec:
       containers:
-      - name: ` + testName + `
+      - name: existing
         image: perl
         command: ["perl", "-Mbignum=bpi", "-wle", "print bpi(2000)"]
       restartPolicy: Never
   backoffLimit: 4
 `,
 			namespace:     testNamespace,
-			expectedError: "jobs.batch \"" + testName + "\" already exists",
+			expectedError: "jobs.batch \"existing\" already exists",
 		},
 	}
 
 	for _, tc := range testCases {
+		tc := tc // pin the testcase
 		t.Run(tc.testID, func(t *testing.T) {
+			t.Parallel()
+			fixture := New(context.Background(), fake.NewSimpleClientset(
+				testutils.NewJob("existing", testNamespace),
+			), metav1.ListOptions{})
+
 			result, err := fixture.Apply(tc.yaml, tc.namespace)
 
 			if err != nil && (tc.expectedError == "" || !strings.Contains(err.Error(), tc.expectedError)) {
@@ -151,7 +154,8 @@ func TestJobs_Create(t *testing.T) {
 			expectError: false,
 			wait:        "",
 			autodelete:  false,
-		}, {
+		},
+		{
 			test:        "wait for job to complete",
 			name:        "test-job",
 			namespace:   testNamespace,
@@ -193,12 +197,14 @@ func TestJobs_Create(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc // pin the testcase
 		t.Run(tc.test, func(t *testing.T) {
+			t.Parallel()
 			// TODO Figure out the rest.Config
 			client := fake.NewSimpleClientset()
 			watcher := watch.NewFake()
 			client.PrependWatchReactor("jobs", k8stest.DefaultWatchReactor(watcher, nil))
-			fixture := New(client, metav1.ListOptions{}, nil)
+			fixture := New(context.Background(), client, metav1.ListOptions{})
 			go func(tc TestCase) {
 				time.Sleep(tc.delay)
 				watcher.Modify(testutils.NewJobWithStatus(tc.name, tc.namespace, tc.status))
@@ -238,22 +244,16 @@ func TestJobs_Create(t *testing.T) {
 			}
 			// FIXME: The fake client does not update the pod object in response to update
 			// events added to the watcher. Checking the status fails
-			//if string(result.Status.Phase) != "Running"  {
+			// if string(result.Status.Phase) != "Running"  {
 			//      t.Errorf("pod is in incorrect state returned: %v", result)
 			//      return
-			//}
+			// }
 		})
 	}
 }
 
 func TestJobs_List(t *testing.T) {
 	t.Parallel()
-	fixture := New(fake.NewSimpleClientset(
-		testutils.NewJob("job-1", testNamespace),
-		testutils.NewJob("job-2", testNamespace),
-		testutils.NewJob("job-3", testNamespace),
-	), metav1.ListOptions{}, nil)
-
 	testCases := []struct {
 		testID        string
 		namespace     string
@@ -272,7 +272,15 @@ func TestJobs_List(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc // pin the testcase
 		t.Run(tc.testID, func(t *testing.T) {
+			t.Parallel()
+			fixture := New(context.Background(), fake.NewSimpleClientset(
+				testutils.NewJob("job-1", testNamespace),
+				testutils.NewJob("job-2", testNamespace),
+				testutils.NewJob("job-3", testNamespace),
+			), metav1.ListOptions{})
+
 			result, err := fixture.List(tc.namespace)
 			if err != nil {
 				t.Errorf("encountered an error: %v", err)
@@ -294,12 +302,11 @@ func TestJobs_List(t *testing.T) {
 
 func TestJobs_Delete(t *testing.T) {
 	t.Parallel()
-	fixture := New(fake.NewSimpleClientset(
+	fixture := New(context.Background(), fake.NewSimpleClientset(
 		testutils.NewJob(testName, testNamespace),
-	), metav1.ListOptions{}, nil)
+	), metav1.ListOptions{})
 
 	err := fixture.Delete(testName, testNamespace)
-
 	if err != nil {
 		t.Errorf("encountered an error: %v", err)
 		return
@@ -313,11 +320,6 @@ func TestJobs_Delete(t *testing.T) {
 
 func TestJobs_Get(t *testing.T) {
 	t.Parallel()
-	fixture := New(fake.NewSimpleClientset(
-		testutils.NewJob(testName, testNamespace),
-		testutils.NewJob("job-other", "ns-2"),
-	), metav1.ListOptions{}, nil)
-
 	testCases := []struct {
 		testID       string
 		name         string
@@ -345,8 +347,16 @@ func TestJobs_Get(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc // pin the testcase
 		t.Run(tc.testID, func(t *testing.T) {
+			t.Parallel()
+			fixture := New(context.Background(), fake.NewSimpleClientset(
+				testutils.NewJob(testName, testNamespace),
+				testutils.NewJob("job-other", "ns-2"),
+			), metav1.ListOptions{})
+
 			result, err := fixture.Get(tc.name, tc.namespace)
+
 			if err != nil && !errors.IsNotFound(err) {
 				t.Errorf("encountered an error: %v", err)
 				return
@@ -417,11 +427,13 @@ func TestJobs_Wait(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc // pin the testcase
 		t.Run(tc.test, func(t *testing.T) {
+			t.Parallel()
 			client := fake.NewSimpleClientset()
 			watcher := watch.NewFake()
 			client.PrependWatchReactor("jobs", k8stest.DefaultWatchReactor(watcher, nil))
-			fixture := New(client, metav1.ListOptions{}, nil)
+			fixture := New(context.Background(), client, metav1.ListOptions{})
 			go func(tc TestCase) {
 				time.Sleep(tc.delay)
 				watcher.Modify(testutils.NewJobWithStatus(tc.name, tc.namespace, tc.status))

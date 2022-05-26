@@ -1,3 +1,4 @@
+// Package secrets provides implementation of Secret resources for Kubernetes
 package secrets
 
 import (
@@ -10,7 +11,8 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
-func New(client kubernetes.Interface, metaOptions metav1.ListOptions, ctx context.Context) *Secrets {
+// New creates a new instance backed by the provided client
+func New(ctx context.Context, client kubernetes.Interface, metaOptions metav1.ListOptions) *Secrets {
 	return &Secrets{
 		client,
 		metaOptions,
@@ -18,12 +20,14 @@ func New(client kubernetes.Interface, metaOptions metav1.ListOptions, ctx contex
 	}
 }
 
+// Secrets provides API for manipulating Secret resources within a Kubernetes cluster
 type Secrets struct {
 	client      kubernetes.Interface
 	metaOptions metav1.ListOptions
 	ctx         context.Context
 }
 
+// Apply creates the Kubernetes resource given the supplied YAML configuration
 func (obj *Secrets) Apply(yaml string, namespace string) (k8sTypes.Secret, error) {
 	decode := scheme.Codecs.UniversalDeserializer().Decode
 	yamlobj, _, err := decode([]byte(yaml), nil, nil)
@@ -33,11 +37,10 @@ func (obj *Secrets) Apply(yaml string, namespace string) (k8sTypes.Secret, error
 		return secret, err
 	}
 
-	switch yamlobj.(type) {
-	case *k8sTypes.Secret:
-		secret = *yamlobj.(*k8sTypes.Secret)
-	default:
-		return secret, errors.New("Yaml was not a Secret")
+	if scrt, ok := yamlobj.(*k8sTypes.Secret); ok {
+		secret = *scrt
+	} else {
+		return secret, errors.New("YAML was not a Secret")
 	}
 
 	scrt, err := obj.client.CoreV1().Secrets(namespace).Create(obj.ctx, &secret, metav1.CreateOptions{})
@@ -47,6 +50,7 @@ func (obj *Secrets) Apply(yaml string, namespace string) (k8sTypes.Secret, error
 	return *scrt, nil
 }
 
+// Create creates the Kubernetes resource given the supplied object
 func (obj *Secrets) Create(
 	secret k8sTypes.Secret,
 	namespace string,
@@ -59,6 +63,7 @@ func (obj *Secrets) Create(
 	return *scrt, nil
 }
 
+// List returns a collection of Secrets available within the namespace
 func (obj *Secrets) List(namespace string) ([]k8sTypes.Secret, error) {
 	scrts, err := obj.client.CoreV1().Secrets(namespace).List(obj.ctx, obj.metaOptions)
 	if err != nil {
@@ -67,15 +72,18 @@ func (obj *Secrets) List(namespace string) ([]k8sTypes.Secret, error) {
 	return scrts.Items, nil
 }
 
+// Delete removes the named Secret from the namespace
 func (obj *Secrets) Delete(name, namespace string, opts metav1.DeleteOptions) error {
 	return obj.client.CoreV1().Secrets(namespace).Delete(obj.ctx, name, opts)
 }
 
+// Kill removes the named Secret from the namespace
 // Deprecated: Use Delete instead.
 func (obj *Secrets) Kill(name, namespace string, opts metav1.DeleteOptions) error {
 	return obj.Delete(name, namespace, opts)
 }
 
+// Get returns the named Secrets instance within the namespace if available
 func (obj *Secrets) Get(name, namespace string, opts metav1.GetOptions) (k8sTypes.Secret, error) {
 	scrt, err := obj.client.CoreV1().Secrets(namespace).Get(obj.ctx, name, opts)
 	if err != nil {

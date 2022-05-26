@@ -1,3 +1,4 @@
+// Package jobs provides implementation of Job resources for Kubernetes
 package jobs
 
 import (
@@ -15,7 +16,8 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
-func New(client kubernetes.Interface, metaOptions metav1.ListOptions, ctx context.Context) *Jobs {
+// New creates a new instance backed by the provided client
+func New(ctx context.Context, client kubernetes.Interface, metaOptions metav1.ListOptions) *Jobs {
 	return &Jobs{
 		client,
 		metaOptions,
@@ -23,12 +25,14 @@ func New(client kubernetes.Interface, metaOptions metav1.ListOptions, ctx contex
 	}
 }
 
+// Jobs provides API for manipulating Job resources within a Kubernetes cluster
 type Jobs struct {
 	client      kubernetes.Interface
 	metaOptions metav1.ListOptions
 	ctx         context.Context
 }
 
+// JobOptions provide configuration settings for creation of Job resources
 type JobOptions struct {
 	Namespace     string
 	Name          string
@@ -40,6 +44,7 @@ type JobOptions struct {
 	Autodelete    bool
 }
 
+// List returns a collection of Jobs available within the namespace
 func (obj *Jobs) List(namespace string) ([]v1.Job, error) {
 	result, err := obj.client.BatchV1().Jobs(namespace).List(obj.ctx, obj.metaOptions)
 	if err != nil {
@@ -48,6 +53,7 @@ func (obj *Jobs) List(namespace string) ([]v1.Job, error) {
 	return result.Items, nil
 }
 
+// Get returns the named Jobs instance within the namespace if available
 func (obj *Jobs) Get(name, namespace string) (v1.Job, error) {
 	result, err := obj.client.BatchV1().Jobs(namespace).Get(obj.ctx, name, metav1.GetOptions{})
 	if err != nil {
@@ -56,8 +62,8 @@ func (obj *Jobs) Get(name, namespace string) (v1.Job, error) {
 	return *result, nil
 }
 
+// Delete removes the named Job from the namespace
 func (obj *Jobs) Delete(name, namespace string) error {
-
 	propagationPolicy := metav1.DeletePropagationBackground
 	options := metav1.DeleteOptions{
 		PropagationPolicy: &propagationPolicy,
@@ -65,11 +71,13 @@ func (obj *Jobs) Delete(name, namespace string) error {
 	return obj.client.BatchV1().Jobs(namespace).Delete(obj.ctx, name, options)
 }
 
+// Kill removes the named Job from the namespace
 // Deprecated: Use Delete instead.
 func (obj *Jobs) Kill(name, namespace string) error {
 	return obj.Delete(name, namespace)
 }
 
+// Apply creates the Kubernetes resource given the supplied YAML configuration
 func (obj *Jobs) Apply(yaml string, namespace string) (v1.Job, error) {
 	decode := scheme.Codecs.UniversalDeserializer().Decode
 	yamlobj, _, err := decode([]byte(yaml), nil, nil)
@@ -79,11 +87,10 @@ func (obj *Jobs) Apply(yaml string, namespace string) (v1.Job, error) {
 		return job, err
 	}
 
-	switch yamlobj.(type) {
-	case *v1.Job:
-		job = *yamlobj.(*v1.Job)
-	default:
-		return job, errors.New("Yaml was not a Job")
+	if jb, ok := yamlobj.(*v1.Job); ok {
+		job = *jb
+	} else {
+		return job, errors.New("YAML was not a Job")
 	}
 
 	jb, err := obj.client.BatchV1().Jobs(namespace).Create(obj.ctx, &job, metav1.CreateOptions{})
@@ -93,6 +100,7 @@ func (obj *Jobs) Apply(yaml string, namespace string) (v1.Job, error) {
 	return *jb, nil
 }
 
+// Create creates the Kubernetes resource given the supplied object
 func (obj *Jobs) Create(options JobOptions) (v1.Job, error) {
 	container := coreV1.Container{
 		Name:    options.Name,
@@ -215,5 +223,4 @@ func (obj *Jobs) Wait(options WaitOptions) (bool, error) {
 			}
 		}
 	}
-	return false, nil
 }
