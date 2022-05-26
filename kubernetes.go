@@ -26,7 +26,7 @@ import (
 	"go.k6.io/k6/js/modules"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	_ "k8s.io/client-go/plugin/pkg/client/auth" // Required for access to GKE and AKS
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 )
