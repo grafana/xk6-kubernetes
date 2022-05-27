@@ -24,7 +24,7 @@ To build a custom `k6` binary with this extension, first ensure you have the pre
     xk6 build --with github.com/grafana/xk6-kubernetes
     ```
 
-    The command creates in your local folder a k6 binary that includes the `xk6-kubernetes` extension. This k6 binary can now run a k6 test using [xk6-kubernetes APIs](#apis).
+    The `xk6 build` command creates a k6 binary that includes the xk6-kubernetes extension in your local folder. This k6 binary can now run a k6 test using [xk6-kubernetes APIs](#apis).
 
 
 ### Development
