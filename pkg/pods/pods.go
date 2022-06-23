@@ -315,6 +315,8 @@ func generateEphemeralContainer(o ContainerOptions) *k8sTypes.EphemeralContainer
 			Name:    o.Name,
 			Image:   o.Image,
 			Command: o.Command,
+			TTY:     true,
+			Stdin:   true,
 			SecurityContext: &k8sTypes.SecurityContext{
 				Capabilities: &k8sTypes.Capabilities{
 					Add: capabilities,
