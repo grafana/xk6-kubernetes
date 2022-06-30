@@ -38,6 +38,7 @@ type JobOptions struct {
 	Name          string
 	NodeName      string
 	Image         string
+	PullPolicy    coreV1.PullPolicy
 	Command       []string
 	RestartPolicy coreV1.RestartPolicy
 	Wait          string
@@ -103,9 +104,10 @@ func (obj *Jobs) Apply(yaml string, namespace string) (v1.Job, error) {
 // Create creates the Kubernetes resource given the supplied object
 func (obj *Jobs) Create(options JobOptions) (v1.Job, error) {
 	container := coreV1.Container{
-		Name:    options.Name,
-		Image:   options.Image,
-		Command: options.Command,
+		Name:            options.Name,
+		Image:           options.Image,
+		ImagePullPolicy: options.PullPolicy,
+		Command:         options.Command,
 	}
 
 	containers := []coreV1.Container{
@@ -113,7 +115,6 @@ func (obj *Jobs) Create(options JobOptions) (v1.Job, error) {
 	}
 
 	var restartPolicy coreV1.RestartPolicy = "Never"
-
 	if options.RestartPolicy != "" {
 		restartPolicy = options.RestartPolicy
 	}

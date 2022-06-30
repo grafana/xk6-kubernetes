@@ -54,8 +54,9 @@ type ExecResult struct {
 
 // ContainerOptions describes a container to be started in a pod
 type ContainerOptions struct {
-	Name         string   // name of the container
-	Image        string   // image to be attached
+	Name         string // name of the container
+	Image        string // image to be attached
+	PullPolicy   k8sTypes.PullPolicy
 	Command      []string // command to be executed by the container
 	Capabilities []string // capabilities to be added to the container's security context
 }
@@ -70,9 +71,10 @@ type Pods struct {
 
 // PodOptions describe a Pod to be executed
 type PodOptions struct {
-	Namespace     string                 // namespace where the pod will be executed
-	Name          string                 // name of the pod
-	Image         string                 // image to be executed by the pod's container
+	Namespace     string // namespace where the pod will be executed
+	Name          string // name of the pod
+	Image         string // image to be executed by the pod's container
+	PullPolicy    k8sTypes.PullPolicy
 	Command       []string               // command to be executed by the pod's container and its arguments
 	RestartPolicy k8sTypes.RestartPolicy // policy for restarting containers in the pod [Always|OnFailure|Never]
 	Wait          string                 // timeout for waiting until the pod is running
@@ -124,9 +126,10 @@ func (obj *Pods) IsTerminating(name, namespace string) (bool, error) {
 // Create runs a pod specified by the options
 func (obj *Pods) Create(options PodOptions) (k8sTypes.Pod, error) {
 	container := k8sTypes.Container{
-		Name:    options.Name,
-		Image:   options.Image,
-		Command: options.Command,
+		Name:            options.Name,
+		Image:           options.Image,
+		ImagePullPolicy: options.PullPolicy,
+		Command:         options.Command,
 	}
 
 	containers := []k8sTypes.Container{
@@ -312,11 +315,12 @@ func generateEphemeralContainer(o ContainerOptions) *k8sTypes.EphemeralContainer
 
 	return &k8sTypes.EphemeralContainer{
 		EphemeralContainerCommon: k8sTypes.EphemeralContainerCommon{
-			Name:    o.Name,
-			Image:   o.Image,
-			Command: o.Command,
-			TTY:     true,
-			Stdin:   true,
+			Name:            o.Name,
+			Image:           o.Image,
+			ImagePullPolicy: o.PullPolicy,
+			Command:         o.Command,
+			TTY:             true,
+			Stdin:           true,
 			SecurityContext: &k8sTypes.SecurityContext{
 				Capabilities: &k8sTypes.Capabilities{
 					Add: capabilities,
