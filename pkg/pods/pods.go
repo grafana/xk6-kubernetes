@@ -80,6 +80,8 @@ type PodOptions struct {
 	Wait          string                 // timeout for waiting until the pod is running
 }
 
+type PodConditionChecker func(*k8sTypes.Pod) (bool, error)
+
 // List returns a collection of Pods available within the namespace
 func (obj *Pods) List(namespace string) ([]k8sTypes.Pod, error) {
 	pods, err := obj.client.CoreV1().Pods(namespace).List(obj.ctx, obj.metaOptions)
@@ -194,10 +196,30 @@ func (obj *Pods) Wait(options WaitOptions) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+
+	return obj.waitForCondition(
+		options.Namespace,
+		options.Name,
+		timeout,
+		func(pod *k8sTypes.Pod) (bool, error) {
+			if pod.Status.Phase == k8sTypes.PodFailed {
+				return false, errors.New("pod has failed")
+			}
+			if string(pod.Status.Phase) == options.Status {
+				return true, nil
+			}
+			return false, nil
+		},
+	)
+}
+
+// waitForCondition watchs a Pod in a given namespace until a condition is validated by a PodConditionChecket or a timeout expires.
+func (obj *Pods) waitForCondition(namespace string, name string, timeout time.Duration, checker PodConditionChecker) (bool, error) {
 	selector := fields.Set{
-		"metadata.name": options.Name,
+		"metadata.name": name,
 	}.AsSelector()
-	watcher, err := obj.client.CoreV1().Pods(options.Namespace).Watch(
+
+	watcher, err := obj.client.CoreV1().Pods(namespace).Watch(
 		obj.ctx,
 		metav1.ListOptions{
 			FieldSelector: selector.String(),
@@ -221,11 +243,9 @@ func (obj *Pods) Wait(options WaitOptions) (bool, error) {
 				if !isPod {
 					return false, errors.New("received unknown object while watching for pods")
 				}
-				if pod.Status.Phase == k8sTypes.PodFailed {
-					return false, errors.New("pod has failed")
-				}
-				if string(pod.Status.Phase) == options.Status {
-					return true, nil
+				condition, err := checker(pod)
+				if condition || err != nil {
+					return condition, err
 				}
 			}
 		}
