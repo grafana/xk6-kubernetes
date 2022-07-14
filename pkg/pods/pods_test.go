@@ -342,3 +342,89 @@ func TestPods_Get(t *testing.T) {
 		})
 	}
 }
+
+func TestPods_AddEphemeralContainer(t *testing.T) {
+	t.Parallel()
+	type TestCase struct {
+		test        string
+		podName     string
+		namespace   string
+		delay       time.Duration
+		expectError bool
+		container   string
+		image       string
+		state       string
+		wait        string
+	}
+
+	testCases := []TestCase{
+		{
+			test:        "Create ephemeral container not waiting",
+			podName:     "test-pod",
+			namespace:   testNamespace,
+			delay:       1 * time.Second,
+			expectError: false,
+			container:   "ephemeral",
+			image:       "busybox",
+			state:       "Running",
+			wait:        "",
+		},
+		{
+			test:        "Create ephemeral container waiting",
+			podName:     "test-pod",
+			namespace:   testNamespace,
+			delay:       3 * time.Second,
+			expectError: false,
+			container:   "ephemeral",
+			image:       "busybox",
+			state:       "Running",
+			wait:        "5s",
+		},
+		{
+			test:        "Fail waiting for container",
+			podName:     "test-pod",
+			namespace:   testNamespace,
+			delay:       3 * time.Second,
+			expectError: true,
+			container:   "ephemeral",
+			image:       "busybox",
+			state:       "Waiting",
+			wait:        "5s",
+		},
+	}
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.test, func(t *testing.T) {
+			t.Parallel()
+			client := fake.NewSimpleClientset(
+				testutils.NewPod(tc.podName, testNamespace),
+			)
+			watcher := watch.NewFake()
+			client.PrependWatchReactor("pods", k8stest.DefaultWatchReactor(watcher, nil))
+			fixture := New(context.Background(), client, nil, metav1.ListOptions{})
+
+			// add watcher to update ephemarel container's status
+			go func(tc TestCase) {
+				time.Sleep(tc.delay)
+				watcher.Modify(testutils.PodWithEphemeralContainerStatus(tc.podName, tc.namespace, tc.container, tc.state))
+			}(tc)
+
+			err := fixture.AddEphemeralContainer(
+				tc.podName,
+				tc.namespace,
+				EphemeralContainerOptions{
+					ContainerOptions: ContainerOptions{
+						Name:  tc.container,
+						Image: tc.image,
+					},
+					Wait: tc.wait,
+				},
+			)
+			if !tc.expectError && err != nil {
+				t.Errorf("unexpected error: %v", err)
+				return
+			}
+
+		})
+	}
+}

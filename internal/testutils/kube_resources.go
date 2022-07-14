@@ -255,6 +255,29 @@ func NewPodWithStatus(name string, namespace string, phase string) *coreV1.Pod {
 	return pod
 }
 
+// NewPodWithStatus is a helper for building Pods with a given Status
+func PodWithEphemeralContainerStatus(name string, namespace string, container string, state string) *coreV1.Pod {
+	pod := NewPod(name, namespace)
+	var containerState coreV1.ContainerState
+	switch state {
+	case "Running":
+		containerState = coreV1.ContainerState{
+			Running: &coreV1.ContainerStateRunning{},
+		}
+	case "Waiting":
+		containerState = coreV1.ContainerState{
+			Waiting: &coreV1.ContainerStateWaiting{},
+		}
+	}
+	pod.Status.EphemeralContainerStatuses = []coreV1.ContainerStatus{
+		{
+			Name:  container,
+			State: containerState,
+		},
+	}
+	return pod
+}
+
 // NewSecret is a helper to build a new Secret instance
 func NewSecret(name string, namespace string) *coreV1.Secret {
 	return &coreV1.Secret{
