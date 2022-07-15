@@ -202,7 +202,7 @@ func TestJobs_Create(t *testing.T) {
 			t.Parallel()
 			// TODO Figure out the rest.Config
 			client := fake.NewSimpleClientset()
-			watcher := watch.NewFake()
+			watcher := watch.NewRaceFreeFake()
 			client.PrependWatchReactor("jobs", k8stest.DefaultWatchReactor(watcher, nil))
 			fixture := New(context.Background(), client, metav1.ListOptions{})
 			go func(tc TestCase) {
@@ -431,7 +431,7 @@ func TestJobs_Wait(t *testing.T) {
 		t.Run(tc.test, func(t *testing.T) {
 			t.Parallel()
 			client := fake.NewSimpleClientset()
-			watcher := watch.NewFake()
+			watcher := watch.NewRaceFreeFake()
 			client.PrependWatchReactor("jobs", k8stest.DefaultWatchReactor(watcher, nil))
 			fixture := New(context.Background(), client, metav1.ListOptions{})
 			go func(tc TestCase) {

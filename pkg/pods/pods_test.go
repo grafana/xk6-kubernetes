@@ -84,7 +84,7 @@ func TestPods_Create(t *testing.T) {
 			t.Parallel()
 			// TODO Figure out the rest.Config
 			client := fake.NewSimpleClientset()
-			watcher := watch.NewFake()
+			watcher := watch.NewRaceFreeFake()
 			client.PrependWatchReactor("pods", k8stest.DefaultWatchReactor(watcher, nil))
 			fixture := New(context.Background(), client, nil, metav1.ListOptions{})
 			go func(tc TestCase) {
@@ -183,7 +183,7 @@ func TestPods_Wait(t *testing.T) {
 			t.Parallel()
 			// TODO Figure out the rest.Config
 			client := fake.NewSimpleClientset()
-			watcher := watch.NewFake()
+			watcher := watch.NewRaceFreeFake()
 			client.PrependWatchReactor("pods", k8stest.DefaultWatchReactor(watcher, nil))
 			fixture := New(context.Background(), client, nil, metav1.ListOptions{})
 			go func(tc TestCase) {
@@ -399,7 +399,7 @@ func TestPods_AddEphemeralContainer(t *testing.T) {
 			client := fake.NewSimpleClientset(
 				testutils.NewPod(tc.podName, testNamespace),
 			)
-			watcher := watch.NewFake()
+			watcher := watch.NewRaceFreeFake()
 			client.PrependWatchReactor("pods", k8stest.DefaultWatchReactor(watcher, nil))
 			fixture := New(context.Background(), client, nil, metav1.ListOptions{})
 
