@@ -18,9 +18,9 @@ export default function () {
     namespace: namespace,
     name: podName,
     image: image,
-    command: command
+    command: command,
+    wait: "5s"
   })
-  sleep(1)
 
   kubernetes.pods.addEphemeralContainer(
     podName,
@@ -30,9 +30,9 @@ export default function () {
       image: containerImage,
       command: containerCommand,
       capabilities: containerCapabilities,
+      wait: "5s"
     }   
   )
-  sleep(1)
 
   let pod = kubernetes.pods.get(podName, namespace)
   if (pod.spec.ephemeral_containers[0].name == containerName) {

@@ -61,6 +61,12 @@ type ContainerOptions struct {
 	Capabilities []string // capabilities to be added to the container's security context
 }
 
+// EphemeralContainerOptions describes the options for creating an ephemeral container in a pod
+type EphemeralContainerOptions struct {
+	ContainerOptions
+	Wait string
+}
+
 // Pods provides API for manipulating Pod resources within a Kubernetes cluster
 type Pods struct {
 	client      kubernetes.Interface
@@ -79,6 +85,9 @@ type PodOptions struct {
 	RestartPolicy k8sTypes.RestartPolicy // policy for restarting containers in the pod [Always|OnFailure|Never]
 	Wait          string                 // timeout for waiting until the pod is running
 }
+
+// podConditionChecker defines a function that checks if a pod satisfies a condition
+type podConditionChecker func(*k8sTypes.Pod) (bool, error)
 
 // List returns a collection of Pods available within the namespace
 func (obj *Pods) List(namespace string) ([]k8sTypes.Pod, error) {
@@ -194,10 +203,35 @@ func (obj *Pods) Wait(options WaitOptions) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+
+	return obj.waitForCondition(
+		options.Namespace,
+		options.Name,
+		timeout,
+		func(pod *k8sTypes.Pod) (bool, error) {
+			if pod.Status.Phase == k8sTypes.PodFailed {
+				return false, errors.New("pod has failed")
+			}
+			if string(pod.Status.Phase) == options.Status {
+				return true, nil
+			}
+			return false, nil
+		},
+	)
+}
+
+// waitForCondition watches a Pod in a namespace until a podConditionChecker is satisfied or a timeout expires
+func (obj *Pods) waitForCondition(
+	namespace string,
+	name string,
+	timeout time.Duration,
+	checker podConditionChecker,
+) (bool, error) {
 	selector := fields.Set{
-		"metadata.name": options.Name,
+		"metadata.name": name,
 	}.AsSelector()
-	watcher, err := obj.client.CoreV1().Pods(options.Namespace).Watch(
+
+	watcher, err := obj.client.CoreV1().Pods(namespace).Watch(
 		obj.ctx,
 		metav1.ListOptions{
 			FieldSelector: selector.String(),
@@ -221,11 +255,9 @@ func (obj *Pods) Wait(options WaitOptions) (bool, error) {
 				if !isPod {
 					return false, errors.New("received unknown object while watching for pods")
 				}
-				if pod.Status.Phase == k8sTypes.PodFailed {
-					return false, errors.New("pod has failed")
-				}
-				if string(pod.Status.Phase) == options.Status {
-					return true, nil
+				condition, err := checker(pod)
+				if condition || err != nil {
+					return condition, err
 				}
 			}
 		}
@@ -278,7 +310,7 @@ func (obj *Pods) Exec(options ExecOptions) (*ExecResult, error) {
 
 // AddEphemeralContainer adds an ephemeral container to a running pod. The Pod is identified by name and namespace.
 // The container is described by options
-func (obj *Pods) AddEphemeralContainer(name, namespace string, options ContainerOptions) error {
+func (obj *Pods) AddEphemeralContainer(name, namespace string, options EphemeralContainerOptions) error {
 	pod, err := obj.Get(name, namespace)
 	if err != nil {
 		return err
@@ -287,7 +319,7 @@ func (obj *Pods) AddEphemeralContainer(name, namespace string, options Container
 	if err != nil {
 		return err
 	}
-	container := generateEphemeralContainer(options)
+	container := generateEphemeralContainer(options.ContainerOptions)
 
 	updatedPod := pod.DeepCopy()
 	updatedPod.Spec.EphemeralContainers = append(updatedPod.Spec.EphemeralContainers, *container)
@@ -304,7 +336,28 @@ func (obj *Pods) AddEphemeralContainer(name, namespace string, options Container
 	_, err = obj.client.CoreV1().Pods(namespace).Patch(
 		obj.ctx, pod.Name, types.StrategicMergePatchType, patch, metav1.PatchOptions{}, "ephemeralcontainers")
 
-	return err
+	if options.Wait == "" {
+		return err
+	}
+
+	timeout, err := time.ParseDuration(options.Wait)
+	if err != nil {
+		return err
+	}
+
+	running, err := obj.waitForCondition(
+		namespace,
+		name,
+		timeout,
+		checkEphemeralContainerState,
+	)
+	if err != nil {
+		return err
+	}
+	if !running {
+		return errors.New("Ephemeral container has not started after " + options.Wait)
+	}
+	return nil
 }
 
 func generateEphemeralContainer(o ContainerOptions) *k8sTypes.EphemeralContainer {
@@ -328,4 +381,16 @@ func generateEphemeralContainer(o ContainerOptions) *k8sTypes.EphemeralContainer
 			},
 		},
 	}
+}
+
+func checkEphemeralContainerState(pod *k8sTypes.Pod) (bool, error) {
+	if pod.Status.EphemeralContainerStatuses != nil {
+		for _, cs := range pod.Status.EphemeralContainerStatuses {
+			if cs.State.Running != nil {
+				return true, nil
+			}
+		}
+	}
+
+	return false, nil
 }
