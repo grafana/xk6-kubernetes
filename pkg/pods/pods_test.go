@@ -424,7 +424,6 @@ func TestPods_AddEphemeralContainer(t *testing.T) {
 				t.Errorf("unexpected error: %v", err)
 				return
 			}
-
 		})
 	}
 }

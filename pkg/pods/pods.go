@@ -61,6 +61,7 @@ type ContainerOptions struct {
 	Capabilities []string // capabilities to be added to the container's security context
 }
 
+// EphemeralContainerOptions describes the options for creating an ephemeral container in a pod
 type EphemeralContainerOptions struct {
 	ContainerOptions
 	Wait string
@@ -85,7 +86,8 @@ type PodOptions struct {
 	Wait          string                 // timeout for waiting until the pod is running
 }
 
-type PodConditionChecker func(*k8sTypes.Pod) (bool, error)
+// podConditionChecker defines a function that checks if a pod satisfies a condition
+type podConditionChecker func(*k8sTypes.Pod) (bool, error)
 
 // List returns a collection of Pods available within the namespace
 func (obj *Pods) List(namespace string) ([]k8sTypes.Pod, error) {
@@ -218,8 +220,13 @@ func (obj *Pods) Wait(options WaitOptions) (bool, error) {
 	)
 }
 
-// waitForCondition watchs a Pod in a given namespace until a condition is validated by a PodConditionChecket or a timeout expires.
-func (obj *Pods) waitForCondition(namespace string, name string, timeout time.Duration, checker PodConditionChecker) (bool, error) {
+// waitForCondition watches a Pod in a namespace until a podConditionChecker is satisfied or a timeout expires
+func (obj *Pods) waitForCondition(
+	namespace string,
+	name string,
+	timeout time.Duration,
+	checker podConditionChecker,
+) (bool, error) {
 	selector := fields.Set{
 		"metadata.name": name,
 	}.AsSelector()

@@ -255,7 +255,7 @@ func NewPodWithStatus(name string, namespace string, phase string) *coreV1.Pod {
 	return pod
 }
 
-// NewPodWithStatus is a helper for building Pods with a given Status
+// PodWithEphemeralContainerStatus is a helper for building Pods with an ephemeral container having the given Status
 func PodWithEphemeralContainerStatus(name string, namespace string, container string, state string) *coreV1.Pod {
 	pod := NewPod(name, namespace)
 	var containerState coreV1.ContainerState
