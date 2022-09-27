@@ -140,7 +140,6 @@ func (mi *ModuleInstance) newClient(c goja.ConstructorCall) *goja.Object {
 			common.Throw(rt, err)
 		}
 		obj.Kubernetes = k8s
-
 	} else {
 		// Pre-configured dynamic client is injected for unit testing
 		k8s, err := api.NewFromConfig(

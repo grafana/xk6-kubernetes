@@ -1,4 +1,4 @@
-// Package kubernetes implements helper functions for manipulating resources in a
+// Package api implements helper functions for manipulating resources in a
 // Kubernetes cluster.
 package api
 
@@ -18,18 +18,26 @@ import (
 
 // maps kinds to api resources
 // TODO: complete with most common kinds
-var knownKinds = map[string]schema.GroupVersionResource{
-	"ConfigMap":  {Group: "", Version: "v1", Resource: "configmaps"},
-	"Deployment": {Group: "apps", Version: "v1", Resource: "deployments"},
-	"Job":        {Group: "batch", Version: "v1", Resource: "jobs"},
-	"Pod":        {Group: "", Version: "v1", Resource: "pods"},
-	"Namespace":  {Group: "", Version: "v1", Resource: "namespaces"},
-	"Node":       {Group: "", Version: "v1", Resource: "nodes"},
-	"Secret":     {Group: "", Version: "v1", Resource: "secrets"},
-	"Service":    {Group: "", Version: "v1", Resource: "services"},
+func knownKinds(kind string) (schema.GroupVersionResource, error) {
+	kindMapping := map[string]schema.GroupVersionResource{
+		"ConfigMap":  {Group: "", Version: "v1", Resource: "configmaps"},
+		"Deployment": {Group: "apps", Version: "v1", Resource: "deployments"},
+		"Job":        {Group: "batch", Version: "v1", Resource: "jobs"},
+		"Pod":        {Group: "", Version: "v1", Resource: "pods"},
+		"Namespace":  {Group: "", Version: "v1", Resource: "namespaces"},
+		"Node":       {Group: "", Version: "v1", Resource: "nodes"},
+		"Secret":     {Group: "", Version: "v1", Resource: "secrets"},
+		"Service":    {Group: "", Version: "v1", Resource: "services"},
+	}
+
+	gvk, found := kindMapping[kind]
+	if !found {
+		return schema.GroupVersionResource{}, fmt.Errorf("unknown kind: '%s'", kind)
+	}
+	return gvk, nil
 }
 
-// Defines an interface that extends kubernetes interface[k8s.io/client-go/kubernetes.Interface] adding
+// Kubernetes defines an interface that extends kubernetes interface[k8s.io/client-go/kubernetes.Interface] adding
 // generic functions that operate on any kind of object
 type Kubernetes interface {
 	Apply(manifest string) error
@@ -86,9 +94,9 @@ func (k *kubernetes) Apply(manifest string) error {
 	if err != nil {
 		return err
 	}
-	resource, known := knownKinds[gvk.Kind]
-	if !known {
-		return fmt.Errorf("unknown kind: '%s'", gvk.Kind)
+	resource, err := knownKinds(gvk.Kind)
+	if err != nil {
+		return err
 	}
 
 	namespace := uObj.GetNamespace()
@@ -103,7 +111,6 @@ func (k *kubernetes) Apply(manifest string) error {
 			uObj,
 			metav1.CreateOptions{},
 		)
-
 	return err
 }
 
@@ -118,9 +125,9 @@ func (k *kubernetes) Create(obj map[string]interface{}) (map[string]interface{},
 	if namespace == "" {
 		namespace = "default"
 	}
-	resource, known := knownKinds[gvk.Kind]
-	if !known {
-		return nil, fmt.Errorf("unknown kind: '%s'", gvk.Kind)
+	resource, err := knownKinds(gvk.Kind)
+	if err != nil {
+		return nil, err
 	}
 
 	resp, err := k.client.Resource(resource).
@@ -130,7 +137,6 @@ func (k *kubernetes) Create(obj map[string]interface{}) (map[string]interface{},
 			uObj,
 			metav1.CreateOptions{},
 		)
-
 	if err != nil {
 		return nil, err
 	}
@@ -139,9 +145,9 @@ func (k *kubernetes) Create(obj map[string]interface{}) (map[string]interface{},
 
 // Get returns an object given its kind, name and namespace
 func (k *kubernetes) Get(kind string, name string, namespace string) (map[string]interface{}, error) {
-	resource, known := knownKinds[kind]
-	if !known {
-		return nil, fmt.Errorf("unknown kind: '%s'", kind)
+	resource, err := knownKinds(kind)
+	if err != nil {
+		return nil, err
 	}
 
 	resp, err := k.client.
@@ -152,7 +158,6 @@ func (k *kubernetes) Get(kind string, name string, namespace string) (map[string
 			name,
 			metav1.GetOptions{},
 		)
-
 	if err != nil {
 		return nil, err
 	}
@@ -161,21 +166,19 @@ func (k *kubernetes) Get(kind string, name string, namespace string) (map[string
 
 // List returns a list of objects given its kind and namespace
 func (k *kubernetes) List(kind string, namespace string) ([]map[string]interface{}, error) {
-	resource, known := knownKinds[kind]
-	if !known {
-		return nil, fmt.Errorf("unknown kind: '%s'", kind)
+	resource, err := knownKinds(kind)
+	if err != nil {
+		return nil, err
 	}
-
 	resp, err := k.client.
 		Resource(resource).
 		Namespace(namespace).
 		List(k.ctx, metav1.ListOptions{})
-
 	if err != nil {
 		return nil, err
 	}
 
-	var list []map[string]interface{}
+	list := []map[string]interface{}{}
 	for _, uObj := range resp.Items {
 		list = append(list, uObj.UnstructuredContent())
 	}
@@ -184,12 +187,12 @@ func (k *kubernetes) List(kind string, namespace string) ([]map[string]interface
 
 // Delete deletes an object given its kind, name and namespace
 func (k *kubernetes) Delete(kind string, name string, namespace string) error {
-	resource, known := knownKinds[kind]
-	if !known {
-		return fmt.Errorf("unknown kind: '%s'", kind)
+	resource, err := knownKinds(kind)
+	if err != nil {
+		return err
 	}
 
-	err := k.client.
+	err = k.client.
 		Resource(resource).
 		Namespace(namespace).
 		Delete(k.ctx, name, metav1.DeleteOptions{})

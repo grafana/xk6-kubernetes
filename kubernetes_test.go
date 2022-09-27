@@ -463,10 +463,14 @@ func TestGenericApiIsScriptable(t *testing.T) {
 
 	tenv := setupTestEnv(t)
 
+	dynamic, err := localutils.NewFakeDynamic()
+	if err != nil {
+		t.Errorf("unexpected error creating fake client %v", err)
+	}
 	tenv.Module.clientset = fake.NewSimpleClientset()
-	tenv.Module.dynamic = localutils.NewFakeDynamic()
+	tenv.Module.dynamic = dynamic
 
-	_, err := tenv.Runtime.RunString(`
+	_, err = tenv.Runtime.RunString(`
 const k8s = new Kubernetes()
 
 const podSpec = {
