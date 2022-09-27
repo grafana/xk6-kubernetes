@@ -45,6 +45,8 @@ type KubernetesConfig struct {
 	Context context.Context
 	// kubernetes rest config
 	Config *rest.Config
+	// Client is a pre-configured dynamic client. If provided, the rest config is not used
+	Client dynamic.Interface
 }
 
 // kubernetes Holds the reference to the helpers for interacting with kubernetes
@@ -56,9 +58,13 @@ type kubernetes struct {
 
 // NewFromConfig returns a Kubernetes instance
 func NewFromConfig(c KubernetesConfig) (Kubernetes, error) {
-	dynamic, err := dynamic.NewForConfig(c.Config)
-	if err != nil {
-		return nil, err
+	client := c.Client
+	var err error
+	if client == nil {
+		client, err = dynamic.NewForConfig(c.Config)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	ctx := c.Context
@@ -68,7 +74,7 @@ func NewFromConfig(c KubernetesConfig) (Kubernetes, error) {
 
 	return &kubernetes{
 		ctx:        ctx,
-		client:     dynamic,
+		client:     client,
 		serializer: yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme),
 	}, nil
 }
