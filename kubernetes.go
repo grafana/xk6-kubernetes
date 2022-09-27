@@ -11,6 +11,7 @@ import (
 	"go.k6.io/k6/js/common"
 	"k8s.io/client-go/rest"
 
+	"github.com/grafana/xk6-kubernetes/pkg/api"
 	"github.com/grafana/xk6-kubernetes/pkg/configmaps"
 	"github.com/grafana/xk6-kubernetes/pkg/deployments"
 	"github.com/grafana/xk6-kubernetes/pkg/ingresses"
@@ -25,6 +26,7 @@ import (
 
 	"go.k6.io/k6/js/modules"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth" // Required for access to GKE and AKS
 	"k8s.io/client-go/tools/clientcmd"
@@ -44,10 +46,13 @@ type ModuleInstance struct {
 	vu modules.VU
 	// clientset enables injection of a pre-configured Kubernetes environment for unit tests
 	clientset kubernetes.Interface
+	// dynamic enables injection of a fake dynamic client for unit tests
+	dynamic dynamic.Interface
 }
 
 // Kubernetes is the exported object used within JavaScript.
 type Kubernetes struct {
+	api.Kubernetes
 	client                 kubernetes.Interface
 	metaOptions            metaV1.ListOptions
 	ctx                    context.Context
@@ -100,6 +105,7 @@ func (mi *ModuleInstance) newClient(c goja.ConstructorCall) *goja.Object {
 	obj := &Kubernetes{}
 	var config *rest.Config
 
+	// if clientset was not injected for unit testing
 	if mi.clientset == nil {
 		var options KubeConfig
 		err := rt.ExportTo(c.Argument(0), &options)
@@ -119,6 +125,34 @@ func (mi *ModuleInstance) newClient(c goja.ConstructorCall) *goja.Object {
 	} else {
 		// Pre-configured clientset is being injected for unit testing
 		obj.client = mi.clientset
+	}
+
+	// If dynamic client was not injected for unit testing
+	// It is assumed rest config is set
+	if mi.dynamic == nil {
+		k8s, err := api.NewFromConfig(
+			api.KubernetesConfig{
+				Config:  config,
+				Context: ctx,
+			},
+		)
+		if err != nil {
+			common.Throw(rt, err)
+		}
+		obj.Kubernetes = k8s
+
+	} else {
+		// Pre-configured dynamic client is injected for unit testing
+		k8s, err := api.NewFromConfig(
+			api.KubernetesConfig{
+				Client:  mi.dynamic,
+				Context: ctx,
+			},
+		)
+		if err != nil {
+			common.Throw(rt, err)
+		}
+		obj.Kubernetes = k8s
 	}
 
 	obj.metaOptions = metaV1.ListOptions{}

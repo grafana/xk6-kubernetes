@@ -456,3 +456,53 @@ if (k8s.services.list().length != initialCount) {
 `)
 	require.NoError(t, err)
 }
+
+// TestGenericApiIsScriptable runs through creating, getting, listing and deleting an object
+func TestGenericApiIsScriptable(t *testing.T) {
+	t.Parallel()
+
+	tenv := setupTestEnv(t)
+
+	tenv.Module.clientset = fake.NewSimpleClientset()
+	tenv.Module.dynamic = localutils.NewFakeDynamic()
+
+	_, err := tenv.Runtime.RunString(`
+const k8s = new Kubernetes()
+
+const podSpec = {
+    apiVersion: "v1",
+    kind:       "Pod",
+    metadata: {
+        name:      "busybox",
+        namespace: "testns"
+    },
+    spec: {
+        containers: [
+            {
+                name:    "busybox",
+                image:   "busybox",
+                command: ["sh", "-c", "sleep 30"]
+            }
+        ]
+    }
+}
+
+var created = k8s.create(podSpec)
+
+var pod = k8s.get(podSpec.kind, podSpec.metadata.name, podSpec.metadata.namespace)
+if (podSpec.metadata.name != pod.metadata.name) {
+	throw new Error("Fetch by name did not return the Service. Expected: " + podSpec.metadata.name + " but got: " + fetched.name)
+}
+
+const pods = k8s.list(podSpec.kind, podSpec.metadata.namespace)
+if (pods === undefined || pods.length < 1) {
+	throw new Error("Expected listing with 1 Pod")
+}
+
+k8s.delete(podSpec.kind, podSpec.metadata.name, podSpec.metadata.namespace)
+if (k8s.list(podSpec.kind, podSpec.metadata.namespace).length != 0) {
+	throw new Error("Deletion failed to remove pod")
+}
+`)
+	require.NoError(t, err)
+}
