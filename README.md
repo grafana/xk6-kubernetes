@@ -36,39 +36,128 @@ cd xk6-kubernetes
 make
 ```
 
-
-## Example
-
-```javascript
-import { Kubernetes } from 'k6/x/kubernetes';
-  
-export default function () {
-  const kubernetes = new Kubernetes({
-    // config_path: "/path/to/kube/config", ~/.kube/config by default
-  });
-
-  const pods = kubernetes.pods.list();
-
-  console.log(`${pods.length} Pods found:`);
-  pods.map(function(pod) {
-    console.log(`  ${pod.name}`)
-  });
-}
-```
-
 Using the `k6` binary with `xk6-kubernetes`, run the k6 test as usual:
 
 ```bash
 ./k6 run k8s-test-script.js
 
-...
-INFO[0001] 16 Pods found:     source=console
-...
+```
+# Usage
 
+The API assumes a `kubeconfig` configuration is available at any of the following default locations:
+* at the location pointed by the `KUBECONFIG` environment variable
+* at `$HOME/.kube`
+
+
+# API
+
+## Generic API
+
+This API offers methods for creating, retrieving, listing and deleting resources of any of the supported kinds.
+
+|  Method     | Parameters|   Description |
+| ------------ | ---| ------ |
+| apply         | manifest string| creates a Kubernetes resource given a YAML manifest |
+| create         | spec object | creates a Kubernetes resource given its specification |
+| delete         | kind  | removes the named resource |
+|                | name  |
+|                | namespace|
+| get         | kind| returns the named resource |
+|                | name  |
+|                | namespace |
+| list         | kind| returns a collection of resources of a given kind
+|                | namespace |
+
+
+The kinds of resources currently supported are:
+* ConfigMap
+* Deployment
+* Job
+* Namespace
+* Node
+* Pod
+* Secret
+* Service
+
+### Examples
+
+#### Creating a pod using a specification 
+```javascript
+import { Kubernetes } from 'k6/x/kubernetes';
+
+const podSpec = {
+    apiVersion: "v1",
+    kind:       "Pod",
+    metadata: {
+        name:      "busybox",
+        namespace: "testns"
+    },
+    spec: {
+        containers: [
+            {
+                name:    "busybox",
+                image:   "busybox",
+                command: ["sh", "-c", "sleep 30"]
+            }
+        ]
+    }
+}
+
+export default function () {
+  const kubernetes = new Kubernetes();
+
+  kubernetes.create(pod)
+
+  const pods = kubernetes.list("Pod", "testns");
+
+  console.log(`${pods.length} Pods found:`);
+  pods.map(function(pod) {
+    console.log(`  ${pod.metadata.name}`)
+  });
+}
 ```
 
+#### Creating a job using a yaml manifest
+```javascript
+import { Kubernetes } from 'k6/x/kubernetes';
 
-## APIs
+const manifest = `
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: busybox
+  namespace: testns
+spec:
+  template:
+    spec:
+      containers:
+      - name: busybox
+        image: busybox
+        command: ["sleep", "300"]
+    restartPolicy: Never
+`
+
+export default function () {
+  const kubernetes = new Kubernetes();
+
+  kubernetes.apply(manifest)
+
+  const jobs = kubernetes.list("Job", "testns");
+
+  console.log(`${jobs.length} Jobs found:`);
+  pods.map(function(job) {
+    console.log(`  ${job.metadata.name}`)
+  });
+}
+```
+
+## Resource kind helpers
+
+This API offers a helper for each kind of Kubernetes resources supported (Pods, Deployments, Secrets, et cetera). For each one, an interface for creating, getting, listing and deleting objects is offered. 
+
+>⚠️  This interface is deprecated and will be removed soon
+> -
+</br>
 
 
 ### Create a client:  `new Kubernetes(config)`
@@ -88,9 +177,6 @@ export default function () {
   })
 }
 ```
-
-
-
 
 ### `Client.config_maps`
 
