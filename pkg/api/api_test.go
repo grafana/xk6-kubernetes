@@ -4,11 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/xk6-kubernetes/internal/testutils"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
-	dynamicfake "k8s.io/client-go/dynamic/fake"
-	"k8s.io/client-go/kubernetes/fake"
 )
 
 var podSpec = map[string]interface{}{
@@ -52,9 +50,7 @@ var JobSpec = map[string]interface{}{
 }
 
 func newForTest() *kubernetes {
-	scheme := runtime.NewScheme()
-	fake.AddToScheme(scheme)
-	client := dynamicfake.NewSimpleDynamicClient(scheme)
+	client := testutils.NewFakeDynamic()
 	return &kubernetes{
 		ctx:        context.TODO(),
 		client:     client,
