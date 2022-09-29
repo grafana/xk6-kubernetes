@@ -60,7 +60,7 @@ type KubernetesConfig struct {
 	Client dynamic.Interface
 }
 
-// kubernetes Holds the reference to the helpers for interacting with kubernetes
+// kubernetes holds the reference to the helpers for interacting with kubernetes
 type kubernetes struct {
 	ctx        context.Context
 	client     dynamic.Interface
@@ -90,7 +90,7 @@ func NewFromConfig(c KubernetesConfig) (Kubernetes, error) {
 	}, nil
 }
 
-// Apply creates a resource in a kubernetes cluster from a yaml manifest
+// Apply creates a resource in a kubernetes cluster from a YAML manifest
 func (k *kubernetes) Apply(manifest string) error {
 	uObj := &unstructured.Unstructured{}
 	_, gvk, err := k.serializer.Decode([]byte(manifest), nil, uObj)
@@ -117,7 +117,7 @@ func (k *kubernetes) Apply(manifest string) error {
 	return err
 }
 
-// Create creates a resource in a kubernetes cluster from a yaml manifest
+// Create creates a resource in a kubernetes cluster from an object with its specification
 func (k *kubernetes) Create(obj map[string]interface{}) (map[string]interface{}, error) {
 	uObj := &unstructured.Unstructured{
 		Object: obj,

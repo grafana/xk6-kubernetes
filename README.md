@@ -120,7 +120,7 @@ export default function () {
 }
 ```
 
-#### Creating a job using a yaml manifest
+#### Creating a job using a YAML manifest
 ```javascript
 import { Kubernetes } from 'k6/x/kubernetes';
 
