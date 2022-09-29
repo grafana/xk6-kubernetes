@@ -15,16 +15,12 @@ import (
 	"go.k6.io/k6/lib/testutils"
 	"go.k6.io/k6/metrics"
 
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
 )
 
-type testEnv struct {
-	Runtime *goja.Runtime
-	Module  *ModuleInstance
-}
-
 // setupTestEnv should be called from each test to build the execution environment for the test
-func setupTestEnv(t *testing.T) testEnv {
+func setupTestEnv(t *testing.T, objs ...runtime.Object) *goja.Runtime {
 	rt := goja.New()
 	rt.SetFieldNameMapper(common.FieldNameMapper{})
 
@@ -54,22 +50,28 @@ func setupTestEnv(t *testing.T) testEnv {
 	require.True(t, ok)
 	require.NoError(t, rt.Set("Kubernetes", m.Exports().Named["Kubernetes"]))
 
-	return testEnv{
-		Module:  m,
-		Runtime: rt,
+	m.clientset = fake.NewSimpleClientset(objs...)
+
+	dynamic, err := localutils.NewFakeDynamic()
+	if err != nil {
+		t.Errorf("unexpected error creating fake client %v", err)
 	}
+	m.dynamic = dynamic
+
+	return rt
 }
 
 // TestConfigMapsScriptable runs through listing, creating, fetching, and deleting to ensure scripting
 func TestConfigMapsScriptable(t *testing.T) {
 	t.Parallel()
 
-	tenv := setupTestEnv(t)
-	tenv.Module.clientset = fake.NewSimpleClientset(
+	rt := setupTestEnv(
+		t,
 		localutils.NewConfigMap("cm-1", "ns-test"),
 	)
 
-	_, err := tenv.Runtime.RunString(`
+	_, err := rt.RunString(`
+
 const k8s = new Kubernetes()
 
 const cms = k8s.config_maps.list("ns-test")
@@ -100,12 +102,12 @@ if (k8s.config_maps.list("ns-test").length != initialCount) {
 func TestDeploymentsScriptable(t *testing.T) {
 	t.Parallel()
 
-	tenv := setupTestEnv(t)
-	tenv.Module.clientset = fake.NewSimpleClientset(
+	rt := setupTestEnv(
+		t,
 		localutils.NewDeployment("deployment-1", "ns-test"),
 	)
 
-	_, err := tenv.Runtime.RunString(`
+	_, err := rt.RunString(`
 const k8s = new Kubernetes()
 
 const deployments = k8s.deployments.list("ns-test")
@@ -139,12 +141,12 @@ if (k8s.deployments.list("ns-test").length != initialCount) {
 func TestIngressesScriptable(t *testing.T) {
 	t.Parallel()
 
-	tenv := setupTestEnv(t)
-	tenv.Module.clientset = fake.NewSimpleClientset(
+	rt := setupTestEnv(
+		t,
 		localutils.NewIngress("ingress-1", "ns-test"),
 	)
 
-	_, err := tenv.Runtime.RunString(`
+	_, err := rt.RunString(`
 const k8s = new Kubernetes()
 
 const ingresses = k8s.ingresses.list("ns-test")
@@ -178,12 +180,12 @@ if (k8s.ingresses.list("ns-test").length != initialCount) {
 func TestJobsScriptable(t *testing.T) {
 	t.Parallel()
 
-	tenv := setupTestEnv(t)
-	tenv.Module.clientset = fake.NewSimpleClientset(
+	rt := setupTestEnv(
+		t,
 		localutils.NewJob("job-1", "ns-test"),
 	)
 
-	_, err := tenv.Runtime.RunString(`
+	_, err := rt.RunString(`
 const k8s = new Kubernetes()
 
 const jobs = k8s.jobs.list("ns-test")
@@ -217,12 +219,12 @@ if (k8s.jobs.list("ns-test").length != initialCount) {
 func TestNamespaceScriptable(t *testing.T) {
 	t.Parallel()
 
-	tenv := setupTestEnv(t)
-	tenv.Module.clientset = fake.NewSimpleClientset(
+	rt := setupTestEnv(
+		t,
 		localutils.NewNamespace("ns-1"),
 	)
 
-	_, err := tenv.Runtime.RunString(`
+	_, err := rt.RunString(`
 const k8s = new Kubernetes()
 
 const namespaces = k8s.namespaces.list()
@@ -253,12 +255,12 @@ if (k8s.namespaces.list().length != initialCount) {
 func TestNodesScriptable(t *testing.T) {
 	t.Parallel()
 
-	tenv := setupTestEnv(t)
-	tenv.Module.clientset = fake.NewSimpleClientset(
+	rt := setupTestEnv(
+		t,
 		localutils.NewNodes("node-1"),
 	)
 
-	_, err := tenv.Runtime.RunString(`
+	_, err := rt.RunString(`
 const k8s = new Kubernetes()
 
 const nodes = k8s.nodes.list()
@@ -273,12 +275,12 @@ if (nodes === undefined || nodes.length < 1) {
 func TestPersistentVolumeClaimsScriptable(t *testing.T) {
 	t.Parallel()
 
-	tenv := setupTestEnv(t)
-	tenv.Module.clientset = fake.NewSimpleClientset(
+	rt := setupTestEnv(
+		t,
 		localutils.NewPersistentVolumeClaim("pvc-1", "ns-test"),
 	)
 
-	_, err := tenv.Runtime.RunString(`
+	_, err := rt.RunString(`
 const k8s = new Kubernetes()
 
 const pvcs = k8s.persistent_volume_claims.list()
@@ -311,12 +313,12 @@ if (k8s.persistent_volume_claims.list().length != initialCount) {
 func TestPersistentVolumesScriptable(t *testing.T) {
 	t.Parallel()
 
-	tenv := setupTestEnv(t)
-	tenv.Module.clientset = fake.NewSimpleClientset(
+	rt := setupTestEnv(
+		t,
 		localutils.NewPersistentVolume("pv-1"),
 	)
 
-	_, err := tenv.Runtime.RunString(`
+	_, err := rt.RunString(`
 const k8s = new Kubernetes()
 
 const pvs = k8s.persistent_volumes.list()
@@ -347,12 +349,12 @@ if (k8s.persistent_volumes.list().length != initialCount) {
 func TestPodsScriptable(t *testing.T) {
 	t.Parallel()
 
-	tenv := setupTestEnv(t)
-	tenv.Module.clientset = fake.NewSimpleClientset(
+	rt := setupTestEnv(
+		t,
 		localutils.NewPod("pod-1", "ns-test"),
 	)
 
-	_, err := tenv.Runtime.RunString(`
+	_, err := rt.RunString(`
 const k8s = new Kubernetes()
 
 const pods = k8s.pods.list()
@@ -385,12 +387,12 @@ if (k8s.pods.list().length != initialCount) {
 func TestSecretsScriptable(t *testing.T) {
 	t.Parallel()
 
-	tenv := setupTestEnv(t)
-	tenv.Module.clientset = fake.NewSimpleClientset(
+	rt := setupTestEnv(
+		t,
 		localutils.NewSecret("secret-1", "ns-test"),
 	)
 
-	_, err := tenv.Runtime.RunString(`
+	_, err := rt.RunString(`
 const k8s = new Kubernetes()
 
 const secrets = k8s.secrets.list()
@@ -423,12 +425,12 @@ if (k8s.secrets.list().length != initialCount) {
 func TestServicesScriptable(t *testing.T) {
 	t.Parallel()
 
-	tenv := setupTestEnv(t)
-	tenv.Module.clientset = fake.NewSimpleClientset(
+	rt := setupTestEnv(
+		t,
 		localutils.NewService("svc-1", "ns-test"),
 	)
 
-	_, err := tenv.Runtime.RunString(`
+	_, err := rt.RunString(`
 const k8s = new Kubernetes()
 
 const svcs = k8s.services.list()
@@ -452,6 +454,53 @@ if (created.name != fetched.name) {
 k8s.services.delete(created.name, created.namespace)
 if (k8s.services.list().length != initialCount) {
 	throw new Error("Deletion failed to remove Service from list")
+}
+`)
+	require.NoError(t, err)
+}
+
+// TestGenericApiIsScriptable runs through creating, getting, listing and deleting an object
+func TestGenericApiIsScriptable(t *testing.T) {
+	t.Parallel()
+
+	rt := setupTestEnv(t)
+
+	_, err := rt.RunString(`
+const k8s = new Kubernetes()
+
+const podSpec = {
+    apiVersion: "v1",
+    kind:       "Pod",
+    metadata: {
+        name:      "busybox",
+        namespace: "testns"
+    },
+    spec: {
+        containers: [
+            {
+                name:    "busybox",
+                image:   "busybox",
+                command: ["sh", "-c", "sleep 30"]
+            }
+        ]
+    }
+}
+
+var created = k8s.create(podSpec)
+
+var pod = k8s.get(podSpec.kind, podSpec.metadata.name, podSpec.metadata.namespace)
+if (podSpec.metadata.name != pod.metadata.name) {
+	throw new Error("Fetch by name did not return the Service. Expected: " + podSpec.metadata.name + " but got: " + fetched.name)
+}
+
+const pods = k8s.list(podSpec.kind, podSpec.metadata.namespace)
+if (pods === undefined || pods.length < 1) {
+	throw new Error("Expected listing with 1 Pod")
+}
+
+k8s.delete(podSpec.kind, podSpec.metadata.name, podSpec.metadata.namespace)
+if (k8s.list(podSpec.kind, podSpec.metadata.namespace).length != 0) {
+	throw new Error("Deletion failed to remove pod")
 }
 `)
 	require.NoError(t, err)
