@@ -20,14 +20,17 @@ import (
 // TODO: complete with most common kinds
 func knownKinds(kind string) (schema.GroupVersionResource, error) {
 	kindMapping := map[string]schema.GroupVersionResource{
-		"ConfigMap":  {Group: "", Version: "v1", Resource: "configmaps"},
-		"Deployment": {Group: "apps", Version: "v1", Resource: "deployments"},
-		"Job":        {Group: "batch", Version: "v1", Resource: "jobs"},
-		"Pod":        {Group: "", Version: "v1", Resource: "pods"},
-		"Namespace":  {Group: "", Version: "v1", Resource: "namespaces"},
-		"Node":       {Group: "", Version: "v1", Resource: "nodes"},
-		"Secret":     {Group: "", Version: "v1", Resource: "secrets"},
-		"Service":    {Group: "", Version: "v1", Resource: "services"},
+		"ConfigMap":             {Group: "", Version: "v1", Resource: "configmaps"},
+		"Deployment":            {Group: "apps", Version: "v1", Resource: "deployments"},
+		"Job":                   {Group: "batch", Version: "v1", Resource: "jobs"},
+		"PersistentVolume":      {Group: "", Version: "v1", Resource: "persistentvolumes"},
+		"PersistentVolumeClaim": {Group: "", Version: "v1", Resource: "persistentvolumeclaims"},
+		"Pod":                   {Group: "", Version: "v1", Resource: "pods"},
+		"Namespace":             {Group: "", Version: "v1", Resource: "namespaces"},
+		"Node":                  {Group: "", Version: "v1", Resource: "nodes"},
+		"Secret":                {Group: "", Version: "v1", Resource: "secrets"},
+		"Service":               {Group: "", Version: "v1", Resource: "services"},
+		"StatefulSet":           {Group: "apps", Version: "v1", Resource: "statefulsets"},
 	}
 
 	gvk, found := kindMapping[kind]

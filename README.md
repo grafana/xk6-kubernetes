@@ -75,9 +75,12 @@ The kinds of resources currently supported are:
 * Job
 * Namespace
 * Node
+* PersistentVolume
+* PersistentVolumeClaim
 * Pod
 * Secret
 * Service
+* StatefulSet
 
 ### Examples
 
