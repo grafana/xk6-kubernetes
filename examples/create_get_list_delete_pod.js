@@ -27,12 +27,12 @@ export default function(){
 
         var pod = k8s.get(podSpec.kind, podSpec.metadata.name, podSpec.metadata.namespace)
         if (podSpec.metadata.name != pod.metadata.name) {
-                throw new Error("Fetch by name did not return the Service. Expected: " + podSpec.metadata.name + " but got: " + fetched.name)
+                throw new Error("fetch by name did not return the Pod. Expected: " + podSpec.metadata.name + " but got: " + fetched.name)
         }
 
         const pods = k8s.list(podSpec.kind, podSpec.metadata.namespace)
         if (pods === undefined || pods.length < 1) {
-                throw new Error("Expected listing with 1 Pod")
+                throw new Error("expected listing with 1 Pod")
         }
 
         k8s.delete(podSpec.kind, podSpec.metadata.name, podSpec.metadata.namespace)
@@ -41,6 +41,6 @@ export default function(){
         sleep(5)
 
         if (k8s.list(podSpec.kind, podSpec.metadata.namespace).length != 0) {
-                throw new Error("Deletion failed to remove pod")
+                throw new Error("deletion failed to remove pod")
         }
 }
