@@ -1,12 +1,10 @@
-package api
+package resources
 
 import (
 	"context"
 	"testing"
 
 	"github.com/grafana/xk6-kubernetes/internal/testutils"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
 )
 
 func podSpec() map[string]interface{} {
@@ -53,16 +51,12 @@ func jobSpec() map[string]interface{} {
 	}
 }
 
-func newForTest() (*kubernetes, error) {
-	client, err := testutils.NewFakeDynamic()
+func newForTest() (*Client, error) {
+	dynamic, err := testutils.NewFakeDynamic()
 	if err != nil {
 		return nil, err
 	}
-	return &kubernetes{
-		ctx:        context.TODO(),
-		client:     client,
-		serializer: yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme),
-	}, nil
+	return NewFromClient(context.TODO(), dynamic), nil
 }
 
 func TestCreateGetListDelete(t *testing.T) {
@@ -94,18 +88,18 @@ func TestCreateGetListDelete(t *testing.T) {
 		tc := tc
 		t.Run(tc.test, func(t *testing.T) {
 			t.Parallel()
-			k, err := newForTest()
+			c, err := newForTest()
 			if err != nil {
 				t.Errorf("failed %v", err)
 				return
 			}
-			_, err = k.Create(tc.obj)
+			_, err = c.Create(tc.obj)
 			if err != nil {
 				t.Errorf("failed %v", err)
 				return
 			}
 
-			obj, err := k.Get(tc.kind, tc.name, tc.ns)
+			obj, err := c.Get(tc.kind, tc.name, tc.ns)
 			if err != nil {
 				t.Errorf("failed %v", err)
 				return
@@ -114,7 +108,7 @@ func TestCreateGetListDelete(t *testing.T) {
 				t.Errorf("invalid value returned")
 				return
 			}
-			pods, err := k.List(tc.kind, tc.ns)
+			pods, err := c.List(tc.kind, tc.ns)
 			if err != nil {
 				t.Errorf("failed to get list of %ss: %v", tc.kind, err)
 				return
@@ -125,7 +119,7 @@ func TestCreateGetListDelete(t *testing.T) {
 				return
 			}
 
-			err = k.Delete(tc.kind, tc.name, tc.ns)
+			err = c.Delete(tc.kind, tc.name, tc.ns)
 			if err != nil {
 				t.Errorf("failed to delete pod: %v", err)
 				return
@@ -171,18 +165,18 @@ func TestApply(t *testing.T) {
 		tc := tc
 		t.Run(tc.test, func(t *testing.T) {
 			t.Parallel()
-			k, err := newForTest()
+			c, err := newForTest()
 			if err != nil {
 				t.Errorf("failed %v", err)
 				return
 			}
-			err = k.Apply(tc.manifest)
+			err = c.Apply(tc.manifest)
 			if err != nil {
 				t.Errorf("failed %v", err)
 				return
 			}
 
-			obj, err := k.Get(tc.kind, tc.name, tc.ns)
+			obj, err := c.Get(tc.kind, tc.name, tc.ns)
 			if err != nil {
 				t.Errorf("failed %v", err)
 				return
