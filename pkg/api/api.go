@@ -5,6 +5,7 @@ package api
 import (
 	"context"
 
+	"github.com/grafana/xk6-kubernetes/pkg/helpers"
 	"github.com/grafana/xk6-kubernetes/pkg/resources"
 
 	"k8s.io/client-go/dynamic"
@@ -15,6 +16,8 @@ import (
 // generic functions that operate on any kind of object
 type Kubernetes interface {
 	resources.Operations
+	Helpers() helpers.Helpers
+	NamespacedHelpers(namespace string) helpers.Helpers
 }
 
 // KubernetesConfig defines the configuration for creating a Kubernetes instance
@@ -55,4 +58,22 @@ func NewFromConfig(c KubernetesConfig) (Kubernetes, error) {
 		ctx:    ctx,
 		Client: client,
 	}, nil
+}
+
+// Helpers returns Helpers for the default namespace
+func (k *kubernetes) Helpers() helpers.Helpers {
+	return helpers.NewHelper(
+		k.ctx,
+		k.Client,
+		"default",
+	)
+}
+
+// NamespacedHelpers returns helpers for the given namespace
+func (k *kubernetes) NamespacedHelpers(namespace string) helpers.Helpers {
+	return helpers.NewHelper(
+		k.ctx,
+		k.Client,
+		namespace,
+	)
 }
