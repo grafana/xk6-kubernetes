@@ -10,6 +10,7 @@ import (
 // Helpers offers Helper functions grouped by the objects they handle
 type Helpers interface {
 	NamespaceHelper
+	PodHelper
 }
 
 // helpers struct holds the data required by the helpers
