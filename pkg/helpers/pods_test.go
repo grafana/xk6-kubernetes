@@ -52,7 +52,7 @@ func TestPods_Wait(t *testing.T) {
 		delay          time.Duration
 		expectError    bool
 		expectedResult bool
-		timeout        time.Duration
+		timeout        uint
 	}
 
 	testCases := []TestCase{
@@ -63,7 +63,7 @@ func TestPods_Wait(t *testing.T) {
 			status:         corev1.PodRunning,
 			expectError:    false,
 			expectedResult: true,
-			timeout:        5 * time.Second,
+			timeout:        5,
 		},
 		{
 			test:           "timeout waiting pod running",
@@ -72,7 +72,7 @@ func TestPods_Wait(t *testing.T) {
 			delay:          10 * time.Second,
 			expectError:    false,
 			expectedResult: false,
-			timeout:        5 * time.Second,
+			timeout:        5,
 		},
 		{
 			test:           "wait failed pod",
@@ -81,7 +81,7 @@ func TestPods_Wait(t *testing.T) {
 			delay:          1 * time.Second,
 			expectError:    true,
 			expectedResult: false,
-			timeout:        5 * time.Second,
+			timeout:        5,
 		},
 	}
 	for _, tc := range testCases {

@@ -101,7 +101,7 @@ func Test_WaitServiceReady(t *testing.T) {
 		endpoints   *corev1.Endpoints
 		updated     *corev1.Endpoints
 		expectError bool
-		timeout     time.Duration
+		timeout     uint
 	}
 
 	testCases := []TestCase{
@@ -111,7 +111,7 @@ func Test_WaitServiceReady(t *testing.T) {
 			updated:     nil,
 			delay:       time.Second * 0,
 			expectError: true,
-			timeout:     time.Second * 5,
+			timeout:     5,
 		},
 		{
 			test:        "endpoint already ready",
@@ -119,7 +119,7 @@ func Test_WaitServiceReady(t *testing.T) {
 			updated:     nil,
 			delay:       time.Second * 0,
 			expectError: false,
-			timeout:     time.Second * 5,
+			timeout:     5,
 		},
 		{
 			test:        "wait for endpoint to be ready",
@@ -127,7 +127,7 @@ func Test_WaitServiceReady(t *testing.T) {
 			updated:     buildEndpointsWithAddresses(),
 			delay:       time.Second * 2,
 			expectError: false,
-			timeout:     time.Second * 5,
+			timeout:     5,
 		},
 		{
 			test:        "not ready addresses",
@@ -135,7 +135,7 @@ func Test_WaitServiceReady(t *testing.T) {
 			updated:     buildEndpointsWithNotReadyAddresses(),
 			delay:       time.Second * 2,
 			expectError: true,
-			timeout:     time.Second * 5,
+			timeout:     5,
 		},
 		{
 			test:        "timeout waiting for addresses",
@@ -143,7 +143,7 @@ func Test_WaitServiceReady(t *testing.T) {
 			updated:     buildEndpointsWithAddresses(),
 			delay:       time.Second * 10,
 			expectError: true,
-			timeout:     time.Second * 5,
+			timeout:     5,
 		},
 		{
 			test:        "other endpoint ready",
@@ -151,7 +151,7 @@ func Test_WaitServiceReady(t *testing.T) {
 			updated:     nil,
 			delay:       time.Second * 10,
 			expectError: true,
-			timeout:     time.Second * 5,
+			timeout:     5,
 		},
 	}
 	for _, tc := range testCases {

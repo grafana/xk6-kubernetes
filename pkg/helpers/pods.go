@@ -12,9 +12,9 @@ import (
 
 // PodHelper defines helper functions for manipulating Pods
 type PodHelper interface {
-	// WaitPodRunning waits for the Pod to be running for up to given timeout and returns a boolean
-	// indicating if the status was reached. If the pod is Failed returns error.
-	WaitPodRunning(name string, timeout time.Duration) (bool, error)
+	// WaitPodRunning waits for the Pod to be running for up to given timeout (in seconds) and returns
+	// a boolean indicating if the status was reached. If the pod is Failed returns error.
+	WaitPodRunning(name string, timeout uint) (bool, error)
 }
 
 // podConditionChecker defines a function that checks if a pod satisfies a condition
@@ -62,10 +62,10 @@ func (h *helpers) waitForCondition(
 	}
 }
 
-func (h *helpers) WaitPodRunning(name string, timeout time.Duration) (bool, error) {
+func (h *helpers) WaitPodRunning(name string, timeout uint) (bool, error) {
 	return h.waitForCondition(
 		name,
-		timeout,
+		time.Duration(timeout)*time.Second,
 		func(pod *corev1.Pod) (bool, error) {
 			if pod.Status.Phase == corev1.PodFailed {
 				return false, errors.New("pod has failed")
