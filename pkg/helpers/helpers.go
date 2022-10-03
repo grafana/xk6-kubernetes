@@ -9,6 +9,7 @@ import (
 
 // Helpers offers Helper functions grouped by the objects they handle
 type Helpers interface {
+	NamespaceHelper
 }
 
 // helpers struct holds the data required by the helpers
@@ -25,5 +26,4 @@ func NewHelper(ctx context.Context, client *resources.Client, namespace string) 
 		ctx:       ctx,
 		namespace: namespace,
 	}
-
 }
