@@ -85,6 +85,7 @@ func knownKinds(kind string) (schema.GroupVersionResource, error) {
 	kindMapping := map[string]schema.GroupVersionResource{
 		"ConfigMap":             {Group: "", Version: "v1", Resource: "configmaps"},
 		"Deployment":            {Group: "apps", Version: "v1", Resource: "deployments"},
+		"Endpoint":              {Group: "", Version: "v1", Resource: "endpoints"},
 		"Job":                   {Group: "batch", Version: "v1", Resource: "jobs"},
 		"PersistentVolume":      {Group: "", Version: "v1", Resource: "persistentvolumes"},
 		"PersistentVolumeClaim": {Group: "", Version: "v1", Resource: "persistentvolumeclaims"},

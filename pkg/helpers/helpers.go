@@ -11,6 +11,7 @@ import (
 type Helpers interface {
 	NamespaceHelper
 	PodHelper
+	ServiceHelper
 }
 
 // helpers struct holds the data required by the helpers
