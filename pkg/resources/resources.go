@@ -19,9 +19,10 @@ import (
 type Operations interface {
 	Apply(manifest string) error
 	Create(obj map[string]interface{}) (map[string]interface{}, error)
+	Delete(kind string, name string, namespace string) error
 	Get(kind string, name string, namespace string) (map[string]interface{}, error)
 	List(kind string, namespace string) ([]map[string]interface{}, error)
-	Delete(kind string, name string, namespace string) error
+	Update(obj map[string]interface{}) (map[string]interface{}, error)
 }
 
 // kubernetes holds the reference to
@@ -184,4 +185,33 @@ func (c *Client) Delete(kind string, name string, namespace string) error {
 		Delete(c.ctx, name, metav1.DeleteOptions{})
 
 	return err
+}
+
+// Update updates a resource in a kubernetes cluster from an object with its specification
+func (c *Client) Update(obj map[string]interface{}) (map[string]interface{}, error) {
+	uObj := &unstructured.Unstructured{
+		Object: obj,
+	}
+
+	gvk := uObj.GroupVersionKind()
+	namespace := uObj.GetNamespace()
+	if namespace == "" {
+		namespace = "default"
+	}
+	resource, err := knownKinds(gvk.Kind)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := c.dynamic.Resource(resource).
+		Namespace(namespace).
+		Update(
+			c.ctx,
+			uObj,
+			metav1.UpdateOptions{},
+		)
+	if err != nil {
+		return nil, err
+	}
+	return resp.UnstructuredContent(), nil
 }

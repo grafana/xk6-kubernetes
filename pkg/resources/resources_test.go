@@ -5,6 +5,11 @@ import (
 	"testing"
 
 	"github.com/grafana/xk6-kubernetes/internal/testutils"
+	"github.com/grafana/xk6-kubernetes/pkg/utils"
+
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func podSpec() map[string]interface{} {
@@ -51,15 +56,15 @@ func jobSpec() map[string]interface{} {
 	}
 }
 
-func newForTest() (*Client, error) {
-	dynamic, err := testutils.NewFakeDynamic()
+func newForTest(objs ...runtime.Object) (*Client, error) {
+	dynamic, err := testutils.NewFakeDynamic(objs...)
 	if err != nil {
 		return nil, err
 	}
 	return NewFromClient(context.TODO(), dynamic), nil
 }
 
-func TestCreateGetListDelete(t *testing.T) {
+func TestCreateGetUpdateListDelete(t *testing.T) {
 	t.Parallel()
 	testCases := []struct {
 		test string
@@ -108,6 +113,7 @@ func TestCreateGetListDelete(t *testing.T) {
 				t.Errorf("invalid value returned")
 				return
 			}
+
 			pods, err := c.List(tc.kind, tc.ns)
 			if err != nil {
 				t.Errorf("failed to get list of %ss: %v", tc.kind, err)
@@ -186,5 +192,60 @@ func TestApply(t *testing.T) {
 				return
 			}
 		})
+	}
+}
+
+func TestUpdate(t *testing.T) {
+	t.Parallel()
+
+	pod := corev1.Pod{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Pod",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "busybox",
+			Namespace: "testns",
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:    "busybox",
+					Image:   "busybox",
+					Command: []string{"sh", "-c", "sleep 30"},
+				},
+			},
+		},
+		Status: corev1.PodStatus{
+			Phase: corev1.PodPending,
+		},
+	}
+	c, err := newForTest(&pod)
+	if err != nil {
+		t.Errorf("failed %v", err)
+		return
+	}
+
+	pod.Status.Phase = corev1.PodFailed
+	podObj, err := utils.RuntimeToUnstructured(&pod)
+	if err != nil {
+		t.Errorf("failed %v", err)
+		return
+	}
+	updated, err := c.Update(podObj.UnstructuredContent())
+	if err != nil {
+		t.Errorf("failed %v", err)
+		return
+	}
+
+	updatedPod := &corev1.Pod{}
+	err = utils.GenericToRuntime(updated, updatedPod)
+	if err != nil {
+		t.Errorf("failed %v", err)
+		return
+	}
+
+	if updatedPod.Status.Phase != corev1.PodFailed {
+		t.Errorf("pod phase was not updated")
 	}
 }
