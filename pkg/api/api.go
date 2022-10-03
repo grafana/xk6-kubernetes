@@ -15,7 +15,7 @@ import (
 // Kubernetes defines an interface that extends kubernetes interface[k8s.io/client-go/kubernetes.Interface] adding
 // generic functions that operate on any kind of object
 type Kubernetes interface {
-	resources.Operations
+	resources.UnstructuredOperations
 	Helpers() helpers.Helpers
 	NamespacedHelpers(namespace string) helpers.Helpers
 }

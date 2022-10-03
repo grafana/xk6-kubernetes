@@ -4,10 +4,14 @@ package resources
 import (
 	"context"
 	"fmt"
+	"reflect"
+
+	"github.com/grafana/xk6-kubernetes/pkg/utils"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/watch"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
@@ -15,8 +19,8 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-// Operations defines generic functions that operate on any kind of Kubernetes object
-type Operations interface {
+// UnstructuredOperations defines generic functions that operate on any kind of Kubernetes object
+type UnstructuredOperations interface {
 	Apply(manifest string) error
 	Create(obj map[string]interface{}) (map[string]interface{}, error)
 	Delete(kind string, name string, namespace string) error
@@ -25,7 +29,32 @@ type Operations interface {
 	Update(obj map[string]interface{}) (map[string]interface{}, error)
 }
 
-// kubernetes holds the reference to
+// StructuredOperations defines generic operations that handles runtime objects such as corev1.Pod.
+// It facilitates handling objects in the situations where their type is known as oposited to the
+// UnstructuredOperations
+type StructuredOperations interface {
+	// Create creates a resource described in the runtime object given as input and returns the resource created.
+	// The resource must be passed by value (e.g corev1.Pod) and a value (not a reference) will be returned
+	Create(obj interface{}) (interface{}, error)
+	// Delete deletes a resource given its kind, name and namespace
+	Delete(kind string, name string, namespace string) error
+	// Get retrieves a resource into the given placeholder given its kind, name and namespace
+	Get(kind string, name string, namespace string, obj interface{}) error
+	// List retrieves a list of resources in the given slice given their kind and namespace
+	List(kind string, namespace string, list interface{}) error
+	// Update updates an existing resource and returns the updated version
+	// The resource must be passed by value (e.g corev1.Pod) and a value (not a reference) will be returned
+	Update(obj interface{}) (interface{}, error)
+	// Watch sets a watcher on a resource type and returns a channel that informs of the updates
+	Watch(kind string, namespace string, options metav1.ListOptions) (watch.Interface, error)
+}
+
+// structured holds the
+type structured struct {
+	client *Client
+}
+
+// Client holds the state to access kubernetes
 type Client struct {
 	ctx        context.Context
 	dynamic    dynamic.Interface
@@ -214,4 +243,106 @@ func (c *Client) Update(obj map[string]interface{}) (map[string]interface{}, err
 		return nil, err
 	}
 	return resp.UnstructuredContent(), nil
+}
+
+// Structured returns a reference to a StructuredOperations interface
+func (c *Client) Structured() StructuredOperations {
+	return &structured{
+		client: c,
+	}
+}
+
+// Creates a resources defined in the runtime object provided as input
+func (s *structured) Create(obj interface{}) (interface{}, error) {
+	uObj, err := utils.RuntimeToGeneric(&obj)
+	if err != nil {
+		return nil, err
+	}
+
+	created, err := s.client.Create(uObj)
+	if err != nil {
+		return nil, err
+	}
+
+	// create a new object of the same time than one provided as input
+	result := reflect.New(reflect.TypeOf(obj))
+	err = utils.GenericToRuntime(created, result.Interface())
+	if err != nil {
+		return nil, err
+	}
+
+	return result.Elem().Interface(), nil
+}
+
+func (s *structured) Get(kind string, name string, namespace string, obj interface{}) error {
+	gObj, err := s.client.Get(kind, name, namespace)
+	if err != nil {
+		return err
+	}
+
+	return utils.GenericToRuntime(gObj, obj)
+}
+
+func (s *structured) Delete(kind string, name string, namespace string) error {
+	return s.client.Delete(kind, name, namespace)
+}
+
+func (s *structured) List(kind string, namespace string, objList interface{}) error {
+	objListType := reflect.ValueOf(objList).Elem().Kind().String()
+	if objListType != reflect.Slice.String() {
+		return fmt.Errorf("must provide an slice to return results but %s received", objListType)
+	}
+
+	list, err := s.client.List(kind, namespace)
+	if err != nil {
+		return err
+	}
+
+	// get the type of the elements of the input slice for creating new instanced
+	// used to convert from the generic structure to the corresponding runtime object
+	rtList := reflect.ValueOf(objList).Elem()
+	rtType := reflect.TypeOf(objList).Elem().Elem()
+	for _, gObj := range list {
+		rtObj := reflect.New(rtType)
+		err = utils.GenericToRuntime(gObj, rtObj.Interface())
+		if err != nil {
+			return err
+		}
+
+		rtList.Set(reflect.Append(rtList, rtObj.Elem()))
+	}
+	return nil
+}
+
+func (s *structured) Update(obj interface{}) (interface{}, error) {
+	uObj, err := utils.RuntimeToGeneric(&obj)
+	if err != nil {
+		return nil, err
+	}
+
+	updated, err := s.client.Update(uObj)
+	if err != nil {
+		return nil, err
+	}
+
+	// create a new object of the same time than one provided as input
+	result := reflect.New(reflect.TypeOf(obj))
+	err = utils.GenericToRuntime(updated, result.Interface())
+	if err != nil {
+		return nil, err
+	}
+
+	return result.Elem().Interface(), nil
+}
+
+func (s *structured) Watch(kind string, namespace string, options metav1.ListOptions) (watch.Interface, error) {
+	resource, err := knownKinds(kind)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.client.dynamic.
+		Resource(resource).
+		Namespace(namespace).
+		Watch(s.client.ctx, options)
 }
