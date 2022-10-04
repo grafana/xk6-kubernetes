@@ -15,6 +15,9 @@ type ServiceHelper interface {
 	// WaitServiceReady waits for the given service to have at least one endpoint available
 	// or the timeout (in seconds) expires. It returns a boolean indicating if the service is ready
 	WaitServiceReady(service string, timeout uint) (bool, error)
+	// GetExternalIP returns one external ip for the given service. If none is assigned after the timeout
+	// expires, returns an empty address "".
+	GetExternalIP(service string, timeout uint) (string, error)
 }
 
 func (h *helpers) WaitServiceReady(service string, timeout uint) (bool, error) {
@@ -36,4 +39,24 @@ func (h *helpers) WaitServiceReady(service string, timeout uint) (bool, error) {
 
 		return false, nil
 	})
+}
+
+func (h *helpers) GetExternalIP(service string, timeout uint) (string, error) {
+	addr := ""
+	_, err := utils.Retry(time.Duration(timeout)*time.Second, time.Second, func() (bool, error) {
+		svc := &corev1.Service{}
+		err := h.client.Structured().Get("Service", service, h.namespace, svc)
+		if err != nil {
+			return false, fmt.Errorf("failed to access service: %w", err)
+		}
+
+		if len(svc.Status.LoadBalancer.Ingress) > 0 {
+			addr = svc.Status.LoadBalancer.Ingress[0].IP
+			return true, nil
+		}
+
+		return false, nil
+	})
+
+	return addr, err
 }

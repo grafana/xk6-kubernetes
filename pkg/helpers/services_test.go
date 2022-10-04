@@ -92,6 +92,27 @@ func buildEndpointsWithNotReadyAddresses() *corev1.Endpoints {
 	}
 }
 
+func buildService() corev1.Service {
+	return corev1.Service{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Service",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "service",
+			Namespace: "default",
+		},
+		Spec: corev1.ServiceSpec{
+			Type: corev1.ServiceTypeLoadBalancer,
+		},
+		Status: corev1.ServiceStatus{
+			LoadBalancer: corev1.LoadBalancerStatus{
+				Ingress: []corev1.LoadBalancerIngress{},
+			},
+		},
+	}
+}
+
 func Test_WaitServiceReady(t *testing.T) {
 	t.Parallel()
 
@@ -197,6 +218,84 @@ func Test_WaitServiceReady(t *testing.T) {
 
 			if ready != tc.expectedValue {
 				t.Errorf("invalid value returned expected %t actual %t", tc.expectedValue, ready)
+				return
+			}
+		})
+	}
+}
+
+func Test_GetServiceIP(t *testing.T) {
+	t.Parallel()
+
+	type TestCase struct {
+		test          string
+		delay         time.Duration
+		updated       []corev1.LoadBalancerIngress
+		expectedValue string
+		expectError   bool
+		timeout       uint
+	}
+
+	testCases := []TestCase{
+		{
+			test: "wait for ip to be assigned",
+			updated: []corev1.LoadBalancerIngress{
+				{
+					IP: "1.1.1.1",
+				},
+			},
+			delay:         time.Second * 2,
+			expectedValue: "1.1.1.1",
+			expectError:   false,
+			timeout:       5,
+		},
+		{
+			test:          "timeout waiting for addresses",
+			updated:       []corev1.LoadBalancerIngress{},
+			delay:         time.Second * 10,
+			expectedValue: "",
+			expectError:   false,
+			timeout:       5,
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.test, func(t *testing.T) {
+			t.Parallel()
+
+			fake, _ := testutils.NewFakeDynamic()
+			client := resources.NewFromClient(context.TODO(), fake)
+			h := NewHelper(context.TODO(), client, "default")
+
+			svc := buildService()
+			_, err := client.Structured().Create(svc)
+			if err != nil {
+				t.Errorf("unexpected error creating service: %v", err)
+				return
+			}
+
+			go func(tc TestCase, svc corev1.Service) {
+				time.Sleep(tc.delay)
+				svc.Status.LoadBalancer.Ingress = tc.updated
+				_, e := client.Structured().Update(svc)
+				if e != nil {
+					t.Errorf("error updating service: %v", e)
+				}
+			}(tc, svc)
+
+			addr, err := h.GetExternalIP("service", tc.timeout)
+			if !tc.expectError && err != nil {
+				t.Errorf("unexpected error: %v", err)
+				return
+			}
+			if tc.expectError && err == nil {
+				t.Error("expected an error but none returned")
+				return
+			}
+
+			if addr != tc.expectedValue {
+				t.Errorf("invalid value returned expected %s actual %s", tc.expectedValue, addr)
 				return
 			}
 		})
