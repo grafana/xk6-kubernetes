@@ -96,62 +96,69 @@ func Test_WaitServiceReady(t *testing.T) {
 	t.Parallel()
 
 	type TestCase struct {
-		test        string
-		delay       time.Duration
-		endpoints   *corev1.Endpoints
-		updated     *corev1.Endpoints
-		expectError bool
-		timeout     uint
+		test          string
+		delay         time.Duration
+		endpoints     *corev1.Endpoints
+		updated       *corev1.Endpoints
+		expectedValue bool
+		expectError   bool
+		timeout       uint
 	}
 
 	testCases := []TestCase{
 		{
-			test:        "endpoint not created",
-			endpoints:   nil,
-			updated:     nil,
-			delay:       time.Second * 0,
-			expectError: true,
-			timeout:     5,
+			test:          "endpoint not created",
+			endpoints:     nil,
+			updated:       nil,
+			delay:         time.Second * 0,
+			expectedValue: false,
+			expectError:   false,
+			timeout:       5,
 		},
 		{
-			test:        "endpoint already ready",
-			endpoints:   buildEndpointsWithAddresses(),
-			updated:     nil,
-			delay:       time.Second * 0,
-			expectError: false,
-			timeout:     5,
+			test:          "endpoint already ready",
+			endpoints:     buildEndpointsWithAddresses(),
+			updated:       nil,
+			delay:         time.Second * 0,
+			expectedValue: true,
+			expectError:   false,
+			timeout:       5,
 		},
 		{
-			test:        "wait for endpoint to be ready",
-			endpoints:   buildEndpointsWithoutAddresses(),
-			updated:     buildEndpointsWithAddresses(),
-			delay:       time.Second * 2,
-			expectError: false,
-			timeout:     5,
+			test:          "wait for endpoint to be ready",
+			endpoints:     buildEndpointsWithoutAddresses(),
+			updated:       buildEndpointsWithAddresses(),
+			delay:         time.Second * 2,
+			expectedValue: true,
+			expectError:   false,
+			timeout:       5,
 		},
 		{
-			test:        "not ready addresses",
-			endpoints:   buildEndpointsWithoutAddresses(),
-			updated:     buildEndpointsWithNotReadyAddresses(),
-			delay:       time.Second * 2,
-			expectError: true,
-			timeout:     5,
+			test:          "not ready addresses",
+			endpoints:     buildEndpointsWithoutAddresses(),
+			updated:       buildEndpointsWithNotReadyAddresses(),
+			delay:         time.Second * 2,
+			expectedValue: false,
+			expectError:   false,
+			timeout:       5,
 		},
 		{
-			test:        "timeout waiting for addresses",
-			endpoints:   buildEndpointsWithoutAddresses(),
-			updated:     buildEndpointsWithAddresses(),
-			delay:       time.Second * 10,
-			expectError: true,
-			timeout:     5,
+			test:          "timeout waiting for addresses",
+			endpoints:     buildEndpointsWithoutAddresses(),
+			updated:       buildEndpointsWithAddresses(),
+			delay:         time.Second * 10,
+			expectedValue: false,
+			expectError:   false,
+			timeout:       5,
 		},
 		{
-			test:        "other endpoint ready",
-			endpoints:   buildOtherEndpointsWithAddresses(),
-			updated:     nil,
-			delay:       time.Second * 10,
-			expectError: true,
-			timeout:     5,
+			test:          "other endpoint ready",
+			endpoints:     buildOtherEndpointsWithAddresses(),
+			updated:       nil,
+			delay:         time.Second * 10,
+			expectedValue: false,
+			expectError:   false,
+			timeout:       5,
 		},
 	}
 	for _, tc := range testCases {
@@ -178,7 +185,7 @@ func Test_WaitServiceReady(t *testing.T) {
 				}
 			}(tc)
 
-			err := h.WaitServiceReady("service", tc.timeout)
+			ready, err := h.WaitServiceReady("service", tc.timeout)
 			if !tc.expectError && err != nil {
 				t.Errorf("unexpected error: %v", err)
 				return
@@ -187,8 +194,9 @@ func Test_WaitServiceReady(t *testing.T) {
 				t.Error("expected an error but none returned")
 				return
 			}
-			// error expected and returned, it is ok
-			if tc.expectError && err != nil {
+
+			if ready != tc.expectedValue {
+				t.Errorf("invalid value returned expected %t actual %t", tc.expectedValue, ready)
 				return
 			}
 		})

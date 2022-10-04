@@ -13,11 +13,11 @@ import (
 // ServiceHelper implements functions for dealing with services
 type ServiceHelper interface {
 	// WaitServiceReady waits for the given service to have at least one endpoint available
-	// or the timeout (in seconds) expires
-	WaitServiceReady(service string, timeout uint) error
+	// or the timeout (in seconds) expires. It returns a boolean indicating if the service is ready
+	WaitServiceReady(service string, timeout uint) (bool, error)
 }
 
-func (h *helpers) WaitServiceReady(service string, timeout uint) error {
+func (h *helpers) WaitServiceReady(service string, timeout uint) (bool, error) {
 	return utils.Retry(time.Duration(timeout)*time.Second, time.Second, func() (bool, error) {
 		ep := &corev1.Endpoints{}
 		err := h.client.Structured().Get("Endpoint", service, h.namespace, ep)

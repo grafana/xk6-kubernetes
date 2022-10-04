@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"errors"
+	"fmt"
 	"testing"
 	"time"
 )
@@ -13,7 +13,7 @@ func Test_Retry(t *testing.T) {
 		timeout       time.Duration
 		backoff       time.Duration
 		failedRetries int
-		errorValue    error
+		expectedValue bool
 		expectError   bool
 	}{
 		{
@@ -21,7 +21,7 @@ func Test_Retry(t *testing.T) {
 			timeout:       time.Second * 5,
 			backoff:       time.Second,
 			failedRetries: 0,
-			errorValue:    nil,
+			expectedValue: true,
 			expectError:   false,
 		},
 		{
@@ -29,7 +29,7 @@ func Test_Retry(t *testing.T) {
 			timeout:       time.Second * 5,
 			backoff:       time.Second,
 			failedRetries: 1,
-			errorValue:    nil,
+			expectedValue: true,
 			expectError:   false,
 		},
 		{
@@ -37,7 +37,7 @@ func Test_Retry(t *testing.T) {
 			timeout:       time.Second * 5,
 			backoff:       time.Second,
 			failedRetries: 0,
-			errorValue:    errors.New("failed retry"),
+			expectedValue: false,
 			expectError:   true,
 		},
 		{
@@ -45,7 +45,7 @@ func Test_Retry(t *testing.T) {
 			timeout:       time.Second * 5,
 			backoff:       time.Second,
 			failedRetries: 1,
-			errorValue:    errors.New("failed retry"),
+			expectedValue: false,
 			expectError:   true,
 		},
 		{
@@ -53,8 +53,8 @@ func Test_Retry(t *testing.T) {
 			timeout:       time.Second * 5,
 			backoff:       time.Second,
 			failedRetries: 100,
-			errorValue:    nil,
-			expectError:   true,
+			expectedValue: false,
+			expectError:   false,
 		},
 	}
 
@@ -63,13 +63,13 @@ func Test_Retry(t *testing.T) {
 		t.Run(tc.title, func(t *testing.T) {
 			t.Parallel()
 			retries := 0
-			err := Retry(tc.timeout, tc.backoff, func() (bool, error) {
+			done, err := Retry(tc.timeout, tc.backoff, func() (bool, error) {
 				retries++
 				if retries < tc.failedRetries {
 					return false, nil
 				}
-				if tc.errorValue != nil {
-					return false, tc.errorValue
+				if tc.expectError {
+					return false, fmt.Errorf("Error")
 				}
 				return true, nil
 			})
@@ -81,6 +81,11 @@ func Test_Retry(t *testing.T) {
 
 			if tc.expectError && err == nil {
 				t.Errorf("should have failed")
+				return
+			}
+
+			if done != tc.expectedValue {
+				t.Errorf("invalid value returned expected %t actual %t", tc.expectedValue, done)
 				return
 			}
 		})
