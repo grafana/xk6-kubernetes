@@ -505,3 +505,51 @@ if (k8s.list(podSpec.kind, podSpec.metadata.namespace).length != 0) {
 `)
 	require.NoError(t, err)
 }
+
+// TestHelpersAreScriptable runs helpers
+func TestHelpersAreScriptable(t *testing.T) {
+	t.Parallel()
+
+	rt := setupTestEnv(t)
+
+	_, err := rt.RunString(`
+const k8s = new Kubernetes()
+
+let pod = {
+	apiVersion: "v1",
+	kind:       "Pod",
+	metadata: {
+	    name:      "busybox",
+	    namespace:  "default"
+	},
+	spec: {
+	    containers: [
+		{
+		    name:    "busybox",
+		    image:   "busybox",
+		    command: ["sh", "-c", "sleep 30"]
+		}
+	    ]
+	},
+	status: {
+		phase: "Running"
+	}
+}
+
+// create namespace with random name with prefix 'test-'
+const ns = k8s.helpers().createRandomNamespace("test-")
+
+// create pod in test namespace
+pod.metadata.namespace = ns
+k8s.create(pod)
+
+// get helpers for test namespace
+const helpers = k8s.namespacedHelpers(ns)
+
+// wait for pod to be running (should timeout as pod status is not changing)
+if (helpers.waitPodRunning(pod.metadata.name, 5)) {
+	throw new Error("should timeout waiting for pod ready")
+}
+`)
+	require.NoError(t, err)
+}
