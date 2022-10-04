@@ -179,9 +179,9 @@ func Test_WaitServiceReady(t *testing.T) {
 				}
 				time.Sleep(tc.delay)
 
-				_, err := client.Structured().Update(tc.updated)
-				if err != nil {
-					t.Errorf("error updating endpoint: %v", err)
+				_, e := client.Structured().Update(tc.updated)
+				if e != nil {
+					t.Errorf("error updating endpoint: %v", e)
 				}
 			}(tc)
 

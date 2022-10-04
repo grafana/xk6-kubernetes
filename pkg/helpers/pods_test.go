@@ -97,7 +97,7 @@ func TestPods_Wait(t *testing.T) {
 				pod.Status.Phase = tc.status
 				time.Sleep(tc.delay)
 				_, e := client.Structured().Update(pod)
-				if !tc.expectError && err != nil {
+				if e != nil {
 					t.Errorf("unexpected error: %v", e)
 					return
 				}
