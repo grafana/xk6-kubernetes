@@ -362,36 +362,3 @@ func TestStructuredUpdate(t *testing.T) {
 		return
 	}
 }
-
-func TestStructuredWatch(t *testing.T) {
-	t.Parallel()
-
-	c, err := newForTest()
-	if err != nil {
-		t.Errorf("failed %v", err)
-		return
-	}
-
-	options := metav1.ListOptions{
-		FieldSelector: "metadata.name=busybox",
-	}
-
-	watcher, err := c.Structured().Watch("Pod", "testns", options)
-	if err != nil {
-		t.Errorf("failed %v", err)
-		return
-	}
-
-	_, err = c.Structured().Create(buildPod())
-	if err != nil {
-		t.Errorf("failed %v", err)
-		return
-	}
-
-	select {
-	case <-watcher.ResultChan():
-		return
-	default:
-		t.Errorf("No event received")
-	}
-}

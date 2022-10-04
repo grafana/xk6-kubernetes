@@ -11,7 +11,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/watch"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
@@ -30,7 +29,7 @@ type UnstructuredOperations interface {
 }
 
 // StructuredOperations defines generic operations that handles runtime objects such as corev1.Pod.
-// It facilitates handling objects in the situations where their type is known as oposited to the
+// It facilitates handling objects in the situations where their type is known as opposed to the
 // UnstructuredOperations
 type StructuredOperations interface {
 	// Create creates a resource described in the runtime object given as input and returns the resource created.
@@ -45,8 +44,6 @@ type StructuredOperations interface {
 	// Update updates an existing resource and returns the updated version
 	// The resource must be passed by value (e.g corev1.Pod) and a value (not a reference) will be returned
 	Update(obj interface{}) (interface{}, error)
-	// Watch sets a watcher on a resource type and returns a channel that informs of the updates
-	Watch(kind string, namespace string, options metav1.ListOptions) (watch.Interface, error)
 }
 
 // structured holds the
@@ -340,16 +337,4 @@ func (s *structured) Update(obj interface{}) (interface{}, error) {
 	}
 
 	return result.Elem().Interface(), nil
-}
-
-func (s *structured) Watch(kind string, namespace string, options metav1.ListOptions) (watch.Interface, error) {
-	resource, err := knownKinds(kind)
-	if err != nil {
-		return nil, err
-	}
-
-	return s.client.dynamic.
-		Resource(resource).
-		Namespace(namespace).
-		Watch(s.client.ctx, options)
 }
