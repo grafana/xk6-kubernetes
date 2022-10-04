@@ -142,18 +142,24 @@ func (c *Client) Create(obj map[string]interface{}) (map[string]interface{}, err
 	if namespace == "" {
 		namespace = "default"
 	}
-	resource, err := knownKinds(gvk.Kind)
+	gvr, err := knownKinds(gvk.Kind)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.dynamic.Resource(resource).
-		Namespace(namespace).
-		Create(
-			c.ctx,
-			uObj,
-			metav1.CreateOptions{},
-		)
+	// Namesapces cannot be created in a namespaced resource interface, handle as special case
+	var resource dynamic.ResourceInterface
+	if gvk.Kind == "Namespace" {
+		resource = c.dynamic.Resource(gvr)
+	} else {
+		resource = c.dynamic.Resource(gvr).Namespace(namespace)
+	}
+
+	resp, err := resource.Create(
+		c.ctx,
+		uObj,
+		metav1.CreateOptions{},
+	)
 	if err != nil {
 		return nil, err
 	}
