@@ -157,19 +157,16 @@ export default function () {
 
 ## Helpers
 
-The `xk6-kubernetes` extension offers helpers to facilitate common tasks when setting up a tests. All helper functions work in a implicit namespace to facilitate the development of tests segregated by namespace. The helpers are accessed using the following methods:
+The `xk6-kubernetes` extension offers helpers to facilitate common tasks when setting up a tests. All helper functions work in a namespace to facilitate the development of tests segregated by namespace. The helpers are accessed using the following method:
 
 |  Method      | Parameters|   Description |
 | -------------| ---| ------ |
-| helpers      | | returns helpers that operate in the default namespace |
-| namespacedHelpers | namespace | returns helpers that operate in the given namespace |
-
+| helpers      | namespace | returns helpers that operate in the given namespace. If none is specified, "default" is used |
 
 The methods above return an object that implements the following helper functions:
 
 |  Method     | Parameters|   Description |
 | ------------ | --------| ------ |
-| createRandomNamespace| prefix         | creates a new namespace with the given prefix and returns its name.  |
 | getExternalIP        | service        | returns the external IP of a service if any is assigned before timeout expires|
 |                      | timeout in seconds | |
 | waitPodRunning | pod name | waits until the pod is in 'Running' state or the timeout expires. Returns a boolean indicating of the pod was ready or not. Throws an error if the pod is Failed. |
@@ -191,7 +188,7 @@ let podSpec = {
     kind:       "Pod",
     metadata: {
         name:      "busybox",
-        namespace:  ""
+        namespace:  "default"
     },
     spec: {
         containers: [
@@ -207,15 +204,11 @@ let podSpec = {
 export default function () {
   const kubernetes = new Kubernetes();
 
-  // create namespace with random name with prefix 'test-'
-  const ns = kubernetes.helpers().randomNamespace("test-")
-
-  // create pod in test namespace
-  pod.metadata.namespace = ns
+  // create pod
   kubernetes.create(pod)
 
   // get helpers for test namespace
-  const helpers = kubernetes.namespacesHelpers(ns)
+  const helpers = kubernetes.helpers()
 
   // wait for pod to be running
   const timeout = 10

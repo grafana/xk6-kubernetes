@@ -16,8 +16,8 @@ import (
 // generic functions that operate on any kind of object
 type Kubernetes interface {
 	resources.UnstructuredOperations
-	Helpers() helpers.Helpers
-	NamespacedHelpers(namespace string) helpers.Helpers
+	// Helpers returns helpers for the given namespace. If none is specified, "default" is used
+	Helpers(namespace string) helpers.Helpers
 }
 
 // KubernetesConfig defines the configuration for creating a Kubernetes instance
@@ -60,17 +60,10 @@ func NewFromConfig(c KubernetesConfig) (Kubernetes, error) {
 	}, nil
 }
 
-// Helpers returns Helpers for the default namespace
-func (k *kubernetes) Helpers() helpers.Helpers {
-	return helpers.NewHelper(
-		k.ctx,
-		k.Client,
-		"default",
-	)
-}
-
-// NamespacedHelpers returns helpers for the given namespace
-func (k *kubernetes) NamespacedHelpers(namespace string) helpers.Helpers {
+func (k *kubernetes) Helpers(namespace string) helpers.Helpers {
+	if namespace == "" {
+		namespace = "default"
+	}
 	return helpers.NewHelper(
 		k.ctx,
 		k.Client,

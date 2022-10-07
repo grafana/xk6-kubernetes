@@ -536,19 +536,15 @@ let pod = {
 	}
 }
 
-// create namespace with random name with prefix 'test-'
-const ns = k8s.helpers().createRandomNamespace("test-")
-
 // create pod in test namespace
-pod.metadata.namespace = ns
 k8s.create(pod)
 
 // get helpers for test namespace
-const helpers = k8s.namespacedHelpers(ns)
+const helpers = k8s.helpers()
 
-// wait for pod to be running (should timeout as pod status is not changing)
-if (helpers.waitPodRunning(pod.metadata.name, 5)) {
-	throw new Error("should timeout waiting for pod ready")
+// wait for pod to be running
+if (!helpers.waitPodRunning(pod.metadata.name, 5)) {
+	throw new Error("should not timeout")
 }
 `)
 	require.NoError(t, err)
