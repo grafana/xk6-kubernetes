@@ -21,16 +21,14 @@ let pod = {
 export default function () {
   const kubernetes = new Kubernetes();
 
-  // create namespace with random name with prefix 'test-'
-  const ns = kubernetes.helpers().createRandomNamespace("test-")
-  //const ns = "default"
+  const ns = "default"
 
   // create pod in test namespace
   pod.metadata.namespace = ns
   kubernetes.create(pod)
 
   // get helpers for test namespace
-  const helpers = kubernetes.namespacedHelpers(ns)
+  const helpers = kubernetes.helpers(ns)
 
   // wait for pod to be running
   const timeout = 10
