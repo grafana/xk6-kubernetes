@@ -7,11 +7,12 @@ import (
 )
 
 // NewFakeDynamic creates a new instance of a fake dynamic client with a default scheme
-func NewFakeDynamic() (*dynamicfake.FakeDynamicClient, error) {
+func NewFakeDynamic(objs ...runtime.Object) (*dynamicfake.FakeDynamicClient, error) {
 	scheme := runtime.NewScheme()
 	err := fake.AddToScheme(scheme)
 	if err != nil {
 		return nil, err
 	}
-	return dynamicfake.NewSimpleDynamicClient(scheme), nil
+
+	return dynamicfake.NewSimpleDynamicClient(scheme, objs...), nil
 }

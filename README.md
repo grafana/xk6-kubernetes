@@ -67,6 +67,7 @@ This API offers methods for creating, retrieving, listing and deleting resources
 |                | namespace |
 | list         | kind| returns a collection of resources of a given kind
 |                | namespace |
+| update         | spec object | updates an existing resource
 
 
 The kinds of resources currently supported are:
@@ -153,6 +154,68 @@ export default function () {
   });
 }
 ```
+
+## Helpers
+
+The `xk6-kubernetes` extension offers helpers to facilitate common tasks when setting up a tests. All helper functions work in a namespace to facilitate the development of tests segregated by namespace. The helpers are accessed using the following method:
+
+|  Method      | Parameters|   Description |
+| -------------| ---| ------ |
+| helpers      | namespace | returns helpers that operate in the given namespace. If none is specified, "default" is used |
+
+The methods above return an object that implements the following helper functions:
+
+|  Method     | Parameters|   Description |
+| ------------ | --------| ------ |
+| getExternalIP        | service        | returns the external IP of a service if any is assigned before timeout expires|
+|                      | timeout in seconds | |
+| waitPodRunning | pod name | waits until the pod is in 'Running' state or the timeout expires. Returns a boolean indicating of the pod was ready or not. Throws an error if the pod is Failed. |
+|                | timeout in seconds | |
+| waitServiceReady         | service name | waits until the given service has at least one endpoint ready or the timeout expires |
+|                | timeout in seconds | |
+
+
+
+### Examples
+
+### Creating a pod in a random namespace and wait until it is running
+
+```javascript
+import { Kubernetes } from 'k6/x/kubernetes';
+
+let podSpec = {
+    apiVersion: "v1",
+    kind:       "Pod",
+    metadata: {
+        name:      "busybox",
+        namespace:  "default"
+    },
+    spec: {
+        containers: [
+            {
+                name:    "busybox",
+                image:   "busybox",
+                command: ["sh", "-c", "sleep 30"]
+            }
+        ]
+    }
+}
+
+export default function () {
+  const kubernetes = new Kubernetes();
+
+  // create pod
+  kubernetes.create(pod)
+
+  // get helpers for test namespace
+  const helpers = kubernetes.helpers()
+
+  // wait for pod to be running
+  const timeout = 10
+  if (!helpers.waitPodRunning(pod.metadata.name, timeout)) {
+      console.log(`"pod ${pod.metadata.name} not ready after ${timeout} seconds`)
+  }
+}
 
 ## Resource kind helpers
 
