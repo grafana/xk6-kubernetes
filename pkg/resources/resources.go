@@ -77,8 +77,8 @@ func NewFromClient(ctx context.Context, dynamic dynamic.Interface) *Client {
 	}
 }
 
-// maps kinds to api resources
-func knownKinds(kind string) (schema.GroupVersionResource, error) {
+// getResource maps kinds to api resources
+func (c *Client) getResource(kind string, namespace string) (dynamic.ResourceInterface, error) {
 	kindMapping := map[string]schema.GroupVersionResource{
 		"ConfigMap":             {Group: "", Version: "v1", Resource: "configmaps"},
 		"Deployment":            {Group: "apps", Version: "v1", Resource: "deployments"},
@@ -94,11 +94,19 @@ func knownKinds(kind string) (schema.GroupVersionResource, error) {
 		"StatefulSet":           {Group: "apps", Version: "v1", Resource: "statefulsets"},
 	}
 
-	gvk, found := kindMapping[kind]
+	gvr, found := kindMapping[kind]
 	if !found {
-		return schema.GroupVersionResource{}, fmt.Errorf("unknown kind: '%s'", kind)
+		return nil, fmt.Errorf("unknown kind: '%s'", kind)
 	}
-	return gvk, nil
+
+	var resource dynamic.ResourceInterface
+	if kind == "Namespace" {
+		resource = c.dynamic.Resource(gvr)
+	} else {
+		resource = c.dynamic.Resource(gvr).Namespace(namespace)
+	}
+
+	return resource, nil
 }
 
 // Apply creates a resource in a kubernetes cluster from a YAML manifest
@@ -108,23 +116,21 @@ func (c *Client) Apply(manifest string) error {
 	if err != nil {
 		return err
 	}
-	resource, err := knownKinds(gvk.Kind)
-	if err != nil {
-		return err
-	}
-
 	namespace := uObj.GetNamespace()
 	if namespace == "" {
 		namespace = "default"
 	}
 
-	_, err = c.dynamic.Resource(resource).
-		Namespace(namespace).
-		Create(
-			c.ctx,
-			uObj,
-			metav1.CreateOptions{},
-		)
+	resource, err := c.getResource(gvk.Kind, namespace)
+	if err != nil {
+		return err
+	}
+
+	_, err = resource.Create(
+		c.ctx,
+		uObj,
+		metav1.CreateOptions{},
+	)
 	return err
 }
 
@@ -139,17 +145,10 @@ func (c *Client) Create(obj map[string]interface{}) (map[string]interface{}, err
 	if namespace == "" {
 		namespace = "default"
 	}
-	gvr, err := knownKinds(gvk.Kind)
+
+	resource, err := c.getResource(gvk.Kind, namespace)
 	if err != nil {
 		return nil, err
-	}
-
-	// Namesapces cannot be created in a namespaced resource interface, handle as special case
-	var resource dynamic.ResourceInterface
-	if gvk.Kind == "Namespace" {
-		resource = c.dynamic.Resource(gvr)
-	} else {
-		resource = c.dynamic.Resource(gvr).Namespace(namespace)
 	}
 
 	resp, err := resource.Create(
@@ -165,19 +164,16 @@ func (c *Client) Create(obj map[string]interface{}) (map[string]interface{}, err
 
 // Get returns an object given its kind, name and namespace
 func (c *Client) Get(kind string, name string, namespace string) (map[string]interface{}, error) {
-	resource, err := knownKinds(kind)
+	resource, err := c.getResource(kind, namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.dynamic.
-		Resource(resource).
-		Namespace(namespace).
-		Get(
-			c.ctx,
-			name,
-			metav1.GetOptions{},
-		)
+	resp, err := resource.Get(
+		c.ctx,
+		name,
+		metav1.GetOptions{},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -186,14 +182,12 @@ func (c *Client) Get(kind string, name string, namespace string) (map[string]int
 
 // List returns a list of objects given its kind and namespace
 func (c *Client) List(kind string, namespace string) ([]map[string]interface{}, error) {
-	resource, err := knownKinds(kind)
+	resource, err := c.getResource(kind, namespace)
 	if err != nil {
 		return nil, err
 	}
-	resp, err := c.dynamic.
-		Resource(resource).
-		Namespace(namespace).
-		List(c.ctx, metav1.ListOptions{})
+
+	resp, err := resource.List(c.ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -207,15 +201,11 @@ func (c *Client) List(kind string, namespace string) ([]map[string]interface{}, 
 
 // Delete deletes an object given its kind, name and namespace
 func (c *Client) Delete(kind string, name string, namespace string) error {
-	resource, err := knownKinds(kind)
+	resource, err := c.getResource(kind, namespace)
 	if err != nil {
 		return err
 	}
-
-	err = c.dynamic.
-		Resource(resource).
-		Namespace(namespace).
-		Delete(c.ctx, name, metav1.DeleteOptions{})
+	err = resource.Delete(c.ctx, name, metav1.DeleteOptions{})
 
 	return err
 }
@@ -231,18 +221,16 @@ func (c *Client) Update(obj map[string]interface{}) (map[string]interface{}, err
 	if namespace == "" {
 		namespace = "default"
 	}
-	resource, err := knownKinds(gvk.Kind)
+	resource, err := c.getResource(gvk.Kind, namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.dynamic.Resource(resource).
-		Namespace(namespace).
-		Update(
-			c.ctx,
-			uObj,
-			metav1.UpdateOptions{},
-		)
+	resp, err := resource.Update(
+		c.ctx,
+		uObj,
+		metav1.UpdateOptions{},
+	)
 	if err != nil {
 		return nil, err
 	}

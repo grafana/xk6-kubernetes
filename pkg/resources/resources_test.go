@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/xk6-kubernetes/internal/testutils"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -33,32 +34,18 @@ func buildUnstructuredPod() map[string]interface{} {
 	}
 }
 
-func buildUnstructuredJob() map[string]interface{} {
+func buildUnstructuredNamespace() map[string]interface{} {
 	return map[string]interface{}{
-		"apiVersion": "apps/v1",
-		"kind":       "Job",
+		"apiVersion": "v1",
+		"kind":       "Namespace",
 		"metadata": map[string]interface{}{
-			"name":      "busybox",
-			"namespace": "testns",
-		},
-		"spec": map[string]interface{}{
-			"template": map[string]interface{}{
-				"spec": map[string]interface{}{
-					"containers": []interface{}{
-						map[string]interface{}{
-							"name":    "busybox",
-							"image":   "busybox",
-							"command": []interface{}{"sh", "-c", "sleep 30"},
-						},
-					},
-				},
-			},
+			"name": "testns",
 		},
 	}
 }
 
-func buildPod() corev1.Pod {
-	return corev1.Pod{
+func buildPod() *corev1.Pod {
+	return &corev1.Pod{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
 			Kind:       "Pod",
@@ -82,6 +69,30 @@ func buildPod() corev1.Pod {
 	}
 }
 
+func buildNamespace() *corev1.Namespace {
+	return &corev1.Namespace{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Namespace",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "testns",
+		},
+	}
+}
+
+func buildNode() *corev1.Node {
+	return &corev1.Node{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Node",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "node1",
+		},
+	}
+}
+
 func newForTest(objs ...runtime.Object) (*Client, error) {
 	dynamic, err := testutils.NewFakeDynamic(objs...)
 	if err != nil {
@@ -101,7 +112,7 @@ func TestCreate(t *testing.T) {
 		ns       string
 	}{
 		{
-			test:     "Create Get List Delete Pods",
+			test:     "Create Pod",
 			obj:      buildUnstructuredPod(),
 			kind:     "Pod",
 			resource: schema.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"},
@@ -109,12 +120,12 @@ func TestCreate(t *testing.T) {
 			ns:       "testns",
 		},
 		{
-			test:     "Create Get List Delete Jobs",
-			obj:      buildUnstructuredJob(),
+			test:     "Create Namespace",
+			obj:      buildUnstructuredNamespace(),
 			kind:     "Job",
-			resource: schema.GroupVersionResource{Group: "batch", Version: "v1", Resource: "jobs"},
-			name:     "busybox",
-			ns:       "testns",
+			resource: schema.GroupVersionResource{Group: "", Version: "v1", Resource: "namespaces"},
+			name:     "testns",
+			ns:       "",
 		},
 	}
 
@@ -223,7 +234,7 @@ func TestUpdate(t *testing.T) {
 
 	// initialize with pod
 	obj := buildPod()
-	c, err := newForTest(&obj)
+	c, err := newForTest(obj)
 	if err != nil {
 		t.Errorf("failed %v", err)
 		return
@@ -252,6 +263,207 @@ func TestUpdate(t *testing.T) {
 	}
 }
 
+func TestDelete(t *testing.T) {
+	t.Parallel()
+	testCases := []struct {
+		test     string
+		obj      runtime.Object
+		kind     string
+		resource schema.GroupVersionResource
+		name     string
+		ns       string
+	}{
+		{
+			test:     "Delete Pod",
+			obj:      buildPod(),
+			kind:     "Pod",
+			resource: schema.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"},
+			name:     "busybox",
+			ns:       "testns",
+		},
+		{
+			test:     "Delete Namespace",
+			obj:      buildNamespace(),
+			kind:     "Namespace",
+			resource: schema.GroupVersionResource{Group: "", Version: "v1", Resource: "namespaces"},
+			name:     "testns",
+			ns:       "",
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.test, func(t *testing.T) {
+			t.Parallel()
+
+			fake, err := testutils.NewFakeDynamic(tc.obj)
+			if err != nil {
+				t.Errorf("unexpected error creating fake client %v", err)
+				return
+			}
+			c, err := NewFromClient(context.TODO(), fake), nil
+			if err != nil {
+				t.Errorf("failed %v", err)
+				return
+			}
+
+			err = c.Delete(tc.kind, tc.name, tc.ns)
+			if err != nil {
+				t.Errorf("failed %v", err)
+				return
+			}
+
+			// check the object was added to the fake client's object tracker
+			_, err = fake.Tracker().Get(tc.resource, tc.ns, tc.name)
+			if !errors.IsNotFound(err) {
+				t.Errorf("error retrieving object %v", err)
+				return
+			}
+		})
+	}
+}
+
+func TestGet(t *testing.T) {
+	t.Parallel()
+	testCases := []struct {
+		test     string
+		obj      runtime.Object
+		kind     string
+		resource schema.GroupVersionResource
+		name     string
+		ns       string
+	}{
+		{
+			test:     "Get Pod",
+			obj:      buildPod(),
+			kind:     "Pod",
+			resource: schema.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"},
+			name:     "busybox",
+			ns:       "testns",
+		},
+		{
+			test:     "Get Namespace",
+			obj:      buildNamespace(),
+			kind:     "Namespace",
+			resource: schema.GroupVersionResource{Group: "", Version: "v1", Resource: "namespaces"},
+			name:     "testns",
+			ns:       "",
+		},
+		{
+			test:     "Get Node",
+			obj:      buildNode(),
+			kind:     "Node",
+			resource: schema.GroupVersionResource{Group: "", Version: "v1", Resource: "nodes"},
+			name:     "node1",
+			ns:       "",
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.test, func(t *testing.T) {
+			t.Parallel()
+
+			fake, err := testutils.NewFakeDynamic(tc.obj)
+			if err != nil {
+				t.Errorf("unexpected error creating fake client %v", err)
+				return
+			}
+			c, err := NewFromClient(context.TODO(), fake), nil
+			if err != nil {
+				t.Errorf("failed %v", err)
+				return
+			}
+
+			obj, err := c.Get(tc.kind, tc.name, tc.ns)
+			if err != nil {
+				t.Errorf("failed %v", err)
+				return
+			}
+
+			name, found, err := unstructured.NestedString(obj, "metadata", "name")
+			if err != nil {
+				t.Errorf("unexpected error %v", err)
+				return
+			}
+			if !found {
+				t.Errorf("object does not have field name")
+				return
+			}
+			if name != tc.name {
+				t.Errorf("invalid pod returned. Expected %s Returned %s", tc.name, name)
+				return
+			}
+		})
+	}
+}
+
+func TestList(t *testing.T) {
+	t.Parallel()
+	testCases := []struct {
+		test     string
+		obj      runtime.Object
+		kind     string
+		resource schema.GroupVersionResource
+		name     string
+		ns       string
+	}{
+		{
+			test:     "List Pods",
+			obj:      buildPod(),
+			kind:     "Pod",
+			resource: schema.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"},
+			name:     "busybox",
+			ns:       "testns",
+		},
+		{
+			test:     "List Namespace",
+			obj:      buildNamespace(),
+			kind:     "Namespace",
+			resource: schema.GroupVersionResource{Group: "", Version: "v1", Resource: "namespaces"},
+			name:     "testns",
+			ns:       "",
+		},
+		{
+			test:     "List Nodes",
+			obj:      buildNode(),
+			kind:     "Node",
+			resource: schema.GroupVersionResource{Group: "", Version: "v1", Resource: "nodes"},
+			name:     "node1",
+			ns:       "",
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.test, func(t *testing.T) {
+			t.Parallel()
+
+			fake, err := testutils.NewFakeDynamic(tc.obj)
+			if err != nil {
+				t.Errorf("unexpected error creating fake client %v", err)
+				return
+			}
+			c, err := NewFromClient(context.TODO(), fake), nil
+			if err != nil {
+				t.Errorf("failed %v", err)
+				return
+			}
+
+			list, err := c.List(tc.kind, tc.ns)
+			if err != nil {
+				t.Errorf("failed %v", err)
+				return
+			}
+
+			if len(list) != 1 {
+				t.Errorf("expect %d %s but %d received", 1, tc.resource.Resource, len(list))
+				return
+			}
+		})
+	}
+}
+
 func TestStructuredCreate(t *testing.T) {
 	t.Parallel()
 
@@ -259,7 +471,7 @@ func TestStructuredCreate(t *testing.T) {
 	c := NewFromClient(context.TODO(), fake)
 
 	pod := buildPod()
-	created, err := c.Structured().Create(pod)
+	created, err := c.Structured().Create(*pod)
 	if err != nil {
 		t.Errorf("failed %v", err)
 		return
@@ -275,7 +487,7 @@ func TestStructuredGet(t *testing.T) {
 	t.Parallel()
 	// initialize with pod
 	initPod := buildPod()
-	c, err := newForTest(&initPod)
+	c, err := newForTest(initPod)
 	if err != nil {
 		t.Errorf("failed %v", err)
 		return
@@ -297,7 +509,7 @@ func TestStructuredList(t *testing.T) {
 	t.Parallel()
 	// initialize with pod
 	pod := buildPod()
-	c, err := newForTest(&pod)
+	c, err := newForTest(pod)
 	if err != nil {
 		t.Errorf("failed %v", err)
 		return
@@ -325,7 +537,7 @@ func TestStructuredDelete(t *testing.T) {
 	t.Parallel()
 	// initialize with pod
 	obj := buildPod()
-	c, err := newForTest(&obj)
+	c, err := newForTest(obj)
 	if err != nil {
 		t.Errorf("failed %v", err)
 		return
@@ -342,7 +554,7 @@ func TestStructuredUpdate(t *testing.T) {
 	t.Parallel()
 	// initialize with pod
 	pod := buildPod()
-	c, err := newForTest(&pod)
+	c, err := newForTest(pod)
 	if err != nil {
 		t.Errorf("failed %v", err)
 		return
@@ -350,7 +562,7 @@ func TestStructuredUpdate(t *testing.T) {
 
 	// change status
 	pod.Status.Phase = corev1.PodFailed
-	updated, err := c.Structured().Update(pod)
+	updated, err := c.Structured().Update(*pod)
 	if err != nil {
 		t.Errorf("failed %v", err)
 		return
