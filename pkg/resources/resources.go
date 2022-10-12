@@ -77,7 +77,7 @@ func NewFromClient(ctx context.Context, dynamic dynamic.Interface) *Client {
 	}
 }
 
-// getResources maps kinds to api resources
+// getResource maps kinds to api resources
 func (c *Client) getResource(kind string, namespace string) (dynamic.ResourceInterface, error) {
 	kindMapping := map[string]schema.GroupVersionResource{
 		"ConfigMap":             {Group: "", Version: "v1", Resource: "configmaps"},
