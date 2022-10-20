@@ -4,7 +4,6 @@ package kubernetes
 import (
 	"context"
 	"errors"
-	"fmt"
 	"path/filepath"
 
 	"github.com/dop251/goja"
@@ -107,13 +106,15 @@ func (mi *ModuleInstance) newClient(c goja.ConstructorCall) *goja.Object {
 
 	// if clientset was not injected for unit testing
 	if mi.clientset == nil {
-		var options KubeConfig
+		/*var options KubeConfig
 		err := rt.ExportTo(c.Argument(0), &options)
 		if err != nil {
 			common.Throw(rt,
 				fmt.Errorf("Kubernetes constructor expects KubeConfig as it's argument: %w", err))
 		}
-		config, err = getClientConfig(options)
+		config, err = getClientConfig(options)*/
+
+		config, err := rest.InClusterConfig()
 		if err != nil {
 			common.Throw(rt, err)
 		}
