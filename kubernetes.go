@@ -5,7 +5,7 @@ import (
 	"context"
 	"errors"
 	"path/filepath"
-
+	"fmt"
 	"github.com/dop251/goja"
 	"go.k6.io/k6/js/common"
 	"k8s.io/client-go/rest"
@@ -102,17 +102,28 @@ func (mi *ModuleInstance) newClient(c goja.ConstructorCall) *goja.Object {
 	ctx := mi.vu.Context()
 
 	obj := &Kubernetes{}
-	var config *rest.Config
+	
+	fmt.Printf("Creating client")
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		common.Throw(rt, err)
+	}
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		common.Throw(rt, err)
+	}
+	obj.client = clientset
 
+	/*
 	// if clientset was not injected for unit testing
 	if mi.clientset == nil {
-		/*var options KubeConfig
+		var options KubeConfig
 		err := rt.ExportTo(c.Argument(0), &options)
 		if err != nil {
 			common.Throw(rt,
 				fmt.Errorf("Kubernetes constructor expects KubeConfig as it's argument: %w", err))
 		}
-		config, err = getClientConfig(options)*/
+		config, err = getClientConfig(options)
 
 		config, err := rest.InClusterConfig()
 		if err != nil {
@@ -126,7 +137,7 @@ func (mi *ModuleInstance) newClient(c goja.ConstructorCall) *goja.Object {
 	} else {
 		// Pre-configured clientset is being injected for unit testing
 		obj.client = mi.clientset
-	}
+	}*/
 
 	// If dynamic client was not injected for unit testing
 	// It is assumed rest config is set
