@@ -14,7 +14,6 @@ import (
 	"go.k6.io/k6/lib"
 	"go.k6.io/k6/lib/testutils"
 	"go.k6.io/k6/metrics"
-
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
 )
@@ -35,7 +34,7 @@ func setupTestEnv(t *testing.T, objs ...runtime.Object) *goja.Runtime {
 			SystemTags: metrics.NewSystemTagSet(metrics.TagVU),
 		},
 		Logger: testLog,
-		Tags:   lib.NewTagMap(nil),
+		Tags:   lib.NewVUStateTags(metrics.NewRegistry().RootTagSet()),
 	}
 
 	root := &RootModule{}
