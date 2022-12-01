@@ -57,7 +57,7 @@ This API offers methods for creating, retrieving, listing and deleting resources
 
 |  Method     | Parameters|   Description |
 | ------------ | ---| ------ |
-| apply         | manifest string| creates a Kubernetes resource given a YAML manifest |
+| apply         | manifest string| creates a Kubernetes resource given a YAML manifest or updates it if already exists |
 | create         | spec object | creates a Kubernetes resource given its specification |
 | delete         | kind  | removes the named resource |
 |                | name  |
