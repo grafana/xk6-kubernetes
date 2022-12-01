@@ -184,6 +184,8 @@ spec:
 }
 
 func TestApply(t *testing.T) {
+	// Skip test. see comments on test cases why
+	t.Skip()
 	t.Parallel()
 	testCases := []struct {
 		test     string
@@ -191,13 +193,27 @@ func TestApply(t *testing.T) {
 		kind     string
 		name     string
 		ns       string
+		objects  []runtime.Object
 	}{
+		// This test case does not work due to https://github.com/kubernetes/client-go/issues/1184
 		{
-			test:     "Apply pod manifest",
+			test:     "Apply: create new pod",
 			manifest: podManifest(),
 			kind:     "Pod",
 			name:     "busybox",
 			ns:       "testns",
+			objects:  []runtime.Object{},
+		},
+		// This test case does not work due to https://github.com/kubernetes/client-go/issues/970
+		{
+			test:     "Apply: existing pod",
+			manifest: podManifest(),
+			kind:     "Pod",
+			name:     "busybox",
+			ns:       "testns",
+			objects: []runtime.Object{
+				buildPod(),
+			},
 		},
 	}
 
@@ -205,7 +221,7 @@ func TestApply(t *testing.T) {
 		tc := tc
 		t.Run(tc.test, func(t *testing.T) {
 			t.Parallel()
-			c, err := newForTest()
+			c, err := newForTest(tc.objects...)
 			if err != nil {
 				t.Errorf("failed %v", err)
 				return
