@@ -83,6 +83,7 @@ func (c *Client) getResource(kind string, namespace string) (dynamic.ResourceInt
 		"ConfigMap":             {Group: "", Version: "v1", Resource: "configmaps"},
 		"Deployment":            {Group: "apps", Version: "v1", Resource: "deployments"},
 		"Endpoint":              {Group: "", Version: "v1", Resource: "endpoints"},
+		"Ingress":               {Group: "networking.k8s.io", Version: "v1", Resource: "ingresses"},
 		"Job":                   {Group: "batch", Version: "v1", Resource: "jobs"},
 		"PersistentVolume":      {Group: "", Version: "v1", Resource: "persistentvolumes"},
 		"PersistentVolumeClaim": {Group: "", Version: "v1", Resource: "persistentvolumeclaims"},
