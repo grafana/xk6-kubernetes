@@ -117,6 +117,8 @@ func (c *Client) Apply(manifest string) error {
 	if err != nil {
 		return err
 	}
+
+	name := uObj.GetName()
 	namespace := uObj.GetNamespace()
 	if namespace == "" {
 		namespace = "default"
@@ -127,10 +129,13 @@ func (c *Client) Apply(manifest string) error {
 		return err
 	}
 
-	_, err = resource.Create(
+	_, err = resource.Apply(
 		c.ctx,
+		name,
 		uObj,
-		metav1.CreateOptions{},
+		metav1.ApplyOptions{
+			FieldManager: "xk6-kubernetes",
+		},
 	)
 	return err
 }
