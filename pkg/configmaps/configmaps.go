@@ -1,4 +1,6 @@
 // Package configmaps provides implementation of ConfigMap resources for Kubernetes
+//
+// Deprecated: Use the resources package instead.
 package configmaps
 
 import (
@@ -12,6 +14,8 @@ import (
 )
 
 // New creates a new instance backed by the provided client
+//
+// Deprecated: No longer used.
 func New(ctx context.Context, client kubernetes.Interface, metaOptions metav1.ListOptions) *ConfigMaps {
 	return &ConfigMaps{
 		client,
@@ -21,6 +25,8 @@ func New(ctx context.Context, client kubernetes.Interface, metaOptions metav1.Li
 }
 
 // ConfigMaps provides API for manipulating ConfigMap resources within a Kubernetes cluster
+//
+// Deprecated: No longer used in favor of generic resources.
 type ConfigMaps struct {
 	client      kubernetes.Interface
 	metaOptions metav1.ListOptions
@@ -28,6 +34,8 @@ type ConfigMaps struct {
 }
 
 // Apply creates the Kubernetes resource given the supplied YAML configuration
+//
+// Deprecated: Use resources.Apply instead.
 func (obj *ConfigMaps) Apply(yaml string, namespace string) (k8sTypes.ConfigMap, error) {
 	decode := scheme.Codecs.UniversalDeserializer().Decode
 	yamlobj, _, err := decode([]byte(yaml), nil, nil)
@@ -51,6 +59,8 @@ func (obj *ConfigMaps) Apply(yaml string, namespace string) (k8sTypes.ConfigMap,
 }
 
 // Create creates the Kubernetes resource given the supplied object
+//
+// Deprecated: Use resources.Create instead.
 func (obj *ConfigMaps) Create(
 	configMap k8sTypes.ConfigMap,
 	namespace string,
@@ -64,6 +74,8 @@ func (obj *ConfigMaps) Create(
 }
 
 // List returns a collection of ConfigMaps available within the namespace
+//
+// Deprecated: Use resources.List instead.
 func (obj *ConfigMaps) List(namespace string) ([]k8sTypes.ConfigMap, error) {
 	cms, err := obj.client.CoreV1().ConfigMaps(namespace).List(obj.ctx, obj.metaOptions)
 	if err != nil {
@@ -73,17 +85,22 @@ func (obj *ConfigMaps) List(namespace string) ([]k8sTypes.ConfigMap, error) {
 }
 
 // Delete removes the named ConfigMap from the namespace
+//
+// Deprecated: Use resources.Delete instead.
 func (obj *ConfigMaps) Delete(name, namespace string, opts metav1.DeleteOptions) error {
 	return obj.client.CoreV1().ConfigMaps(namespace).Delete(obj.ctx, name, opts)
 }
 
 // Kill removes the named ConfigMap from the namespace
-// Deprecated: Use Delete instead.
+//
+// Deprecated: Use resources.Delete instead.
 func (obj *ConfigMaps) Kill(name, namespace string, opts metav1.DeleteOptions) error {
 	return obj.Delete(name, namespace, opts)
 }
 
 // Get returns the named ConfigMaps instance within the namespace if available
+//
+// Deprecated: Use resources.Get instead.
 func (obj *ConfigMaps) Get(name, namespace string, opts metav1.GetOptions) (k8sTypes.ConfigMap, error) {
 	cm, err := obj.client.CoreV1().ConfigMaps(namespace).Get(obj.ctx, name, opts)
 	if err != nil {
