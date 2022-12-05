@@ -1,4 +1,6 @@
 // Package persistentvolumeclaims provides implementation of PersistentVolumeClaim resources for Kubernetes
+//
+// Deprecated: Use the resources package instead.
 package persistentvolumeclaims
 
 import (
@@ -12,6 +14,8 @@ import (
 )
 
 // New creates a new instance backed by the provided client
+//
+// Deprecated: No longer used.
 func New(ctx context.Context, client kubernetes.Interface, metaOptions metav1.ListOptions) *PersistentVolumeClaims {
 	return &PersistentVolumeClaims{
 		client,
@@ -21,6 +25,8 @@ func New(ctx context.Context, client kubernetes.Interface, metaOptions metav1.Li
 }
 
 // PersistentVolumeClaims provides API for manipulating PersistentVolumeClaim resources within a Kubernetes cluster
+//
+// Deprecated: No longer used in favor of generic resources.
 type PersistentVolumeClaims struct {
 	client      kubernetes.Interface
 	metaOptions metav1.ListOptions
@@ -28,6 +34,8 @@ type PersistentVolumeClaims struct {
 }
 
 // Apply creates the Kubernetes resource given the supplied YAML configuration
+//
+// Deprecated: Use resources.Apply instead.
 func (obj *PersistentVolumeClaims) Apply(yaml string, namespace string) (k8sTypes.PersistentVolumeClaim, error) {
 	decode := scheme.Codecs.UniversalDeserializer().Decode
 	yamlobj, _, err := decode([]byte(yaml), nil, nil)
@@ -52,6 +60,8 @@ func (obj *PersistentVolumeClaims) Apply(yaml string, namespace string) (k8sType
 }
 
 // Create creates the Kubernetes resource given the supplied object
+//
+// Deprecated: Use resources.Create instead.
 func (obj *PersistentVolumeClaims) Create(
 	persistentvolumeclaim k8sTypes.PersistentVolumeClaim,
 	namespace string,
@@ -65,6 +75,8 @@ func (obj *PersistentVolumeClaims) Create(
 }
 
 // List returns a collection of PersistentVolumeClaims available within the namespace
+//
+// Deprecated: Use resources.List instead.
 func (obj *PersistentVolumeClaims) List(namespace string) ([]k8sTypes.PersistentVolumeClaim, error) {
 	pvcs, err := obj.client.CoreV1().PersistentVolumeClaims(namespace).List(obj.ctx, obj.metaOptions)
 	if err != nil {
@@ -74,11 +86,15 @@ func (obj *PersistentVolumeClaims) List(namespace string) ([]k8sTypes.Persistent
 }
 
 // Delete removes the named PersistentVolumeClaims from the namespace
+//
+// Deprecated: Use resources.Delete instead.
 func (obj *PersistentVolumeClaims) Delete(name, namespace string, opts metav1.DeleteOptions) error {
 	return obj.client.CoreV1().PersistentVolumeClaims(namespace).Delete(obj.ctx, name, opts)
 }
 
 // Get returns the named PersistentVolumeClaims instance within the namespace if available
+//
+// Deprecated: Use resources.Get instead.
 func (obj *PersistentVolumeClaims) Get(
 	name, namespace string, opts metav1.GetOptions,
 ) (k8sTypes.PersistentVolumeClaim, error) {

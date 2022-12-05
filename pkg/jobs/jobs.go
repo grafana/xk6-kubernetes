@@ -1,4 +1,6 @@
 // Package jobs provides implementation of Job resources for Kubernetes
+//
+// Deprecated: Use the resources package instead.
 package jobs
 
 import (
@@ -17,6 +19,8 @@ import (
 )
 
 // New creates a new instance backed by the provided client
+//
+// Deprecated: No longer used.
 func New(ctx context.Context, client kubernetes.Interface, metaOptions metav1.ListOptions) *Jobs {
 	return &Jobs{
 		client,
@@ -26,6 +30,8 @@ func New(ctx context.Context, client kubernetes.Interface, metaOptions metav1.Li
 }
 
 // Jobs provides API for manipulating Job resources within a Kubernetes cluster
+//
+// Deprecated: No longer used in favor of generic resources.
 type Jobs struct {
 	client      kubernetes.Interface
 	metaOptions metav1.ListOptions
@@ -33,6 +39,8 @@ type Jobs struct {
 }
 
 // JobOptions provide configuration settings for creation of Job resources
+//
+// Deprecated: No longer used in favor of generic resources.
 type JobOptions struct {
 	Namespace     string
 	Name          string
@@ -46,6 +54,8 @@ type JobOptions struct {
 }
 
 // List returns a collection of Jobs available within the namespace
+//
+// Deprecated: Use resources.List instead.
 func (obj *Jobs) List(namespace string) ([]v1.Job, error) {
 	result, err := obj.client.BatchV1().Jobs(namespace).List(obj.ctx, obj.metaOptions)
 	if err != nil {
@@ -55,6 +65,8 @@ func (obj *Jobs) List(namespace string) ([]v1.Job, error) {
 }
 
 // Get returns the named Jobs instance within the namespace if available
+//
+// Deprecated: Use resources.Get instead.
 func (obj *Jobs) Get(name, namespace string) (v1.Job, error) {
 	result, err := obj.client.BatchV1().Jobs(namespace).Get(obj.ctx, name, metav1.GetOptions{})
 	if err != nil {
@@ -64,6 +76,8 @@ func (obj *Jobs) Get(name, namespace string) (v1.Job, error) {
 }
 
 // Delete removes the named Job from the namespace
+//
+// Deprecated: Use resources.Delete instead.
 func (obj *Jobs) Delete(name, namespace string) error {
 	propagationPolicy := metav1.DeletePropagationBackground
 	options := metav1.DeleteOptions{
@@ -73,12 +87,15 @@ func (obj *Jobs) Delete(name, namespace string) error {
 }
 
 // Kill removes the named Job from the namespace
-// Deprecated: Use Delete instead.
+//
+// Deprecated: Use resources.Delete instead.
 func (obj *Jobs) Kill(name, namespace string) error {
 	return obj.Delete(name, namespace)
 }
 
 // Apply creates the Kubernetes resource given the supplied YAML configuration
+//
+// Deprecated: Use resources.Apply instead.
 func (obj *Jobs) Apply(yaml string, namespace string) (v1.Job, error) {
 	decode := scheme.Codecs.UniversalDeserializer().Decode
 	yamlobj, _, err := decode([]byte(yaml), nil, nil)
@@ -102,6 +119,8 @@ func (obj *Jobs) Apply(yaml string, namespace string) (v1.Job, error) {
 }
 
 // Create creates the Kubernetes resource given the supplied object
+//
+// Deprecated: Use resources.Create instead.
 func (obj *Jobs) Create(options JobOptions) (v1.Job, error) {
 	container := coreV1.Container{
 		Name:            options.Name,
@@ -161,6 +180,8 @@ func (obj *Jobs) Create(options JobOptions) (v1.Job, error) {
 }
 
 // WaitOptions specify the options for waiting for a Job to complete
+//
+// Deprecated: no longer used.
 type WaitOptions struct {
 	Name      string
 	Namespace string
@@ -181,6 +202,8 @@ func isCompleted(job *v1.Job) (bool, error) {
 }
 
 // Wait for all pods to complete
+//
+// Deprecated: No longer used.
 func (obj *Jobs) Wait(options WaitOptions) (bool, error) {
 	// wait for updates until completion
 	timeout, err := time.ParseDuration(options.Timeout)
