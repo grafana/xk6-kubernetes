@@ -8,8 +8,11 @@ import (
 	"github.com/grafana/xk6-kubernetes/pkg/helpers"
 	"github.com/grafana/xk6-kubernetes/pkg/resources"
 
+	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/discovery/cached/memory"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/restmapper"
 )
 
 // Kubernetes defines an interface that extends kubernetes interface[k8s.io/client-go/kubernetes.Interface] adding
@@ -28,23 +31,38 @@ type KubernetesConfig struct {
 	Config *rest.Config
 	// Client is a pre-configured dynamic client. If provided, the rest config is not used
 	Client dynamic.Interface
+	REST   rest.Interface
 }
 
 // kubernetes holds references to implementation of the Kubernetes interface
 type kubernetes struct {
 	ctx context.Context
 	*resources.Client
+	*restmapper.DeferredDiscoveryRESTMapper
 }
 
 // NewFromConfig returns a Kubernetes instance
 func NewFromConfig(c KubernetesConfig) (Kubernetes, error) {
+	var (
+		err             error
+		discoveryClient *discovery.DiscoveryClient
+	)
+
 	ctx := c.Context
 	if ctx == nil {
 		ctx = context.TODO()
 	}
 
+	if c.REST != nil {
+		discoveryClient = discovery.NewDiscoveryClient(c.REST)
+	} else if c.Config != nil {
+		discoveryClient, err = discovery.NewDiscoveryClientForConfig(c.Config)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	var client *resources.Client
-	var err error
 	if c.Client != nil {
 		client = resources.NewFromClient(ctx, c.Client)
 	} else {
@@ -52,6 +70,11 @@ func NewFromConfig(c KubernetesConfig) (Kubernetes, error) {
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	if discoveryClient != nil {
+		mapper := restmapper.NewDeferredDiscoveryRESTMapper(memory.NewMemCacheClient(discoveryClient))
+		client.WithMapper(mapper)
 	}
 
 	return &kubernetes{
