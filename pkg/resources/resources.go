@@ -17,7 +17,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/restmapper"
 )
 
 // UnstructuredOperations defines generic functions that operate on any kind of Kubernetes object
@@ -57,7 +56,7 @@ type structured struct {
 type Client struct {
 	ctx        context.Context
 	dynamic    dynamic.Interface
-	mapper     *restmapper.DeferredDiscoveryRESTMapper
+	mapper     meta.RESTMapper
 	serializer runtime.Serializer
 }
 
@@ -80,7 +79,7 @@ func NewFromClient(ctx context.Context, dynamic dynamic.Interface) *Client {
 	}
 }
 
-func (c *Client) WithMapper(mapper *restmapper.DeferredDiscoveryRESTMapper) *Client {
+func (c *Client) WithMapper(mapper meta.RESTMapper) *Client {
 	c.mapper = mapper
 	return c
 }
@@ -89,7 +88,7 @@ func (c *Client) WithMapper(mapper *restmapper.DeferredDiscoveryRESTMapper) *Cli
 func (c *Client) getResource(kind string, namespace string, versions ...string) (dynamic.ResourceInterface, error) {
 	gk := schema.ParseGroupKind(kind)
 	if c.mapper == nil {
-		return nil, fmt.Errorf("REST mapper not initialized")
+		return nil, fmt.Errorf("RESTMapper not initialized")
 	}
 
 	mapping, err := c.mapper.RESTMapping(gk, versions...)

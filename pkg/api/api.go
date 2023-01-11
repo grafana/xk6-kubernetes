@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/xk6-kubernetes/pkg/helpers"
 	"github.com/grafana/xk6-kubernetes/pkg/resources"
 
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/discovery/cached/memory"
 	"k8s.io/client-go/dynamic"
@@ -31,7 +32,8 @@ type KubernetesConfig struct {
 	Config *rest.Config
 	// Client is a pre-configured dynamic client. If provided, the rest config is not used
 	Client dynamic.Interface
-	REST   rest.Interface
+	// Mapper is a pre-configured RESTMapper. If provided, the rest config is not used
+	Mapper meta.RESTMapper
 }
 
 // kubernetes holds references to implementation of the Kubernetes interface
@@ -53,18 +55,9 @@ func NewFromConfig(c KubernetesConfig) (Kubernetes, error) {
 		ctx = context.TODO()
 	}
 
-	if c.REST != nil {
-		discoveryClient = discovery.NewDiscoveryClient(c.REST)
-	} else if c.Config != nil {
-		discoveryClient, err = discovery.NewDiscoveryClientForConfig(c.Config)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	var client *resources.Client
 	if c.Client != nil {
-		client = resources.NewFromClient(ctx, c.Client)
+		client = resources.NewFromClient(ctx, c.Client).WithMapper(c.Mapper)
 	} else {
 		client, err = resources.NewFromConfig(ctx, c.Config)
 		if err != nil {
@@ -72,8 +65,12 @@ func NewFromConfig(c KubernetesConfig) (Kubernetes, error) {
 		}
 	}
 
-	if discoveryClient != nil {
+	if c.Mapper == nil {
+		discoveryClient, err = discovery.NewDiscoveryClientForConfig(c.Config)
 		mapper := restmapper.NewDeferredDiscoveryRESTMapper(memory.NewMemCacheClient(discoveryClient))
+		if err != nil {
+			return nil, err
+		}
 		client.WithMapper(mapper)
 	}
 

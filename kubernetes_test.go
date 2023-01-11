@@ -56,6 +56,7 @@ func setupTestEnv(t *testing.T, objs ...runtime.Object) *goja.Runtime {
 		t.Errorf("unexpected error creating fake client %v", err)
 	}
 	m.dynamic = dynamic
+	m.mapper = &localutils.FakeRESTMapper{}
 
 	return rt
 }
