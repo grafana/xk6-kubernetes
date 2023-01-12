@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/xk6-kubernetes/pkg/services"
 
 	"go.k6.io/k6/js/modules"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
@@ -48,6 +49,8 @@ type ModuleInstance struct {
 	clientset kubernetes.Interface
 	// dynamic enables injection of a fake dynamic client for unit tests
 	dynamic dynamic.Interface
+	// mapper enables injection of a fake RESTMapper for unit tests
+	mapper meta.RESTMapper
 }
 
 // Kubernetes is the exported object used within JavaScript.
@@ -141,10 +144,11 @@ func (mi *ModuleInstance) newClient(c goja.ConstructorCall) *goja.Object {
 		}
 		obj.Kubernetes = k8s
 	} else {
-		// Pre-configured dynamic client is injected for unit testing
+		// Pre-configured dynamic client and RESTMapper are injected for unit testing
 		k8s, err := api.NewFromConfig(
 			api.KubernetesConfig{
 				Client:  mi.dynamic,
+				Mapper:  mi.mapper,
 				Context: ctx,
 			},
 		)

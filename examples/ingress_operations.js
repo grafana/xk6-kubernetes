@@ -68,11 +68,11 @@ export default function () {
         })
 
         describe('Retrieve all available ingresses', () => {
-            expect(kubernetes.list("Ingress", ns).length).to.be.at.least(1)
+            expect(kubernetes.list("Ingress.networking.k8s.io", ns).length).to.be.at.least(1)
         })
 
         describe('Retrieve our ingress by name and namespace', () => {
-            let fetched = kubernetes.get("Ingress", name, ns)
+            let fetched = kubernetes.get("Ingress.networking.k8s.io", name, ns)
             expect(ingress.metadata.uid).to.equal(fetched.metadata.uid)
         })
 
@@ -81,12 +81,12 @@ export default function () {
             json.spec.rules[0].http.paths[0].path = newValue
 
             kubernetes.update(json)
-            let updated = kubernetes.get("Ingress", name, ns)
+            let updated = kubernetes.get("Ingress.networking.k8s.io", name, ns)
             expect(updated.spec.rules[0].http.paths[0].path).to.be.equal(newValue)
         })
 
         describe('Remove our ingresses to cleanup', () => {
-            kubernetes.delete("Ingress", name, ns)
+            kubernetes.delete("Ingress.networking.k8s.io", name, ns)
         })
     })
 
@@ -98,19 +98,19 @@ export default function () {
 
         describe('Create our ingress using the YAML definition', () => {
             kubernetes.apply(yaml)
-            let created = kubernetes.get("Ingress", name, ns)
+            let created = kubernetes.get("Ingress.networking.k8s.io", name, ns)
             expect(created.metadata).to.have.property('uid')
             uid = created.metadata.uid
         })
 
         describe('Update our ingress with a modified YAML definition', () => {
             kubernetes.apply(yaml)
-            let updated = kubernetes.get("Ingress", name, ns)
+            let updated = kubernetes.get("Ingress.networking.k8s.io", name, ns)
             expect(updated.metadata.uid).to.be.equal(uid)
         })
 
         describe('Remove our ingresses to cleanup', () => {
-            kubernetes.delete("Ingress", name, ns)
+            kubernetes.delete("Ingress.networking.k8s.io", name, ns)
         })
     })
 
