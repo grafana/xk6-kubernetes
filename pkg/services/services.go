@@ -1,4 +1,6 @@
 // Package services provides implementation of Service resources for Kubernetes
+//
+// Deprecated: Use the resources package instead.
 package services
 
 import (
@@ -12,6 +14,8 @@ import (
 )
 
 // New creates a new instance backed by the provided client
+//
+// Deprecated: No longer used.
 func New(ctx context.Context, client kubernetes.Interface, metaOptions metav1.ListOptions) *Services {
 	return &Services{
 		client,
@@ -21,6 +25,8 @@ func New(ctx context.Context, client kubernetes.Interface, metaOptions metav1.Li
 }
 
 // Services provides API for manipulating Service resources within a Kubernetes cluster
+//
+// Deprecated: No longer used in favor of generic resources.
 type Services struct {
 	client      kubernetes.Interface
 	metaOptions metav1.ListOptions
@@ -28,6 +34,8 @@ type Services struct {
 }
 
 // Apply creates the Kubernetes resource given the supplied YAML configuration
+//
+// Deprecated: Use resources.Apply instead.
 func (obj *Services) Apply(yaml string, namespace string) (k8sTypes.Service, error) {
 	decode := scheme.Codecs.UniversalDeserializer().Decode
 	yamlobj, _, err := decode([]byte(yaml), nil, nil)
@@ -51,6 +59,8 @@ func (obj *Services) Apply(yaml string, namespace string) (k8sTypes.Service, err
 }
 
 // Create creates the Kubernetes resource given the supplied object
+//
+// Deprecated: Use resources.Create instead.
 func (obj *Services) Create(
 	service k8sTypes.Service,
 	namespace string,
@@ -64,6 +74,8 @@ func (obj *Services) Create(
 }
 
 // List returns a collection of Services available within the namespace
+//
+// Deprecated: Use resources.List instead.
 func (obj *Services) List(namespace string) ([]k8sTypes.Service, error) {
 	svcs, err := obj.client.CoreV1().Services(namespace).List(obj.ctx, obj.metaOptions)
 	if err != nil {
@@ -73,17 +85,22 @@ func (obj *Services) List(namespace string) ([]k8sTypes.Service, error) {
 }
 
 // Delete removes the named Service from the namespace
+//
+// Deprecated: Use resources.Delete instead.
 func (obj *Services) Delete(name, namespace string, opts metav1.DeleteOptions) error {
 	return obj.client.CoreV1().Services(namespace).Delete(obj.ctx, name, opts)
 }
 
 // Kill removes the named Service from the namespace
-// Deprecated: Use Delete instead.
+//
+// Deprecated: Use resources.Delete instead.
 func (obj *Services) Kill(name, namespace string, opts metav1.DeleteOptions) error {
 	return obj.Delete(name, namespace, opts)
 }
 
 // Get returns the named Services instance within the namespace if available
+//
+// Deprecated: Use resources.Get instead.
 func (obj *Services) Get(name, namespace string, opts metav1.GetOptions) (k8sTypes.Service, error) {
 	svc, err := obj.client.CoreV1().Services(namespace).Get(obj.ctx, name, opts)
 	if err != nil {

@@ -98,7 +98,7 @@ func newForTest(objs ...runtime.Object) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewFromClient(context.TODO(), dynamic), nil
+	return NewFromClient(context.TODO(), dynamic).WithMapper(&testutils.FakeRESTMapper{}), nil
 }
 
 func TestCreate(t *testing.T) {
@@ -122,7 +122,7 @@ func TestCreate(t *testing.T) {
 		{
 			test:     "Create Namespace",
 			obj:      buildUnstructuredNamespace(),
-			kind:     "Job",
+			kind:     "Namespace",
 			resource: schema.GroupVersionResource{Group: "", Version: "v1", Resource: "namespaces"},
 			name:     "testns",
 			ns:       "",
@@ -134,7 +134,7 @@ func TestCreate(t *testing.T) {
 		t.Run(tc.test, func(t *testing.T) {
 			t.Parallel()
 			fake, _ := testutils.NewFakeDynamic()
-			c := NewFromClient(context.TODO(), fake)
+			c := NewFromClient(context.TODO(), fake).WithMapper(&testutils.FakeRESTMapper{})
 
 			created, err := c.Create(tc.obj)
 			if err != nil {
@@ -184,6 +184,8 @@ spec:
 }
 
 func TestApply(t *testing.T) {
+	// Skip test. see comments on test cases why
+	t.Skip()
 	t.Parallel()
 	testCases := []struct {
 		test     string
@@ -191,13 +193,27 @@ func TestApply(t *testing.T) {
 		kind     string
 		name     string
 		ns       string
+		objects  []runtime.Object
 	}{
+		// This test case does not work due to https://github.com/kubernetes/client-go/issues/1184
 		{
-			test:     "Apply pod manifest",
+			test:     "Apply: create new pod",
 			manifest: podManifest(),
 			kind:     "Pod",
 			name:     "busybox",
 			ns:       "testns",
+			objects:  []runtime.Object{},
+		},
+		// This test case does not work due to https://github.com/kubernetes/client-go/issues/970
+		{
+			test:     "Apply: existing pod",
+			manifest: podManifest(),
+			kind:     "Pod",
+			name:     "busybox",
+			ns:       "testns",
+			objects: []runtime.Object{
+				buildPod(),
+			},
 		},
 	}
 
@@ -205,7 +221,7 @@ func TestApply(t *testing.T) {
 		tc := tc
 		t.Run(tc.test, func(t *testing.T) {
 			t.Parallel()
-			c, err := newForTest()
+			c, err := newForTest(tc.objects...)
 			if err != nil {
 				t.Errorf("failed %v", err)
 				return
@@ -301,7 +317,7 @@ func TestDelete(t *testing.T) {
 				t.Errorf("unexpected error creating fake client %v", err)
 				return
 			}
-			c, err := NewFromClient(context.TODO(), fake), nil
+			c, err := NewFromClient(context.TODO(), fake).WithMapper(&testutils.FakeRESTMapper{}), nil
 			if err != nil {
 				t.Errorf("failed %v", err)
 				return
@@ -369,7 +385,7 @@ func TestGet(t *testing.T) {
 				t.Errorf("unexpected error creating fake client %v", err)
 				return
 			}
-			c, err := NewFromClient(context.TODO(), fake), nil
+			c, err := NewFromClient(context.TODO(), fake).WithMapper(&testutils.FakeRESTMapper{}), nil
 			if err != nil {
 				t.Errorf("failed %v", err)
 				return
@@ -444,7 +460,7 @@ func TestList(t *testing.T) {
 				t.Errorf("unexpected error creating fake client %v", err)
 				return
 			}
-			c, err := NewFromClient(context.TODO(), fake), nil
+			c, err := NewFromClient(context.TODO(), fake).WithMapper(&testutils.FakeRESTMapper{}), nil
 			if err != nil {
 				t.Errorf("failed %v", err)
 				return
@@ -468,7 +484,7 @@ func TestStructuredCreate(t *testing.T) {
 	t.Parallel()
 
 	fake, _ := testutils.NewFakeDynamic()
-	c := NewFromClient(context.TODO(), fake)
+	c := NewFromClient(context.TODO(), fake).WithMapper(&testutils.FakeRESTMapper{})
 
 	pod := buildPod()
 	created, err := c.Structured().Create(*pod)

@@ -57,7 +57,7 @@ This API offers methods for creating, retrieving, listing and deleting resources
 
 |  Method     | Parameters|   Description |
 | ------------ | ---| ------ |
-| apply         | manifest string| creates a Kubernetes resource given a YAML manifest |
+| apply         | manifest string| creates a Kubernetes resource given a YAML manifest or updates it if already exists |
 | create         | spec object | creates a Kubernetes resource given its specification |
 | delete         | kind  | removes the named resource |
 |                | name  |
@@ -73,6 +73,7 @@ This API offers methods for creating, retrieving, listing and deleting resources
 The kinds of resources currently supported are:
 * ConfigMap
 * Deployment
+* Ingress
 * Job
 * Namespace
 * Node
@@ -216,17 +217,19 @@ export default function () {
       console.log(`"pod ${pod.metadata.name} not ready after ${timeout} seconds`)
   }
 }
+```
 
 ## Resource kind helpers
 
 This API offers a helper for each kind of Kubernetes resources supported (Pods, Deployments, Secrets, et cetera). For each one, an interface for creating, getting, listing and deleting objects is offered. 
 
->⚠️  This interface is deprecated and will be removed soon
+>⚠️ This interface is deprecated and will be removed soon
 > -
+Migrate to the usage of the generic resources API.
 </br>
 
 
-### Create a client:  `new Kubernetes(config)`
+### (Deprecated) Create a client:  `new Kubernetes(config)`
 
 Creates a Kubernetes client to interact with the Kubernetes cluster.
 
@@ -244,7 +247,7 @@ export default function () {
 }
 ```
 
-### `Client.config_maps`
+### (Deprecated) `Client.config_maps`
 
 |  Method     |   Description |                               |
 | ------------ | ------ | ---------------------------------------- |
@@ -266,7 +269,7 @@ export default function () {
 }
 ```
 
-### `Client.deployments`
+### (Deprecated) `Client.deployments`
 
 |  Method     |   Description | Example                              |
 | ------------ | ------ | ---------------------------------------- |
@@ -293,7 +296,7 @@ export default function () {
 ```
 
 
-### `Client.ingresses`
+### (Deprecated) `Client.ingresses`
 
 |  Method     |   Description |                               |
 | ------------ | ------ | ---------------------------------------- |
@@ -317,7 +320,7 @@ export default function () {
 }
 ```
 
-### `Client.jobs`
+### (Deprecated) `Client.jobs`
 
 |  Method     |   Description | Example                              |
 | ------------ | ------ | ---------------------------------------- |
@@ -354,7 +357,7 @@ export default function () {
 }
 ```
 
-### `Client.namespaces`
+### (Deprecated) `Client.namespaces`
 
 |  Method     |   Description |                               |
 | ------------ | ------ | ---------------------------------------- |
@@ -376,7 +379,7 @@ export default function () {
 }
 ```
 
-### `Client.nodes`
+### (Deprecated) `Client.nodes`
 
 |  Method     |   Description | Example                              |
 | ------------ | ------ | ---------------------------------------- |
@@ -391,7 +394,7 @@ export default function () {
 }
 ```
 
-### `Client.persistent_volumes`
+### (Deprecated) `Client.persistent_volumes`
 
 |  Method     |   Description | Example                              |
 | ------------ | ------ | ---------------------------------------- |
@@ -412,7 +415,7 @@ export default function () {
 }
 ```
 
-### `Client.persistent_volumes_claims`
+### (Deprecated) `Client.persistent_volumes_claims`
 
 |  Method     |   Description | Example                              |
 | ------------ | ------ | ---------------------------------------- |
@@ -435,7 +438,7 @@ export default function () {
 }
 ```
 
-### `Client.pods`
+### (Deprecated) `Client.pods`
 
 |  Method     |   Description | Example                              |
 | ------------ | ------ | ---------------------------------------- |
@@ -480,7 +483,7 @@ export default function () {
 }
 ```
 
-### `Client.secrets`
+### (Deprecated) `Client.secrets`
 
 |  Method     |   Description | Example                              |
 | ------------ | ------ | ---------------------------------------- |
@@ -500,7 +503,7 @@ export default function () {
 }
 ```
 
-### `Client.services`
+### (Deprecated) `Client.services`
 
 |  Method     |   Description | Example                              |
 | ------------ | ------ | ---------------------------------------- |

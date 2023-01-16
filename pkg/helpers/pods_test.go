@@ -84,7 +84,7 @@ func TestPods_Wait(t *testing.T) {
 		t.Run(tc.test, func(t *testing.T) {
 			t.Parallel()
 			fake, _ := testutils.NewFakeDynamic()
-			client := resources.NewFromClient(context.TODO(), fake)
+			client := resources.NewFromClient(context.TODO(), fake).WithMapper(&testutils.FakeRESTMapper{})
 			h := NewHelper(context.TODO(), client, testNamespace)
 			pod := buildPod()
 			_, err := client.Structured().Create(pod)

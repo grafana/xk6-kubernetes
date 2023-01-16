@@ -1,4 +1,6 @@
 // Package nodes provides implementation of Node resources for Kubernetes
+//
+// Deprecated: Use the resources package instead.
 package nodes
 
 import (
@@ -10,6 +12,8 @@ import (
 )
 
 // New creates a new instance backed by the provided client
+//
+// Deprecated: No longer used.
 func New(ctx context.Context, client kubernetes.Interface, metaOptions metav1.ListOptions) *Nodes {
 	return &Nodes{
 		client,
@@ -19,6 +23,8 @@ func New(ctx context.Context, client kubernetes.Interface, metaOptions metav1.Li
 }
 
 // Nodes provides API for manipulating Node resources within a Kubernetes cluster
+//
+// Deprecated: No longer used in favor of generic resources.
 type Nodes struct {
 	client      kubernetes.Interface
 	metaOptions metav1.ListOptions
@@ -26,6 +32,8 @@ type Nodes struct {
 }
 
 // List returns a collection of Nodes comprising the cluster
+//
+// Deprecated: Use resources.List instead.
 func (obj *Nodes) List() ([]k8sTypes.Node, error) {
 	nodes, err := obj.client.CoreV1().Nodes().List(obj.ctx, obj.metaOptions)
 	if err != nil {

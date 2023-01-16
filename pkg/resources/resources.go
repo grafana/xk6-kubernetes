@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/xk6-kubernetes/pkg/utils"
 
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -55,6 +56,7 @@ type structured struct {
 type Client struct {
 	ctx        context.Context
 	dynamic    dynamic.Interface
+	mapper     meta.RESTMapper
 	serializer runtime.Serializer
 }
 
@@ -77,33 +79,28 @@ func NewFromClient(ctx context.Context, dynamic dynamic.Interface) *Client {
 	}
 }
 
+func (c *Client) WithMapper(mapper meta.RESTMapper) *Client {
+	c.mapper = mapper
+	return c
+}
+
 // getResource maps kinds to api resources
-func (c *Client) getResource(kind string, namespace string) (dynamic.ResourceInterface, error) {
-	kindMapping := map[string]schema.GroupVersionResource{
-		"ConfigMap":             {Group: "", Version: "v1", Resource: "configmaps"},
-		"Deployment":            {Group: "apps", Version: "v1", Resource: "deployments"},
-		"Endpoint":              {Group: "", Version: "v1", Resource: "endpoints"},
-		"Job":                   {Group: "batch", Version: "v1", Resource: "jobs"},
-		"PersistentVolume":      {Group: "", Version: "v1", Resource: "persistentvolumes"},
-		"PersistentVolumeClaim": {Group: "", Version: "v1", Resource: "persistentvolumeclaims"},
-		"Pod":                   {Group: "", Version: "v1", Resource: "pods"},
-		"Namespace":             {Group: "", Version: "v1", Resource: "namespaces"},
-		"Node":                  {Group: "", Version: "v1", Resource: "nodes"},
-		"Secret":                {Group: "", Version: "v1", Resource: "secrets"},
-		"Service":               {Group: "", Version: "v1", Resource: "services"},
-		"StatefulSet":           {Group: "apps", Version: "v1", Resource: "statefulsets"},
+func (c *Client) getResource(kind string, namespace string, versions ...string) (dynamic.ResourceInterface, error) {
+	gk := schema.ParseGroupKind(kind)
+	if c.mapper == nil {
+		return nil, fmt.Errorf("RESTMapper not initialized")
 	}
 
-	gvr, found := kindMapping[kind]
-	if !found {
-		return nil, fmt.Errorf("unknown kind: '%s'", kind)
+	mapping, err := c.mapper.RESTMapping(gk, versions...)
+	if err != nil {
+		return nil, err
 	}
 
 	var resource dynamic.ResourceInterface
-	if kind == "Namespace" {
-		resource = c.dynamic.Resource(gvr)
+	if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
+		resource = c.dynamic.Resource(mapping.Resource).Namespace(namespace)
 	} else {
-		resource = c.dynamic.Resource(gvr).Namespace(namespace)
+		resource = c.dynamic.Resource(mapping.Resource)
 	}
 
 	return resource, nil
@@ -114,22 +111,27 @@ func (c *Client) Apply(manifest string) error {
 	uObj := &unstructured.Unstructured{}
 	_, gvk, err := c.serializer.Decode([]byte(manifest), nil, uObj)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to decode manifest: %w", err)
 	}
+
+	name := uObj.GetName()
 	namespace := uObj.GetNamespace()
 	if namespace == "" {
 		namespace = "default"
 	}
 
-	resource, err := c.getResource(gvk.Kind, namespace)
+	resource, err := c.getResource(gvk.GroupKind().String(), namespace, gvk.Version)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get resource: %w", err)
 	}
 
-	_, err = resource.Create(
+	_, err = resource.Apply(
 		c.ctx,
+		name,
 		uObj,
-		metav1.CreateOptions{},
+		metav1.ApplyOptions{
+			FieldManager: "xk6-kubernetes",
+		},
 	)
 	return err
 }
@@ -146,7 +148,7 @@ func (c *Client) Create(obj map[string]interface{}) (map[string]interface{}, err
 		namespace = "default"
 	}
 
-	resource, err := c.getResource(gvk.Kind, namespace)
+	resource, err := c.getResource(gvk.GroupKind().String(), namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -221,7 +223,7 @@ func (c *Client) Update(obj map[string]interface{}) (map[string]interface{}, err
 	if namespace == "" {
 		namespace = "default"
 	}
-	resource, err := c.getResource(gvk.Kind, namespace)
+	resource, err := c.getResource(gvk.GroupKind().String(), namespace)
 	if err != nil {
 		return nil, err
 	}

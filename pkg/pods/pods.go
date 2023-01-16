@@ -1,4 +1,6 @@
 // Package pods provides implementation of Pod resources for Kubernetes
+//
+// Deprecated: Use the resources package instead.
 package pods
 
 import (
@@ -28,6 +30,8 @@ const (
 )
 
 // New creates a new instance backed by the provided client
+//
+// Deprecated: No longer used.
 func New(ctx context.Context, client kubernetes.Interface, config *rest.Config, metaOptions metav1.ListOptions) *Pods {
 	return &Pods{
 		client,
@@ -38,6 +42,8 @@ func New(ctx context.Context, client kubernetes.Interface, config *rest.Config, 
 }
 
 // ExecOptions describe the command to be executed and the target container
+//
+// Deprecated: No longer used.
 type ExecOptions struct {
 	Namespace string   // namespace where the pod is running
 	Pod       string   // name of the Pod to execute the command in
@@ -47,12 +53,16 @@ type ExecOptions struct {
 }
 
 // ExecResult contains the output obtained from the execution of a command
+//
+// Deprecated: No longer used.
 type ExecResult struct {
 	Stdout []byte
 	Stderr []byte
 }
 
 // ContainerOptions describes a container to be started in a pod
+//
+// Deprecated: No longer used.
 type ContainerOptions struct {
 	Name         string // name of the container
 	Image        string // image to be attached
@@ -62,12 +72,16 @@ type ContainerOptions struct {
 }
 
 // EphemeralContainerOptions describes the options for creating an ephemeral container in a pod
+//
+// Deprecated: No longer used.
 type EphemeralContainerOptions struct {
 	ContainerOptions
 	Wait string
 }
 
 // Pods provides API for manipulating Pod resources within a Kubernetes cluster
+//
+// Deprecated: No longer used in favor of generic resources.
 type Pods struct {
 	client      kubernetes.Interface
 	config      *rest.Config
@@ -76,6 +90,8 @@ type Pods struct {
 }
 
 // PodOptions describe a Pod to be executed
+//
+// Deprecated: No longer used.
 type PodOptions struct {
 	Namespace     string // namespace where the pod will be executed
 	Name          string // name of the pod
@@ -87,9 +103,13 @@ type PodOptions struct {
 }
 
 // podConditionChecker defines a function that checks if a pod satisfies a condition
+//
+// Deprecated: No longer used.
 type podConditionChecker func(*k8sTypes.Pod) (bool, error)
 
 // List returns a collection of Pods available within the namespace
+//
+// Deprecated: Use resources.List instead.
 func (obj *Pods) List(namespace string) ([]k8sTypes.Pod, error) {
 	pods, err := obj.client.CoreV1().Pods(namespace).List(obj.ctx, obj.metaOptions)
 	if err != nil {
@@ -99,17 +119,22 @@ func (obj *Pods) List(namespace string) ([]k8sTypes.Pod, error) {
 }
 
 // Delete removes the named Pod from the namespace
+//
+// Deprecated: Use resources.Delete instead.
 func (obj *Pods) Delete(name, namespace string, opts metav1.DeleteOptions) error {
 	return obj.client.CoreV1().Pods(namespace).Delete(obj.ctx, name, opts)
 }
 
 // Kill removes the named Pod from the namespace
-// Deprecated: Use Delete instead.
+//
+// Deprecated: Use resources.Delete instead.
 func (obj *Pods) Kill(name, namespace string, opts metav1.DeleteOptions) error {
 	return obj.Delete(name, namespace, opts)
 }
 
 // Get returns the named Pods instance within the namespace if available
+//
+// Deprecated: Use resources.Get instead.
 func (obj *Pods) Get(name, namespace string) (k8sTypes.Pod, error) {
 	pods, err := obj.List(namespace)
 	if err != nil {
@@ -124,6 +149,8 @@ func (obj *Pods) Get(name, namespace string) (k8sTypes.Pod, error) {
 }
 
 // IsTerminating returns if the state of the named pod is currently terminating
+//
+// Deprecated: No longer used.
 func (obj *Pods) IsTerminating(name, namespace string) (bool, error) {
 	pod, err := obj.Get(name, namespace)
 	if err != nil {
@@ -133,6 +160,8 @@ func (obj *Pods) IsTerminating(name, namespace string) (bool, error) {
 }
 
 // Create runs a pod specified by the options
+//
+// Deprecated: Use resources.Create instead.
 func (obj *Pods) Create(options PodOptions) (k8sTypes.Pod, error) {
 	container := k8sTypes.Container{
 		Name:            options.Name,
@@ -186,6 +215,8 @@ func (obj *Pods) Create(options PodOptions) (k8sTypes.Pod, error) {
 }
 
 // WaitOptions for waiting for a Pod status
+//
+// Deprecated: No longer used.
 type WaitOptions struct {
 	Name      string // Pod name
 	Namespace string // Namespace where the pod is running
@@ -195,6 +226,8 @@ type WaitOptions struct {
 
 // Wait for the Pod to be in a given status up to given timeout and returns a boolean indicating if the status
 // was reached. If the pod is Failed returns error.
+//
+// Deprecated: No longer used.
 func (obj *Pods) Wait(options WaitOptions) (bool, error) {
 	if options.Status != Running && options.Status != Succeeded {
 		return false, errors.New("wait condition must be 'Running' or 'Succeeded'")
@@ -265,6 +298,8 @@ func (obj *Pods) waitForCondition(
 }
 
 // Exec executes a non-interactive command described in options and returns the stdout and stderr outputs
+//
+// Deprecated: No longer used.
 func (obj *Pods) Exec(options ExecOptions) (*ExecResult, error) {
 	req := obj.client.CoreV1().RESTClient().
 		Post().
@@ -310,6 +345,8 @@ func (obj *Pods) Exec(options ExecOptions) (*ExecResult, error) {
 
 // AddEphemeralContainer adds an ephemeral container to a running pod. The Pod is identified by name and namespace.
 // The container is described by options
+//
+// Deprecated: No longer used.
 func (obj *Pods) AddEphemeralContainer(name, namespace string, options EphemeralContainerOptions) error {
 	pod, err := obj.Get(name, namespace)
 	if err != nil {
