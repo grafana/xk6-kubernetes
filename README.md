@@ -249,13 +249,13 @@ export default function () {
 
 ### (Deprecated) `Client.config_maps`
 
-|  Method     |   Description |                               |
-| ------------ | ------ | ---------------------------------------- |
-| apply         | creates the Kubernetes resource given a YAML configuration    | [apply-configmap.js](./examples/apply-configmap.js)  |
-| create         | creates the Kubernetes resource given an object configuration    |   |
-| delete         | removes the named ConfigMap     |   |
-| get         | returns the named ConfigMaps     | [get-configmap.js](./examples/get-configmap.js)  |
-| list         | returns a collection of ConfigMaps     | [list-configmaps.js](./examples/list-configmaps.js)   |
+|  Method     |   Description |
+| ------------ | ------ |
+| apply         | creates the Kubernetes resource given a YAML configuration |
+| create         | creates the Kubernetes resource given an object configuration |
+| delete         | removes the named ConfigMap     |
+| get         | returns the named ConfigMaps     |
+| list         | returns a collection of ConfigMaps     |
 
 ```javascript
 import { Kubernetes } from 'k6/x/kubernetes';
