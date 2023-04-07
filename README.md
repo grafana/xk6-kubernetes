@@ -298,13 +298,13 @@ export default function () {
 
 ### (Deprecated) `Client.ingresses`
 
-|  Method     |   Description |                               |
-| ------------ | ------ | ---------------------------------------- |
-| apply         | creates the Kubernetes resource given a YAML configuration    | [apply-deployment-service-ingress.js](./examples/apply-deployment-service-ingress.js)  |
-| create         | creates the Kubernetes resource given an object configuration    |   |
-| delete         | removes the named Ingress     |   |
-| get         | returns the named Ingress     | [get-ingress.js](./examples/get-ingress.js)  |
-| list         | returns a collection of Ingresses     | [list-ingresses.js](./examples/list-ingresses.js)   |
+|  Method     |   Description |
+| ------------ | ------ |
+| apply         | creates the Kubernetes resource given a YAML configuration    |
+| create         | creates the Kubernetes resource given an object configuration    |
+| delete         | removes the named Ingress     |
+| get         | returns the named Ingress     |
+| list         | returns a collection of Ingresses     |
 
 ```javascript
 import { Kubernetes } from 'k6/x/kubernetes';
