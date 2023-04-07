@@ -417,13 +417,13 @@ export default function () {
 
 ### (Deprecated) `Client.persistent_volumes_claims`
 
-|  Method     |   Description | Example                              |
-| ------------ | ------ | ---------------------------------------- |
-| apply         | creates the Kubernetes resource given a YAML configuration    | [apply-get-delete-pvc.js](./examples/apply-get-delete-pvc.js)  |
-| create         | creates the Kubernetes resource given an object configuration    |   |
-| delete         | removes the named persistent volume claim     | [apply-get-delete-pvc.js](./examples/apply-get-delete-pvc.js) |
-| get         | returns the named persistent volume claim     | [apply-get-delete-pvc.js](./examples/apply-get-delete-pvc.js)  |
-| list         | returns a collection of persistent volumen claims     | [list-pvc.js](./examples/list-pvc.js)   |
+|  Method     |   Description |
+| ------------ | ------ |
+| apply         | creates the Kubernetes resource given a YAML configuration    |
+| create         | creates the Kubernetes resource given an object configuration    |
+| delete         | removes the named persistent volume claim     |
+| get         | returns the named persistent volume claim     |
+| list         | returns a collection of persistent volumen claims     |
 
 ```javascript
 import { Kubernetes } from 'k6/x/kubernetes';
