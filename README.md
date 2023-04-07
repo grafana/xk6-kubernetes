@@ -396,13 +396,13 @@ export default function () {
 
 ### (Deprecated) `Client.persistent_volumes`
 
-|  Method     |   Description | Example                              |
-| ------------ | ------ | ---------------------------------------- |
-| apply         | creates the Kubernetes resource given a YAML configuration    | [apply-get-delete-pv.js](./examples/apply-get-delete-pv.js)  |
-| create         | creates the Kubernetes resource given an object configuration    |   |
-| delete         | removes the named persistent volume     | [apply-get-delete-pv.js](./examples/apply-get-delete-pv.js) |
-| get         | returns the named persistent  volume instance     | [apply-get-delete-pv.js](./examples/apply-get-delete-pv.js)  |
-| list         | returns a collection of persistent volumens     | [list-pv.js](./examples/list-pv.js)   |
+|  Method     |   Description |
+| ------------ | ------ |
+| apply         | creates the Kubernetes resource given a YAML configuration    |
+| create         | creates the Kubernetes resource given an object configuration    |
+| delete         | removes the named persistent volume     |
+| get         | returns the named persistent  volume instance     |
+| list         | returns a collection of persistent volumens     |
 
 ```javascript
 import { Kubernetes } from 'k6/x/kubernetes';
