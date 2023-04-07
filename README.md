@@ -359,13 +359,13 @@ export default function () {
 
 ### (Deprecated) `Client.namespaces`
 
-|  Method     |   Description |                               |
-| ------------ | ------ | ---------------------------------------- |
-| apply         | creates the Kubernetes resource given a YAML configuration    | [apply-namespace.js](./examples/apply-namespace.js)  |
-| create         | creates the Kubernetes resource given an object configuration    |   |
-| delete         | removes the named Namespaces     |   |
-| get         | returns the named Namespace    | [get-namespace.js](./examples/get-namespace.js)  |
-| list         | returns a collection of Namespaces     | [list-namespaces.js](./examples/list-namespaces.js)   |
+|  Method     |   Description |
+| ------------ | ------ |
+| apply         | creates the Kubernetes resource given a YAML configuration    |
+| create         | creates the Kubernetes resource given an object configuration    |
+| delete         | removes the named Namespaces     |
+| get         | returns the named Namespace    |
+| list         | returns a collection of Namespaces     |
 
 
 ```javascript
