@@ -485,13 +485,13 @@ export default function () {
 
 ### (Deprecated) `Client.secrets`
 
-|  Method     |   Description | Example                              |
-| ------------ | ------ | ---------------------------------------- |
-| apply         | creates the Kubernetes resource given a YAML configuration    | [apply-secret.js](./examples/apply-secret.js)  |
-| create         | creates the Kubernetes resource given an object configuration    |   |
-| delete         | removes the named secret     |   |
-| get         | returns the named secret    | [get-secret.js](./examples/get-secret.js)  |
-| list         | returns a collection of secrets     | [list-secrets.js](./examples/list-secrets.js)   |
+|  Method     |   Description |
+| ------------ | ------ |
+| apply         | creates the Kubernetes resource given a YAML configuration    |
+| create         | creates the Kubernetes resource given an object configuration    |
+| delete         | removes the named secret     |
+| get         | returns the named secret    |
+| list         | returns a collection of secrets     |
 
 
 ```javascript
