@@ -322,14 +322,14 @@ export default function () {
 
 ### (Deprecated) `Client.jobs`
 
-|  Method     |   Description | Example                              |
-| ------------ | ------ | ---------------------------------------- |
-| apply         | creates the Kubernetes resource given a YAML configuration    | [apply-job.js](./examples/apply-job.js)  |
-| create         | creates the Kubernetes resource given an object configuration    | [create-job.js](./examples/create-job.js), [create-job-wait.js](./examples/create-job-wait.js), [create-job-by-nodename.js](./examples/create-job-by-nodename.js), [create-job-autodelete.js](./examples/create-job-autodelete.js)   |
-| delete         | removes the named Job     |   |
-| get         | returns the named Jobs     | [get-job.js](./examples/get-job.js)  |
-| list         | returns a collection of Jobs     | [list-jobs.js](./examples/list-jobs.js)   |
-| wait         | wait for all Jobs to complete    | [wait-job.js](./examples/wait-job.js)   |
+|  Method     |   Description | Example                             |
+| ------------ | ------ | --------------------------------------- |
+| apply         | creates the Kubernetes resource given a YAML configuration    ||
+| create         | creates the Kubernetes resource given an object configuration    | [create-job-wait.js](./examples/create-job-wait.js) |
+| delete         | removes the named Job     |  |
+| get         | returns the named Jobs     | |
+| list         | returns a collection of Jobs     |  |
+| wait         | wait for all Jobs to complete    | [wait-job.js](./examples/wait-job.js)  |
 
 ```javascript
 import { Kubernetes } from 'k6/x/kubernetes';
