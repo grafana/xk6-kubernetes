@@ -440,15 +440,15 @@ export default function () {
 
 ### (Deprecated) `Client.pods`
 
-|  Method     |   Description | Example                              |
-| ------------ | ------ | ---------------------------------------- |
-| create         | runs a pod    | [create-pod.js](./examples/create-pod.js), [create-pod-wait.js](./examples/create-pod-wait.js)  |
-| delete         | removes the named Pod     |   |
-| get         | returns the named Pod     | [get-pod.js](./examples/get-pod.js)  |
-| list         | returns a collection of Pods     | [list-pods.js](./examples/list-pods.js)   |
-| wait         | wait for the Pod to be in a given status    | [wait-pod.js](./examples/wait-pod.js)   |
-| exec         | executes a non-interactive command    | [exec-command.js](./examples/exec-command.js)   |
-| addEphemeralContainer         | adds an ephemeral container to a running pod    | [add-ephemeral.js](./examples/add-ephemeral.js)   |
+|  Method     |   Description |
+| ------------ | ------ |
+| create         | runs a pod    |
+| delete         | removes the named Pod     |
+| get         | returns the named Pod     |
+| list         | returns a collection of Pods     |
+| wait         | wait for the Pod to be in a given status    |
+| exec         | executes a non-interactive command    |
+| addEphemeralContainer         | adds an ephemeral container to a running pod    |
 
 
 
