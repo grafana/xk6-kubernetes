@@ -381,9 +381,9 @@ export default function () {
 
 ### (Deprecated) `Client.nodes`
 
-|  Method     |   Description | Example                              |
-| ------------ | ------ | ---------------------------------------- |
-| list         | returns a collection of Nodes comprising the cluster    | [list-nodes.js](./examples/list-nodes.js) |
+|  Method     |   Description |
+| ------------ | ------ |
+| list         | returns a collection of Nodes comprising the cluster |
 
 ```javascript
 import { Kubernetes } from 'k6/x/kubernetes';

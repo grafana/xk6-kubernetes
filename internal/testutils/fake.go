@@ -47,7 +47,7 @@ func (f *FakeRESTMapper) RESTMapping(gk schema.GroupKind, versions ...string) (*
 		return nil, fmt.Errorf("unknown kind: '%s'", gk.Kind)
 	}
 	scope := meta.RESTScopeNamespace
-	if gk.Kind == "Namespace" {
+	if gk.Kind == "Namespace" || gk.Kind == "Node" {
 		scope = meta.RESTScopeRoot
 	}
 
