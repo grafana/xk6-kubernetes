@@ -71,18 +71,18 @@ This API offers methods for creating, retrieving, listing and deleting resources
 
 
 The kinds of resources currently supported are:
-* ConfigMap
-* Deployment
-* Ingress
-* Job
-* Namespace
-* Node
-* PersistentVolume
-* PersistentVolumeClaim
-* Pod
-* Secret
-* Service
-* StatefulSet
+* [ConfigMap](examples/configmap_operations.js)
+* [Deployment](examples/deployment_operations.js)
+* [Ingress](examples/ingress_operations.js)
+* [Job](examples/job_operations.js)
+* [Namespace](examples/namespace_operations.js)
+* [Node](examples/node_operations.js)
+* [PersistentVolume](examples/persistentvolume_operations.js)
+* [PersistentVolumeClaim](examples/persistentvolumeclaim_operations.js)
+* [Pod](examples/pod_operations.js)
+* [Secret](examples/secret_operations.js)
+* [Service](examples/service_operations.js)
+* [StatefulSet](examples/statefulset_operations.js)
 
 ### Examples
 
