@@ -271,13 +271,13 @@ export default function () {
 
 ### (Deprecated) `Client.deployments`
 
-|  Method     |   Description | Example                              |
-| ------------ | ------ | ---------------------------------------- |
-| apply         | creates the Kubernetes resource given a YAML configuration    | [apply-deployment-service-ingress.js](./examples/apply-deployment-service-ingress.js)  |
-| create         | creates the Kubernetes resource given an object configuration    |   |
-| delete         | removes the named Deployment     |   |
-| get         | returns the named Deployment     | [get-configmap.js](./examples/get-deployment.js)  |
-| list         | returns a collection of Deployments     | [list-configmaps.js](./examples/list-deployments.js)   |
+|  Method     |   Description |
+| ------------ | ------ |
+| apply         | creates the Kubernetes resource given a YAML configuration    |
+| create         | creates the Kubernetes resource given an object configuration    |
+| delete         | removes the named Deployment     |
+| get         | returns the named Deployment     |
+| list         | returns a collection of Deployments     |
 
 
 
@@ -507,7 +507,7 @@ export default function () {
 
 |  Method     |   Description | Example                              |
 | ------------ | ------ | ---------------------------------------- |
-| apply         | creates the Kubernetes resource given a YAML configuration    | [apply-deployment-service-ingress.js](./examples/apply-deployment-service-ingress.js)  |
+| apply         | creates the Kubernetes resource given a YAML configuration    | |
 | create         | creates the Kubernetes resource given an object configuration    |   |
 | delete         | removes the named service     |   |
 | get         | returns the named service    | [get-service.js](./examples/get-service.js)  |
