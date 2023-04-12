@@ -12,17 +12,6 @@ import (
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/xk6-kubernetes/pkg/api"
-	"github.com/grafana/xk6-kubernetes/pkg/configmaps"
-	"github.com/grafana/xk6-kubernetes/pkg/deployments"
-	"github.com/grafana/xk6-kubernetes/pkg/ingresses"
-	"github.com/grafana/xk6-kubernetes/pkg/jobs"
-	"github.com/grafana/xk6-kubernetes/pkg/namespaces"
-	"github.com/grafana/xk6-kubernetes/pkg/nodes"
-	"github.com/grafana/xk6-kubernetes/pkg/persistentvolumeclaims"
-	"github.com/grafana/xk6-kubernetes/pkg/persistentvolumes"
-	"github.com/grafana/xk6-kubernetes/pkg/pods"
-	"github.com/grafana/xk6-kubernetes/pkg/secrets"
-	"github.com/grafana/xk6-kubernetes/pkg/services"
 
 	"go.k6.io/k6/js/modules"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -56,20 +45,9 @@ type ModuleInstance struct {
 // Kubernetes is the exported object used within JavaScript.
 type Kubernetes struct {
 	api.Kubernetes
-	client                 kubernetes.Interface
-	metaOptions            metaV1.ListOptions
-	ctx                    context.Context
-	ConfigMaps             *configmaps.ConfigMaps
-	Ingresses              *ingresses.Ingresses
-	Deployments            *deployments.Deployments
-	Pods                   *pods.Pods
-	Namespaces             *namespaces.Namespaces
-	Nodes                  *nodes.Nodes
-	Jobs                   *jobs.Jobs
-	Services               *services.Services
-	Secrets                *secrets.Secrets
-	PersistentVolumes      *persistentvolumes.PersistentVolumes
-	PersistentVolumeClaims *persistentvolumeclaims.PersistentVolumeClaims
+	client      kubernetes.Interface
+	metaOptions metaV1.ListOptions
+	ctx         context.Context
 }
 
 // KubeConfig represents the initialization settings for the kubernetes api client.
@@ -162,18 +140,6 @@ func (mi *ModuleInstance) newClient(c goja.ConstructorCall) *goja.Object {
 
 	obj.metaOptions = metaV1.ListOptions{}
 	obj.ctx = ctx
-
-	obj.ConfigMaps = configmaps.New(obj.ctx, obj.client, obj.metaOptions)
-	obj.Ingresses = ingresses.New(obj.ctx, obj.client, obj.metaOptions)
-	obj.Deployments = deployments.New(obj.ctx, obj.client, obj.metaOptions)
-	obj.Pods = pods.New(obj.ctx, obj.client, config, obj.metaOptions)
-	obj.Namespaces = namespaces.New(obj.ctx, obj.client, obj.metaOptions)
-	obj.Nodes = nodes.New(obj.ctx, obj.client, obj.metaOptions)
-	obj.Jobs = jobs.New(obj.ctx, obj.client, obj.metaOptions)
-	obj.Services = services.New(obj.ctx, obj.client, obj.metaOptions)
-	obj.Secrets = secrets.New(obj.ctx, obj.client, obj.metaOptions)
-	obj.PersistentVolumes = persistentvolumes.New(obj.ctx, obj.client, obj.metaOptions)
-	obj.PersistentVolumeClaims = persistentvolumeclaims.New(obj.ctx, obj.client, obj.metaOptions)
 
 	return rt.ToValue(obj).ToObject(rt)
 }

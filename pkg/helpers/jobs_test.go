@@ -3,6 +3,9 @@ package helpers
 import (
 	"context"
 	"github.com/grafana/xk6-kubernetes/pkg/resources"
+	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
+	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes/fake" //nolint:typecheck
 	k8stest "k8s.io/client-go/testing"
@@ -15,6 +18,40 @@ import (
 const (
 	jobName = "test-job"
 )
+
+func newJob(name string, namespace string) *batchv1.Job {
+	return &batchv1.Job{
+		TypeMeta: metaV1.TypeMeta{
+			APIVersion: "batch/v1",
+			Kind:       "Job",
+		},
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+			Labels: map[string]string{
+				"app": "xk6-kubernetes/unit-test",
+			},
+		},
+		Spec: batchv1.JobSpec{
+			BackoffLimit: nil,
+			Template:     corev1.PodTemplateSpec{},
+		},
+		Status: batchv1.JobStatus{
+			Conditions: []batchv1.JobCondition{},
+		},
+	}
+}
+
+func newJobWithStatus(name string, namespace string, status string) *batchv1.Job {
+	job := newJob(name, namespace)
+	job.Status.Conditions = []batchv1.JobCondition{
+		{
+			Type:   batchv1.JobConditionType(status),
+			Status: corev1.ConditionTrue,
+		},
+	}
+	return job
+}
 
 func TestWaitJobCompleted(t *testing.T) {
 	t.Parallel()
@@ -67,7 +104,7 @@ func TestWaitJobCompleted(t *testing.T) {
 			client := resources.NewFromClient(context.TODO(), fake).WithMapper(&testutils.FakeRESTMapper{})
 
 			fixture := NewHelper(context.TODO(), clientset, client, nil, "default")
-			job := testutils.NewJob(jobName, "default")
+			job := newJob(jobName, "default")
 			_, err := client.Structured().Create(job)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
@@ -76,7 +113,7 @@ func TestWaitJobCompleted(t *testing.T) {
 
 			go func(tc TestCase) {
 				time.Sleep(tc.delay)
-				job = testutils.NewJobWithStatus(jobName, "default", tc.status)
+				job = newJobWithStatus(jobName, "default", tc.status)
 				_, e := client.Structured().Update(job)
 				if e != nil {
 					t.Errorf("unexpected error: %v", e)
