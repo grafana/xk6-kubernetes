@@ -505,13 +505,13 @@ export default function () {
 
 ### (Deprecated) `Client.services`
 
-|  Method     |   Description | Example                              |
-| ------------ | ------ | ---------------------------------------- |
-| apply         | creates the Kubernetes resource given a YAML configuration    | |
-| create         | creates the Kubernetes resource given an object configuration    |   |
-| delete         | removes the named service     |   |
-| get         | returns the named service    | [get-service.js](./examples/get-service.js)  |
-| list         | returns a collection of services     | [list-services.js](./examples/list-services.js)   |
+|  Method     |   Description |
+| ------------ | ------ |
+| apply         | creates the Kubernetes resource given a YAML configuration    |
+| create         | creates the Kubernetes resource given an object configuration    |
+| delete         | removes the named service     |
+| get         | returns the named service    |
+| list         | returns a collection of services     |
 
 
 ```javascript
