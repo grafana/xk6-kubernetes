@@ -192,7 +192,8 @@ func Test_WaitServiceReady(t *testing.T) {
 			}
 			fake, _ := testutils.NewFakeDynamic(objs...)
 			client := resources.NewFromClient(context.TODO(), fake).WithMapper(&testutils.FakeRESTMapper{})
-			h := NewHelper(context.TODO(), client, "default")
+			clientset := testutils.NewFakeClientset()
+			h := NewHelper(context.TODO(), clientset, client, nil, "default")
 
 			go func(tc TestCase) {
 				if tc.updated == nil {
@@ -266,7 +267,8 @@ func Test_GetServiceIP(t *testing.T) {
 
 			fake, _ := testutils.NewFakeDynamic()
 			client := resources.NewFromClient(context.TODO(), fake).WithMapper(&testutils.FakeRESTMapper{})
-			h := NewHelper(context.TODO(), client, "default")
+			clientset := testutils.NewFakeClientset()
+			h := NewHelper(context.TODO(), clientset, client, nil, "default")
 
 			svc := buildService()
 			_, err := client.Structured().Create(svc)

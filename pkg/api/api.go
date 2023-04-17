@@ -4,6 +4,7 @@ package api
 
 import (
 	"context"
+	k8s "k8s.io/client-go/kubernetes"
 
 	"github.com/grafana/xk6-kubernetes/pkg/helpers"
 	"github.com/grafana/xk6-kubernetes/pkg/resources"
@@ -30,6 +31,8 @@ type KubernetesConfig struct {
 	Context context.Context
 	// kubernetes rest config
 	Config *rest.Config
+	// Clientset provides access to various API-specific clients
+	Clientset k8s.Interface
 	// Client is a pre-configured dynamic client. If provided, the rest config is not used
 	Client dynamic.Interface
 	// Mapper is a pre-configured RESTMapper. If provided, the rest config is not used
@@ -38,8 +41,10 @@ type KubernetesConfig struct {
 
 // kubernetes holds references to implementation of the Kubernetes interface
 type kubernetes struct {
-	ctx context.Context
+	ctx       context.Context
+	Clientset k8s.Interface
 	*resources.Client
+	Config *rest.Config
 	*restmapper.DeferredDiscoveryRESTMapper
 }
 
@@ -75,8 +80,10 @@ func NewFromConfig(c KubernetesConfig) (Kubernetes, error) {
 	}
 
 	return &kubernetes{
-		ctx:    ctx,
-		Client: client,
+		ctx:       ctx,
+		Clientset: c.Clientset,
+		Client:    client,
+		Config:    c.Config,
 	}, nil
 }
 
@@ -86,7 +93,9 @@ func (k *kubernetes) Helpers(namespace string) helpers.Helpers {
 	}
 	return helpers.NewHelper(
 		k.ctx,
+		k.Clientset,
 		k.Client,
+		k.Config,
 		namespace,
 	)
 }

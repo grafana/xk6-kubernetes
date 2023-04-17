@@ -135,8 +135,9 @@ func (mi *ModuleInstance) newClient(c goja.ConstructorCall) *goja.Object {
 	if mi.dynamic == nil {
 		k8s, err := api.NewFromConfig(
 			api.KubernetesConfig{
-				Config:  config,
-				Context: ctx,
+				Clientset: obj.client,
+				Config:    config,
+				Context:   ctx,
 			},
 		)
 		if err != nil {
@@ -147,9 +148,10 @@ func (mi *ModuleInstance) newClient(c goja.ConstructorCall) *goja.Object {
 		// Pre-configured dynamic client and RESTMapper are injected for unit testing
 		k8s, err := api.NewFromConfig(
 			api.KubernetesConfig{
-				Client:  mi.dynamic,
-				Mapper:  mi.mapper,
-				Context: ctx,
+				Clientset: obj.client,
+				Client:    mi.dynamic,
+				Mapper:    mi.mapper,
+				Context:   ctx,
 			},
 		)
 		if err != nil {
