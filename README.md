@@ -71,18 +71,18 @@ This API offers methods for creating, retrieving, listing and deleting resources
 
 
 The kinds of resources currently supported are:
-* ConfigMap
-* Deployment
-* Ingress
-* Job
-* Namespace
-* Node
-* PersistentVolume
-* PersistentVolumeClaim
-* Pod
-* Secret
-* Service
-* StatefulSet
+* [ConfigMap](examples/configmap_operations.js)
+* [Deployment](examples/deployment_operations.js)
+* [Ingress](examples/ingress_operations.js)
+* [Job](examples/job_operations.js)
+* [Namespace](examples/namespace_operations.js)
+* [Node](examples/node_operations.js)
+* [PersistentVolume](examples/persistentvolume_operations.js)
+* [PersistentVolumeClaim](examples/persistentvolumeclaim_operations.js)
+* [Pod](examples/pod_operations.js)
+* [Secret](examples/secret_operations.js)
+* [Service](examples/service_operations.js)
+* [StatefulSet](examples/statefulset_operations.js)
 
 ### Examples
 
@@ -249,13 +249,13 @@ export default function () {
 
 ### (Deprecated) `Client.config_maps`
 
-|  Method     |   Description |                               |
-| ------------ | ------ | ---------------------------------------- |
-| apply         | creates the Kubernetes resource given a YAML configuration    | [apply-configmap.js](./examples/apply-configmap.js)  |
-| create         | creates the Kubernetes resource given an object configuration    |   |
-| delete         | removes the named ConfigMap     |   |
-| get         | returns the named ConfigMaps     | [get-configmap.js](./examples/get-configmap.js)  |
-| list         | returns a collection of ConfigMaps     | [list-configmaps.js](./examples/list-configmaps.js)   |
+|  Method     |   Description |
+| ------------ | ------ |
+| apply         | creates the Kubernetes resource given a YAML configuration |
+| create         | creates the Kubernetes resource given an object configuration |
+| delete         | removes the named ConfigMap     |
+| get         | returns the named ConfigMaps     |
+| list         | returns a collection of ConfigMaps     |
 
 ```javascript
 import { Kubernetes } from 'k6/x/kubernetes';
@@ -271,13 +271,13 @@ export default function () {
 
 ### (Deprecated) `Client.deployments`
 
-|  Method     |   Description | Example                              |
-| ------------ | ------ | ---------------------------------------- |
-| apply         | creates the Kubernetes resource given a YAML configuration    | [apply-deployment-service-ingress.js](./examples/apply-deployment-service-ingress.js)  |
-| create         | creates the Kubernetes resource given an object configuration    |   |
-| delete         | removes the named Deployment     |   |
-| get         | returns the named Deployment     | [get-configmap.js](./examples/get-deployment.js)  |
-| list         | returns a collection of Deployments     | [list-configmaps.js](./examples/list-deployments.js)   |
+|  Method     |   Description |
+| ------------ | ------ |
+| apply         | creates the Kubernetes resource given a YAML configuration    |
+| create         | creates the Kubernetes resource given an object configuration    |
+| delete         | removes the named Deployment     |
+| get         | returns the named Deployment     |
+| list         | returns a collection of Deployments     |
 
 
 
@@ -298,13 +298,13 @@ export default function () {
 
 ### (Deprecated) `Client.ingresses`
 
-|  Method     |   Description |                               |
-| ------------ | ------ | ---------------------------------------- |
-| apply         | creates the Kubernetes resource given a YAML configuration    | [apply-deployment-service-ingress.js](./examples/apply-deployment-service-ingress.js)  |
-| create         | creates the Kubernetes resource given an object configuration    |   |
-| delete         | removes the named Ingress     |   |
-| get         | returns the named Ingress     | [get-ingress.js](./examples/get-ingress.js)  |
-| list         | returns a collection of Ingresses     | [list-ingresses.js](./examples/list-ingresses.js)   |
+|  Method     |   Description |
+| ------------ | ------ |
+| apply         | creates the Kubernetes resource given a YAML configuration    |
+| create         | creates the Kubernetes resource given an object configuration    |
+| delete         | removes the named Ingress     |
+| get         | returns the named Ingress     |
+| list         | returns a collection of Ingresses     |
 
 ```javascript
 import { Kubernetes } from 'k6/x/kubernetes';
@@ -322,14 +322,14 @@ export default function () {
 
 ### (Deprecated) `Client.jobs`
 
-|  Method     |   Description | Example                              |
-| ------------ | ------ | ---------------------------------------- |
-| apply         | creates the Kubernetes resource given a YAML configuration    | [apply-job.js](./examples/apply-job.js)  |
-| create         | creates the Kubernetes resource given an object configuration    | [create-job.js](./examples/create-job.js), [create-job-wait.js](./examples/create-job-wait.js), [create-job-by-nodename.js](./examples/create-job-by-nodename.js), [create-job-autodelete.js](./examples/create-job-autodelete.js)   |
-| delete         | removes the named Job     |   |
-| get         | returns the named Jobs     | [get-job.js](./examples/get-job.js)  |
-| list         | returns a collection of Jobs     | [list-jobs.js](./examples/list-jobs.js)   |
-| wait         | wait for all Jobs to complete    | [wait-job.js](./examples/wait-job.js)   |
+|  Method     |   Description | Example                             |
+| ------------ | ------ | --------------------------------------- |
+| apply         | creates the Kubernetes resource given a YAML configuration    ||
+| create         | creates the Kubernetes resource given an object configuration    | [create-job-wait.js](./examples/create-job-wait.js) |
+| delete         | removes the named Job     |  |
+| get         | returns the named Jobs     | |
+| list         | returns a collection of Jobs     |  |
+| wait         | wait for all Jobs to complete    | [wait-job.js](./examples/wait-job.js)  |
 
 ```javascript
 import { Kubernetes } from 'k6/x/kubernetes';
@@ -359,13 +359,13 @@ export default function () {
 
 ### (Deprecated) `Client.namespaces`
 
-|  Method     |   Description |                               |
-| ------------ | ------ | ---------------------------------------- |
-| apply         | creates the Kubernetes resource given a YAML configuration    | [apply-namespace.js](./examples/apply-namespace.js)  |
-| create         | creates the Kubernetes resource given an object configuration    |   |
-| delete         | removes the named Namespaces     |   |
-| get         | returns the named Namespace    | [get-namespace.js](./examples/get-namespace.js)  |
-| list         | returns a collection of Namespaces     | [list-namespaces.js](./examples/list-namespaces.js)   |
+|  Method     |   Description |
+| ------------ | ------ |
+| apply         | creates the Kubernetes resource given a YAML configuration    |
+| create         | creates the Kubernetes resource given an object configuration    |
+| delete         | removes the named Namespaces     |
+| get         | returns the named Namespace    |
+| list         | returns a collection of Namespaces     |
 
 
 ```javascript
@@ -381,9 +381,9 @@ export default function () {
 
 ### (Deprecated) `Client.nodes`
 
-|  Method     |   Description | Example                              |
-| ------------ | ------ | ---------------------------------------- |
-| list         | returns a collection of Nodes comprising the cluster    | [list-nodes.js](./examples/list-nodes.js) |
+|  Method     |   Description |
+| ------------ | ------ |
+| list         | returns a collection of Nodes comprising the cluster |
 
 ```javascript
 import { Kubernetes } from 'k6/x/kubernetes';
@@ -396,13 +396,13 @@ export default function () {
 
 ### (Deprecated) `Client.persistent_volumes`
 
-|  Method     |   Description | Example                              |
-| ------------ | ------ | ---------------------------------------- |
-| apply         | creates the Kubernetes resource given a YAML configuration    | [apply-get-delete-pv.js](./examples/apply-get-delete-pv.js)  |
-| create         | creates the Kubernetes resource given an object configuration    |   |
-| delete         | removes the named persistent volume     | [apply-get-delete-pv.js](./examples/apply-get-delete-pv.js) |
-| get         | returns the named persistent  volume instance     | [apply-get-delete-pv.js](./examples/apply-get-delete-pv.js)  |
-| list         | returns a collection of persistent volumens     | [list-pv.js](./examples/list-pv.js)   |
+|  Method     |   Description |
+| ------------ | ------ |
+| apply         | creates the Kubernetes resource given a YAML configuration    |
+| create         | creates the Kubernetes resource given an object configuration    |
+| delete         | removes the named persistent volume     |
+| get         | returns the named persistent  volume instance     |
+| list         | returns a collection of persistent volumens     |
 
 ```javascript
 import { Kubernetes } from 'k6/x/kubernetes';
@@ -417,13 +417,13 @@ export default function () {
 
 ### (Deprecated) `Client.persistent_volumes_claims`
 
-|  Method     |   Description | Example                              |
-| ------------ | ------ | ---------------------------------------- |
-| apply         | creates the Kubernetes resource given a YAML configuration    | [apply-get-delete-pvc.js](./examples/apply-get-delete-pvc.js)  |
-| create         | creates the Kubernetes resource given an object configuration    |   |
-| delete         | removes the named persistent volume claim     | [apply-get-delete-pvc.js](./examples/apply-get-delete-pvc.js) |
-| get         | returns the named persistent volume claim     | [apply-get-delete-pvc.js](./examples/apply-get-delete-pvc.js)  |
-| list         | returns a collection of persistent volumen claims     | [list-pvc.js](./examples/list-pvc.js)   |
+|  Method     |   Description |
+| ------------ | ------ |
+| apply         | creates the Kubernetes resource given a YAML configuration    |
+| create         | creates the Kubernetes resource given an object configuration    |
+| delete         | removes the named persistent volume claim     |
+| get         | returns the named persistent volume claim     |
+| list         | returns a collection of persistent volumen claims     |
 
 ```javascript
 import { Kubernetes } from 'k6/x/kubernetes';
@@ -440,15 +440,15 @@ export default function () {
 
 ### (Deprecated) `Client.pods`
 
-|  Method     |   Description | Example                              |
-| ------------ | ------ | ---------------------------------------- |
-| create         | runs a pod    | [create-pod.js](./examples/create-pod.js), [create-pod-wait.js](./examples/create-pod-wait.js)  |
-| delete         | removes the named Pod     |   |
-| get         | returns the named Pod     | [get-pod.js](./examples/get-pod.js)  |
-| list         | returns a collection of Pods     | [list-pods.js](./examples/list-pods.js)   |
-| wait         | wait for the Pod to be in a given status    | [wait-pod.js](./examples/wait-pod.js)   |
-| exec         | executes a non-interactive command    | [exec-command.js](./examples/exec-command.js)   |
-| addEphemeralContainer         | adds an ephemeral container to a running pod    | [add-ephemeral.js](./examples/add-ephemeral.js)   |
+|  Method     |   Description |
+| ------------ | ------ |
+| create         | runs a pod    |
+| delete         | removes the named Pod     |
+| get         | returns the named Pod     |
+| list         | returns a collection of Pods     |
+| wait         | wait for the Pod to be in a given status    |
+| exec         | executes a non-interactive command    |
+| addEphemeralContainer         | adds an ephemeral container to a running pod    |
 
 
 
@@ -485,13 +485,13 @@ export default function () {
 
 ### (Deprecated) `Client.secrets`
 
-|  Method     |   Description | Example                              |
-| ------------ | ------ | ---------------------------------------- |
-| apply         | creates the Kubernetes resource given a YAML configuration    | [apply-secret.js](./examples/apply-secret.js)  |
-| create         | creates the Kubernetes resource given an object configuration    |   |
-| delete         | removes the named secret     |   |
-| get         | returns the named secret    | [get-secret.js](./examples/get-secret.js)  |
-| list         | returns a collection of secrets     | [list-secrets.js](./examples/list-secrets.js)   |
+|  Method     |   Description |
+| ------------ | ------ |
+| apply         | creates the Kubernetes resource given a YAML configuration    |
+| create         | creates the Kubernetes resource given an object configuration    |
+| delete         | removes the named secret     |
+| get         | returns the named secret    |
+| list         | returns a collection of secrets     |
 
 
 ```javascript
@@ -505,13 +505,13 @@ export default function () {
 
 ### (Deprecated) `Client.services`
 
-|  Method     |   Description | Example                              |
-| ------------ | ------ | ---------------------------------------- |
-| apply         | creates the Kubernetes resource given a YAML configuration    | [apply-deployment-service-ingress.js](./examples/apply-deployment-service-ingress.js)  |
-| create         | creates the Kubernetes resource given an object configuration    |   |
-| delete         | removes the named service     |   |
-| get         | returns the named service    | [get-service.js](./examples/get-service.js)  |
-| list         | returns a collection of services     | [list-services.js](./examples/list-services.js)   |
+|  Method     |   Description |
+| ------------ | ------ |
+| apply         | creates the Kubernetes resource given a YAML configuration    |
+| create         | creates the Kubernetes resource given an object configuration    |
+| delete         | removes the named service     |
+| get         | returns the named service    |
+| list         | returns a collection of services     |
 
 
 ```javascript
