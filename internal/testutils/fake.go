@@ -2,6 +2,7 @@ package testutils
 
 import (
 	"fmt"
+	k8s "k8s.io/client-go/kubernetes"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -9,6 +10,11 @@ import (
 	dynamicfake "k8s.io/client-go/dynamic/fake"
 	"k8s.io/client-go/kubernetes/fake"
 )
+
+// NewFakeClientset creates a new instance of a fake Kubernetes clientset
+func NewFakeClientset(objs ...runtime.Object) k8s.Interface {
+	return fake.NewSimpleClientset(objs...)
+}
 
 // NewFakeDynamic creates a new instance of a fake dynamic client with a default scheme
 func NewFakeDynamic(objs ...runtime.Object) (*dynamicfake.FakeDynamicClient, error) {

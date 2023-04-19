@@ -52,21 +52,23 @@ export default function () {
     describe('JSON-based resources', () => {
         const name = json.metadata.name
         const ns = json.metadata.namespace
+        const helpers = kubernetes.helpers(ns)
 
         let job
 
-        describe('Create our job using the JSON definition', () => {
+        describe('Create our job using the JSON definition and wait until completed', () => {
             job = kubernetes.create(json)
             expect(job.metadata, 'new job').to.have.property('uid')
+
+            let timeout = 10
+            expect(helpers.waitJobCompleted(name, timeout), `job completion within ${timeout}s`).to.be.true
+
+            let fetched = kubernetes.get("Job.batch", name, ns)
+            expect(job.metadata.uid, 'created and fetched uids').to.equal(fetched.metadata.uid)
         })
 
         describe('Retrieve all available jobs', () => {
             expect(kubernetes.list("Job.batch", ns).length, 'total jobs').to.be.at.least(1)
-        })
-
-        describe('Retrieve our job by name and namespace', () => {
-            let fetched = kubernetes.get("Job.batch", name, ns)
-            expect(job.metadata.uid, 'created and fetched uids').to.equal(fetched.metadata.uid)
         })
 
         describe('Remove our jobs to cleanup', () => {

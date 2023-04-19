@@ -322,14 +322,14 @@ export default function () {
 
 ### (Deprecated) `Client.jobs`
 
-|  Method     |   Description | Example                             |
-| ------------ | ------ | --------------------------------------- |
-| apply         | creates the Kubernetes resource given a YAML configuration    ||
-| create         | creates the Kubernetes resource given an object configuration    | [create-job-wait.js](./examples/create-job-wait.js) |
-| delete         | removes the named Job     |  |
-| get         | returns the named Jobs     | |
-| list         | returns a collection of Jobs     |  |
-| wait         | wait for all Jobs to complete    | [wait-job.js](./examples/wait-job.js)  |
+|  Method     |   Description |
+| ------------ | ------ |
+| apply         | creates the Kubernetes resource given a YAML configuration    |
+| create         | creates the Kubernetes resource given an object configuration    |
+| delete         | removes the named Job     |
+| get         | returns the named Jobs     |
+| list         | returns a collection of Jobs     |
+| wait         | wait for all Jobs to complete    |
 
 ```javascript
 import { Kubernetes } from 'k6/x/kubernetes';

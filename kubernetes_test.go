@@ -15,7 +15,6 @@ import (
 	"go.k6.io/k6/lib/testutils"
 	"go.k6.io/k6/metrics"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/kubernetes/fake"
 )
 
 // setupTestEnv should be called from each test to build the execution environment for the test
@@ -49,7 +48,7 @@ func setupTestEnv(t *testing.T, objs ...runtime.Object) *goja.Runtime {
 	require.True(t, ok)
 	require.NoError(t, rt.Set("Kubernetes", m.Exports().Named["Kubernetes"]))
 
-	m.clientset = fake.NewSimpleClientset(objs...)
+	m.clientset = localutils.NewFakeClientset(objs...)
 
 	dynamic, err := localutils.NewFakeDynamic()
 	if err != nil {

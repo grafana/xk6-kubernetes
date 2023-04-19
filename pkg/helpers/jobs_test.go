@@ -2,51 +2,25 @@ package helpers
 
 import (
 	"context"
+	"github.com/grafana/xk6-kubernetes/pkg/resources"
+	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/client-go/kubernetes/fake" //nolint:typecheck
+	k8stest "k8s.io/client-go/testing"
 	"testing"
 	"time"
 
 	"github.com/grafana/xk6-kubernetes/internal/testutils"
-	"github.com/grafana/xk6-kubernetes/pkg/resources"
-
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
-	podName       = "test-pod"
-	testNamespace = "ns-test"
+	jobName = "test-job"
 )
 
-func buildPod() corev1.Pod {
-	return corev1.Pod{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "v1",
-			Kind:       "Pod",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      podName,
-			Namespace: testNamespace,
-		},
-		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{
-				{
-					Name:    "busybox",
-					Image:   "busybox",
-					Command: []string{"sh", "-c", "sleep 300"},
-				},
-			},
-		},
-		Status: corev1.PodStatus{
-			Phase: corev1.PodPending,
-		},
-	}
-}
-
-func TestPods_Wait(t *testing.T) {
+func TestWaitJobCompleted(t *testing.T) {
 	t.Parallel()
 	type TestCase struct {
 		test           string
-		status         corev1.PodPhase
+		status         string
 		delay          time.Duration
 		expectError    bool
 		expectedResult bool
@@ -55,57 +29,64 @@ func TestPods_Wait(t *testing.T) {
 
 	testCases := []TestCase{
 		{
-			test:           "wait pod running",
+			test:           "job completed before timeout",
+			status:         "Complete",
 			delay:          1 * time.Second,
-			status:         corev1.PodRunning,
 			expectError:    false,
 			expectedResult: true,
-			timeout:        5,
+			timeout:        60,
 		},
 		{
-			test:           "timeout waiting pod running",
-			status:         corev1.PodRunning,
+			test:           "timeout waiting for job to complete",
+			status:         "Complete",
 			delay:          10 * time.Second,
 			expectError:    false,
 			expectedResult: false,
 			timeout:        5,
 		},
 		{
-			test:           "wait failed pod",
-			status:         corev1.PodFailed,
+			test:           "job failed before timeout",
+			status:         "Failed",
 			delay:          1 * time.Second,
 			expectError:    true,
 			expectedResult: false,
-			timeout:        5,
+			timeout:        60,
 		},
 	}
+
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.test, func(t *testing.T) {
 			t.Parallel()
+
+			clientset := testutils.NewFakeClientset().(*fake.Clientset)
+			watcher := watch.NewRaceFreeFake()
+			clientset.PrependWatchReactor("jobs", k8stest.DefaultWatchReactor(watcher, nil))
+
 			fake, _ := testutils.NewFakeDynamic()
 			client := resources.NewFromClient(context.TODO(), fake).WithMapper(&testutils.FakeRESTMapper{})
-			clientset := testutils.NewFakeClientset()
-			h := NewHelper(context.TODO(), clientset, client, nil, testNamespace)
-			pod := buildPod()
-			_, err := client.Structured().Create(pod)
+
+			fixture := NewHelper(context.TODO(), clientset, client, nil, "default")
+			job := testutils.NewJob(jobName, "default")
+			_, err := client.Structured().Create(job)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 				return
 			}
 
 			go func(tc TestCase) {
-				pod.Status.Phase = tc.status
 				time.Sleep(tc.delay)
-				_, e := client.Structured().Update(pod)
+				job = testutils.NewJobWithStatus(jobName, "default", tc.status)
+				_, e := client.Structured().Update(job)
 				if e != nil {
 					t.Errorf("unexpected error: %v", e)
 					return
 				}
+				watcher.Modify(job)
 			}(tc)
 
-			result, err := h.WaitPodRunning(
-				podName,
+			result, err := fixture.WaitJobCompleted(
+				jobName,
 				tc.timeout,
 			)
 

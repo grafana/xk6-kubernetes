@@ -58,9 +58,21 @@ export default function () {
             expect(kubernetes.list("Pod", ns).length, 'total pods').to.be.at.least(1)
         })
 
-        describe('Retrieve our pod by name and namespace', () => {
+        describe('Retrieve our pod by name and namespace, then execute a command within the pod', () => {
             let fetched = kubernetes.get("Pod", name, ns)
             expect(pod.metadata.uid, 'created and fetched uids').to.equal(fetched.metadata.uid)
+
+            let greeting = 'hello xk6-kubernetes'
+            let exec = {
+                pod: name,
+                container: fetched.spec.containers[0].name,
+                command: ["echo", greeting]
+            }
+            let result = helpers.executeInPod(exec)
+            const stdout = String.fromCharCode(...result.stdout)
+            const stderr = String.fromCharCode(...result.stderr)
+            expect(stdout, 'execution result').to.contain(greeting)
+            expect(stderr, 'execution error').to.be.empty
         })
 
         describe('Remove our pods to cleanup', () => {
