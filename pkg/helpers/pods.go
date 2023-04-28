@@ -81,7 +81,7 @@ func (h *helpers) ExecuteInPod(options PodExecOptions) (*PodExecResult, error) {
 
 		var stdout, stderr bytes.Buffer
 		stdin := bytes.NewReader(options.Stdin)
-		err = exec.Stream(remotecommand.StreamOptions{
+		err = exec.StreamWithContext(h.ctx, remotecommand.StreamOptions{
 			Stdin:  stdin,
 			Stdout: &stdout,
 			Stderr: &stderr,
