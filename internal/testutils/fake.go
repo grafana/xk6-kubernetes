@@ -1,7 +1,9 @@
+// Package testutils provides specialized resources for use with unit testing
 package testutils
 
 import (
 	"fmt"
+
 	k8s "k8s.io/client-go/kubernetes"
 
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -27,11 +29,13 @@ func NewFakeDynamic(objs ...runtime.Object) (*dynamicfake.FakeDynamicClient, err
 	return dynamicfake.NewSimpleDynamicClient(scheme, objs...), nil
 }
 
+// FakeRESTMapper provides a basic RESTMapper for use with testing
 type FakeRESTMapper struct {
 	meta.RESTMapper
 }
 
-func (f *FakeRESTMapper) RESTMapping(gk schema.GroupKind, versions ...string) (*meta.RESTMapping, error) {
+// RESTMapping provides information needed to deal with supported REST resources
+func (f *FakeRESTMapper) RESTMapping(gk schema.GroupKind, _ ...string) (*meta.RESTMapping, error) {
 	kindMapping := map[string]schema.GroupVersionResource{
 		"ConfigMap":             {Group: "", Version: "v1", Resource: "configmaps"},
 		"Deployment":            {Group: "apps", Version: "v1", Resource: "deployments"},

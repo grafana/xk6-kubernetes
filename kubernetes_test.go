@@ -2,7 +2,7 @@ package kubernetes
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"testing"
 
 	"github.com/dop251/goja"
@@ -26,7 +26,7 @@ func setupTestEnv(t *testing.T, objs ...runtime.Object) *goja.Runtime {
 	testLog.AddHook(&testutils.SimpleLogrusHook{
 		HookedLevels: []logrus.Level{logrus.WarnLevel},
 	})
-	testLog.SetOutput(ioutil.Discard)
+	testLog.SetOutput(io.Discard)
 
 	state := &lib.State{
 		Options: lib.Options{

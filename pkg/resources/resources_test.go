@@ -493,8 +493,12 @@ func TestStructuredCreate(t *testing.T) {
 		return
 	}
 
-	if created.(corev1.Pod).Name != pod.Name {
-		t.Errorf("invalid pod returned. Expected %s Returned %s", pod.Name, created.(corev1.Pod).Name)
+	createdPod, ok := created.(corev1.Pod)
+	if !ok {
+		t.Errorf("invalid type assertion")
+	}
+	if createdPod.Name != pod.Name {
+		t.Errorf("invalid pod returned. Expected %s Returned %s", pod.Name, createdPod.Name)
 		return
 	}
 }
@@ -584,7 +588,11 @@ func TestStructuredUpdate(t *testing.T) {
 		return
 	}
 
-	status := updated.(corev1.Pod).Status.Phase
+	updatedPod, ok := updated.(corev1.Pod)
+	if !ok {
+		t.Errorf("invalid type assertion")
+	}
+	status := updatedPod.Status.Phase
 	if status != corev1.PodFailed {
 		t.Errorf("pod status not updated")
 		return
