@@ -2,15 +2,16 @@ package helpers
 
 import (
 	"context"
+	"testing"
+	"time"
+
 	"github.com/grafana/xk6-kubernetes/pkg/resources"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/kubernetes/fake" //nolint:typecheck
+	"k8s.io/client-go/kubernetes/fake"
 	k8stest "k8s.io/client-go/testing"
-	"testing"
-	"time"
 
 	"github.com/grafana/xk6-kubernetes/internal/testutils"
 )
@@ -96,7 +97,10 @@ func TestWaitJobCompleted(t *testing.T) {
 		t.Run(tc.test, func(t *testing.T) {
 			t.Parallel()
 
-			clientset := testutils.NewFakeClientset().(*fake.Clientset)
+			clientset, ok := testutils.NewFakeClientset().(*fake.Clientset)
+			if !ok {
+				t.Errorf("invalid type assertion")
+			}
 			watcher := watch.NewRaceFreeFake()
 			clientset.PrependWatchReactor("jobs", k8stest.DefaultWatchReactor(watcher, nil))
 

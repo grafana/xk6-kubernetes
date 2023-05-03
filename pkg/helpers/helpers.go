@@ -3,6 +3,7 @@ package helpers
 
 import (
 	"context"
+
 	k8s "k8s.io/client-go/kubernetes"
 
 	"github.com/grafana/xk6-kubernetes/pkg/resources"
@@ -26,7 +27,13 @@ type helpers struct {
 }
 
 // NewHelper creates a set of helper functions on the specified namespace
-func NewHelper(ctx context.Context, clientset k8s.Interface, client *resources.Client, config *rest.Config, namespace string) Helpers {
+func NewHelper(
+	ctx context.Context,
+	clientset k8s.Interface,
+	client *resources.Client,
+	config *rest.Config,
+	namespace string,
+) Helpers {
 	return &helpers{
 		client:    client,
 		clientset: clientset,

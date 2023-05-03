@@ -3,9 +3,10 @@ package helpers
 import (
 	"bytes"
 	"fmt"
+	"time"
+
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/remotecommand"
-	"time"
 
 	"github.com/grafana/xk6-kubernetes/pkg/utils"
 	corev1 "k8s.io/api/core/v1"
@@ -76,12 +77,11 @@ func (h *helpers) ExecuteInPod(options PodExecOptions) (*PodExecResult, error) {
 		exec, err := remotecommand.NewSPDYExecutor(h.config, "POST", req.URL())
 		if err != nil {
 			return false, err
-			//return nil, err
 		}
 
 		var stdout, stderr bytes.Buffer
 		stdin := bytes.NewReader(options.Stdin)
-		err = exec.Stream(remotecommand.StreamOptions{
+		err = exec.StreamWithContext(h.ctx, remotecommand.StreamOptions{
 			Stdin:  stdin,
 			Stdout: &stdout,
 			Stderr: &stderr,

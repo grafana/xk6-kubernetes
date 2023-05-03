@@ -79,6 +79,7 @@ func NewFromClient(ctx context.Context, dynamic dynamic.Interface) *Client {
 	}
 }
 
+// WithMapper specifies the RESTMapper for the client to utilize
 func (c *Client) WithMapper(mapper meta.RESTMapper) *Client {
 	c.mapper = mapper
 	return c
