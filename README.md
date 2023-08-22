@@ -49,7 +49,7 @@ The API assumes a `kubeconfig` configuration is available at any of the followin
 * at `$HOME/.kube`
 
 
-# API
+# APIs
 
 ## Generic API
 
