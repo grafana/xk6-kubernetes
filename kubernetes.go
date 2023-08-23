@@ -19,6 +19,7 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth" // Required for access to GKE and AKS
+	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 )
@@ -147,6 +148,12 @@ func (mi *ModuleInstance) newClient(c goja.ConstructorCall) *goja.Object {
 func getClientConfig(options KubeConfig) (*rest.Config, error) {
 	kubeconfig := options.ConfigPath
 	if kubeconfig == "" {
+		// are we in-cluster?
+		config, err := restclient.InClusterConfig()
+		if err == nil {
+			return config, nil
+		}
+		// we aren't in-cluster
 		home := homedir.HomeDir()
 		if home == "" {
 			return nil, errors.New("home directory not found")
