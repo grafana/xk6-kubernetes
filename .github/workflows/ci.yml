@@ -29,7 +29,7 @@ jobs:
           go version
           pwd && ls -l
           
-          go install go.k6.io/xk6/cmd/xk6@latest
+          go install -x go.k6.io/xk6/cmd/xk6@latest
           MODULE_NAME=$(go list -m)
           
           xk6 build \
