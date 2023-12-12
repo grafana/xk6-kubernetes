@@ -53,6 +53,8 @@ type Kubernetes struct {
 // KubeConfig represents the initialization settings for the kubernetes api client.
 type KubeConfig struct {
 	ConfigPath string
+	Server     string
+	Token      string
 }
 
 // Ensure the interfaces are implemented correctly.
@@ -145,19 +147,30 @@ func (mi *ModuleInstance) newClient(c goja.ConstructorCall) *goja.Object {
 }
 
 func getClientConfig(options KubeConfig) (*rest.Config, error) {
-	kubeconfig := options.ConfigPath
-	if kubeconfig == "" {
-		// are we in-cluster?
-		config, err := rest.InClusterConfig()
-		if err == nil {
-			return config, nil
+	// If cluster and token are provided, use them
+	if options.Server != "" && options.Token != "" {
+		return &rest.Config{
+			Host:        options.Server,
+			BearerToken: options.Token,
+			TLSClientConfig: rest.TLSClientConfig{
+				Insecure: true,
+			},
+		}, nil
+	} else {
+		kubeconfig := options.ConfigPath
+		if kubeconfig == "" {
+			// are we in-cluster?
+			config, err := rest.InClusterConfig()
+			if err == nil {
+				return config, nil
+			}
+			// we aren't in-cluster
+			home := homedir.HomeDir()
+			if home == "" {
+				return nil, errors.New("home directory not found")
+			}
+			kubeconfig = filepath.Join(home, ".kube", "config")
 		}
-		// we aren't in-cluster
-		home := homedir.HomeDir()
-		if home == "" {
-			return nil, errors.New("home directory not found")
-		}
-		kubeconfig = filepath.Join(home, ".kube", "config")
+		return clientcmd.BuildConfigFromFlags("", kubeconfig)
 	}
-	return clientcmd.BuildConfigFromFlags("", kubeconfig)
 }
