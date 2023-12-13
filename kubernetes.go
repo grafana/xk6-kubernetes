@@ -147,7 +147,7 @@ func (mi *ModuleInstance) newClient(c goja.ConstructorCall) *goja.Object {
 }
 
 func getClientConfig(options KubeConfig) (*rest.Config, error) {
-	// If cluster and token are provided, use them
+	// If server and token are provided, use them
 	if options.Server != "" && options.Token != "" {
 		return &rest.Config{
 			Host:        options.Server,
@@ -156,21 +156,22 @@ func getClientConfig(options KubeConfig) (*rest.Config, error) {
 				Insecure: true,
 			},
 		}, nil
-	} else {
-		kubeconfig := options.ConfigPath
-		if kubeconfig == "" {
-			// are we in-cluster?
-			config, err := rest.InClusterConfig()
-			if err == nil {
-				return config, nil
-			}
-			// we aren't in-cluster
-			home := homedir.HomeDir()
-			if home == "" {
-				return nil, errors.New("home directory not found")
-			}
-			kubeconfig = filepath.Join(home, ".kube", "config")
-		}
-		return clientcmd.BuildConfigFromFlags("", kubeconfig)
 	}
+
+	// If server and token are not provided, use kubeconfig
+	kubeconfig := options.ConfigPath
+	if kubeconfig == "" {
+		// are we in-cluster?
+		config, err := rest.InClusterConfig()
+		if err == nil {
+			return config, nil
+		}
+		// we aren't in-cluster
+		home := homedir.HomeDir()
+		if home == "" {
+			return nil, errors.New("home directory not found")
+		}
+		kubeconfig = filepath.Join(home, ".kube", "config")
+	}
+	return clientcmd.BuildConfigFromFlags("", kubeconfig)
 }
