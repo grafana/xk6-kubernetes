@@ -53,6 +53,8 @@ type Kubernetes struct {
 // KubeConfig represents the initialization settings for the kubernetes api client.
 type KubeConfig struct {
 	ConfigPath string
+	Server     string
+	Token      string
 }
 
 // Ensure the interfaces are implemented correctly.
@@ -145,6 +147,18 @@ func (mi *ModuleInstance) newClient(c goja.ConstructorCall) *goja.Object {
 }
 
 func getClientConfig(options KubeConfig) (*rest.Config, error) {
+	// If server and token are provided, use them
+	if options.Server != "" && options.Token != "" {
+		return &rest.Config{
+			Host:        options.Server,
+			BearerToken: options.Token,
+			TLSClientConfig: rest.TLSClientConfig{
+				Insecure: true,
+			},
+		}, nil
+	}
+
+	// If server and token are not provided, use kubeconfig
 	kubeconfig := options.ConfigPath
 	if kubeconfig == "" {
 		// are we in-cluster?
