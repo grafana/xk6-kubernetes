@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/dop251/goja"
+	"github.com/grafana/sobek"
 	"go.k6.io/k6/js/common"
 	"k8s.io/client-go/rest"
 
@@ -81,7 +81,7 @@ func (mi *ModuleInstance) Exports() modules.Exports {
 	}
 }
 
-func (mi *ModuleInstance) newClient(c goja.ConstructorCall) *goja.Object {
+func (mi *ModuleInstance) newClient(c sobek.ConstructorCall) *sobek.Object {
 	rt := mi.vu.Runtime()
 	ctx := mi.vu.Context()
 

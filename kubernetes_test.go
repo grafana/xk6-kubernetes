@@ -5,7 +5,7 @@ import (
 	"io"
 	"testing"
 
-	"github.com/dop251/goja"
+	"github.com/grafana/sobek"
 	localutils "github.com/grafana/xk6-kubernetes/internal/testutils"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
@@ -18,8 +18,8 @@ import (
 )
 
 // setupTestEnv should be called from each test to build the execution environment for the test
-func setupTestEnv(t *testing.T, objs ...runtime.Object) *goja.Runtime {
-	rt := goja.New()
+func setupTestEnv(t *testing.T, objs ...runtime.Object) *sobek.Runtime {
+	rt := sobek.New()
 	rt.SetFieldNameMapper(common.FieldNameMapper{})
 
 	testLog := logrus.New()
