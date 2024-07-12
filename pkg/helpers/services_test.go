@@ -16,7 +16,7 @@ func buildEndpointsWithoutAddresses() *corev1.Endpoints {
 	return &corev1.Endpoints{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
-			Kind:       "Endpoint",
+			Kind:       "Endpoints",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "service",
@@ -30,7 +30,7 @@ func buildEndpointsWithAddresses() *corev1.Endpoints {
 	return &corev1.Endpoints{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
-			Kind:       "Endpoint",
+			Kind:       "Endpoints",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "service",
@@ -52,7 +52,7 @@ func buildOtherEndpointsWithAddresses() *corev1.Endpoints {
 	return &corev1.Endpoints{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
-			Kind:       "Endpoint",
+			Kind:       "Endpoints",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "otherservice",
@@ -74,7 +74,7 @@ func buildEndpointsWithNotReadyAddresses() *corev1.Endpoints {
 	return &corev1.Endpoints{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
-			Kind:       "Endpoint",
+			Kind:       "Endpoints",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "service",

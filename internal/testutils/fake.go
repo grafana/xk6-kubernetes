@@ -39,7 +39,7 @@ func (f *FakeRESTMapper) RESTMapping(gk schema.GroupKind, _ ...string) (*meta.RE
 	kindMapping := map[string]schema.GroupVersionResource{
 		"ConfigMap":             {Group: "", Version: "v1", Resource: "configmaps"},
 		"Deployment":            {Group: "apps", Version: "v1", Resource: "deployments"},
-		"Endpoint":              {Group: "", Version: "v1", Resource: "endpoints"},
+		"Endpoints":             {Group: "", Version: "v1", Resource: "endpoints"},
 		"Ingress":               {Group: "networking.k8s.io", Version: "v1", Resource: "ingresses"},
 		"Job":                   {Group: "batch", Version: "v1", Resource: "jobs"},
 		"PersistentVolume":      {Group: "", Version: "v1", Resource: "persistentvolumes"},
