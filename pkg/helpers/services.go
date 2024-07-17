@@ -23,7 +23,7 @@ type ServiceHelper interface {
 func (h *helpers) WaitServiceReady(service string, timeout uint) (bool, error) {
 	return utils.Retry(time.Duration(timeout)*time.Second, time.Second, func() (bool, error) {
 		ep := &corev1.Endpoints{}
-		err := h.client.Structured().Get("Endpoint", service, h.namespace, ep)
+		err := h.client.Structured().Get("Endpoints", service, h.namespace, ep)
 		if err != nil {
 			if errors.IsNotFound(err) {
 				return false, nil
