@@ -111,7 +111,7 @@ const podSpec = {
 export default function () {
   const kubernetes = new Kubernetes();
 
-  kubernetes.create(pod)
+  kubernetes.create(podSpec)
 
   const pods = kubernetes.list("Pod", "testns");
 
@@ -206,7 +206,7 @@ export default function () {
   const kubernetes = new Kubernetes();
 
   // create pod
-  kubernetes.create(pod)
+  kubernetes.create(podSpec)
 
   // get helpers for test namespace
   const helpers = kubernetes.helpers()
