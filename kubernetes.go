@@ -34,11 +34,13 @@ type RootModule struct{}
 // ModuleInstance represents an instance of the JS module.
 type ModuleInstance struct {
 	vu modules.VU
-	// clientset enables injection of a pre-configured Kubernetes environment for unit tests
+	// clientset enables injection of a pre-configured Kubernetes environment for tests
 	clientset kubernetes.Interface
-	// dynamic enables injection of a fake dynamic client for unit tests
+	// config is the rest config allow injection of fake rest config for tests
+       config *rest.Config
+	// dynamic enables injection of a fake dynamic client for tests
 	dynamic dynamic.Interface
-	// mapper enables injection of a fake RESTMapper for unit tests
+	// mapper enables injection of a fake RESTMapper for tests
 	mapper meta.RESTMapper
 }
 
@@ -108,6 +110,7 @@ func (mi *ModuleInstance) newClient(c sobek.ConstructorCall) *sobek.Object {
 	} else {
 		// Pre-configured clientset is being injected for unit testing
 		obj.client = mi.clientset
+		config = mi.config
 	}
 
 	// If dynamic client was not injected for unit testing
