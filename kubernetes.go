@@ -164,6 +164,8 @@ func getClientConfig(options KubeConfig) (*rest.Config, error) {
 		// are we in-cluster?
 		config, err := rest.InClusterConfig()
 		if err == nil {
+			config.QPS = 1000
+			config.Burst = 1500
 			return config, nil
 		}
 		// we aren't in-cluster
