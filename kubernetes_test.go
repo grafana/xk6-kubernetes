@@ -12,7 +12,6 @@ import (
 	"go.k6.io/k6/js/common"
 	"go.k6.io/k6/js/modulestest"
 	"go.k6.io/k6/lib"
-	"go.k6.io/k6/lib/testutils"
 	"go.k6.io/k6/metrics"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -23,9 +22,6 @@ func setupTestEnv(t *testing.T, objs ...runtime.Object) *sobek.Runtime {
 	rt.SetFieldNameMapper(common.FieldNameMapper{})
 
 	testLog := logrus.New()
-	testLog.AddHook(&testutils.SimpleLogrusHook{
-		HookedLevels: []logrus.Level{logrus.WarnLevel},
-	})
 	testLog.SetOutput(io.Discard)
 
 	state := &lib.State{
