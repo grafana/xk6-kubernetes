@@ -141,6 +141,50 @@ export default function () {
 }
 ```
 
+#### Interacting with objects created by CRDs
+
+For objects outside of the core API, use the fully-qualified resource name.
+
+```javascript
+
+import { Kubernetes } from 'k6/x/kubernetes';
+
+const manifest = `
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: yaml-ingress
+  namespace: default
+spec:
+  ingressClassName: nginx
+  rules:
+  - http:
+      paths:
+      - path: /my-service-path
+        pathType: Prefix
+        backend:
+          service:
+            name: my-service
+            port:
+              number: 80
+`
+
+export default function () {
+  const kubernetes = new Kubernetes();
+
+  kubernetes.apply(manifest);
+
+  const ingresses = kubernetes.list("Ingress.networking.k8s.io", "default")
+
+  console.log(`${ingresses.length} Ingress found:`);
+  ingresses.map(function(ingress) {
+    console.log(`  ${ingress.metadata.name}`)
+  });
+}
+
+
+```
+
 ## Helpers
 
 The `xk6-kubernetes` extension offers helpers to facilitate common tasks when setting up a tests. All helper functions work in a namespace to facilitate the development of tests segregated by namespace. The helpers are accessed using the following method:
