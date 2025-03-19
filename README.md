@@ -46,13 +46,13 @@ Using the `k6` binary with `xk6-kubernetes`, run the k6 test as usual:
 
 By default, the API assumes a `kubeconfig` configuration is available at `$HOME/.kube`.
 
-You can pass in the following options as a javascript Object to the Kubernetes constructor:
+Alternatively, you can pass in the following options as a javascript Object to the Kubernetes constructor to configure access to the Kubernetes API server:
 
 | Option | Value | Description |
 | -- | --| ---- |
 | config_path | /path/to/kubeconfig | Kubeconfig file location. You can also set this to __ENV.KUBECONFIG to use the location pointed by the `KUBECONFIG` environment variable |
-| server | <SERVER_HOST> | Host for token login |
-| token | <TOKEN> | Token for token login |
+| server | <SERVER_HOST> | Kubernetes API server URL |
+| token | <TOKEN> | Bearer Token for authenticating to the Kubernetes API server |
 
 ```javascript
 
