@@ -44,10 +44,26 @@ Using the `k6` binary with `xk6-kubernetes`, run the k6 test as usual:
 ```
 # Usage
 
-The API assumes a `kubeconfig` configuration is available at any of the following default locations:
-* at the location pointed by the `KUBECONFIG` environment variable
-* at `$HOME/.kube`
+By default, the API assumes a `kubeconfig` configuration is available at `$HOME/.kube`.
 
+Alternatively, you can pass in the following options as a javascript Object to the Kubernetes constructor to configure access to the Kubernetes API server:
+
+| Option | Value | Description |
+| -- | --| ---- |
+| config_path | /path/to/kubeconfig | Kubeconfig file location. You can also set this to __ENV.KUBECONFIG to use the location pointed by the `KUBECONFIG` environment variable |
+| server | <SERVER_HOST> | Kubernetes API server URL |
+| token | <TOKEN> | Bearer Token for authenticating to the Kubernetes API server |
+
+```javascript
+
+import { Kubernetes } from 'k6/x/kubernetes';
+
+export default function () {
+  const k = new Kubernetes({
+    config_map: '/path/to/kubeconfig',
+  });
+}
+```
 
 # APIs
 
@@ -139,6 +155,50 @@ export default function () {
     console.log(`  ${job.metadata.name}`)
   });
 }
+```
+
+#### Interacting with objects created by CRDs
+
+For objects outside of the core API, use the fully-qualified resource name.
+
+```javascript
+
+import { Kubernetes } from 'k6/x/kubernetes';
+
+const manifest = `
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: yaml-ingress
+  namespace: default
+spec:
+  ingressClassName: nginx
+  rules:
+  - http:
+      paths:
+      - path: /my-service-path
+        pathType: Prefix
+        backend:
+          service:
+            name: my-service
+            port:
+              number: 80
+`
+
+export default function () {
+  const kubernetes = new Kubernetes();
+
+  kubernetes.apply(manifest);
+
+  const ingresses = kubernetes.list("Ingress.networking.k8s.io", "default")
+
+  console.log(`${ingresses.length} Ingress found:`);
+  ingresses.map(function(ingress) {
+    console.log(`  ${ingress.metadata.name}`)
+  });
+}
+
+
 ```
 
 ## Helpers
