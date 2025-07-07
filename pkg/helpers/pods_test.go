@@ -50,7 +50,7 @@ func TestPods_Wait(t *testing.T) {
 		delay          time.Duration
 		expectError    bool
 		expectedResult bool
-		timeout        uint
+		timeout        int64
 	}
 
 	testCases := []TestCase{

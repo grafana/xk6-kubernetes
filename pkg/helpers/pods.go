@@ -19,10 +19,10 @@ type PodHelper interface {
 	ExecuteInPod(options PodExecOptions) (*PodExecResult, error)
 	// WaitPodRunning waits for the Pod to be running for up to given timeout (in seconds) and returns
 	// a boolean indicating if the status was reached. If the pod is Failed returns error.
-	WaitPodRunning(name string, timeout uint) (bool, error)
+	WaitPodRunning(name string, timeout int64) (bool, error)
 }
 
-func (h *helpers) WaitPodRunning(name string, timeout uint) (bool, error) {
+func (h *helpers) WaitPodRunning(name string, timeout int64) (bool, error) {
 	return utils.Retry(time.Duration(timeout)*time.Second, time.Second, func() (bool, error) {
 		pod := &corev1.Pod{}
 		err := h.client.Structured().Get("Pod", name, h.namespace, pod)
@@ -48,7 +48,7 @@ type PodExecOptions struct {
 	Container string   // name of the container to execute the command in
 	Command   []string // command to be executed with its parameters
 	Stdin     []byte   // stdin to be supplied to the command
-	Timeout   uint     // number of seconds allowed to wait for completion
+	Timeout   int64    // number of seconds allowed to wait for completion
 }
 
 // PodExecResult contains the output obtained from the execution of a command

@@ -123,7 +123,7 @@ func Test_WaitServiceReady(t *testing.T) {
 		updated       *corev1.Endpoints
 		expectedValue bool
 		expectError   bool
-		timeout       uint
+		timeout       int64
 	}
 
 	testCases := []TestCase{
@@ -234,7 +234,7 @@ func Test_GetServiceIP(t *testing.T) {
 		updated       []corev1.LoadBalancerIngress
 		expectedValue string
 		expectError   bool
-		timeout       uint
+		timeout       int64
 	}
 
 	testCases := []TestCase{

@@ -14,13 +14,13 @@ import (
 type ServiceHelper interface {
 	// WaitServiceReady waits for the given service to have at least one endpoint available
 	// or the timeout (in seconds) expires. It returns a boolean indicating if the service is ready
-	WaitServiceReady(service string, timeout uint) (bool, error)
+	WaitServiceReady(service string, timeout int64) (bool, error)
 	// GetExternalIP returns one external ip for the given service. If none is assigned after the timeout
 	// expires, returns an empty address "".
-	GetExternalIP(service string, timeout uint) (string, error)
+	GetExternalIP(service string, timeout int64) (string, error)
 }
 
-func (h *helpers) WaitServiceReady(service string, timeout uint) (bool, error) {
+func (h *helpers) WaitServiceReady(service string, timeout int64) (bool, error) {
 	return utils.Retry(time.Duration(timeout)*time.Second, time.Second, func() (bool, error) {
 		ep := &corev1.Endpoints{}
 		err := h.client.Structured().Get("Endpoints", service, h.namespace, ep)
@@ -41,7 +41,7 @@ func (h *helpers) WaitServiceReady(service string, timeout uint) (bool, error) {
 	})
 }
 
-func (h *helpers) GetExternalIP(service string, timeout uint) (string, error) {
+func (h *helpers) GetExternalIP(service string, timeout int64) (string, error) {
 	addr := ""
 	_, err := utils.Retry(time.Duration(timeout)*time.Second, time.Second, func() (bool, error) {
 		svc := &corev1.Service{}
