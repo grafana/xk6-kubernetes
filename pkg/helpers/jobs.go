@@ -15,7 +15,7 @@ import (
 type JobHelper interface {
 	// WaitJobCompleted waits for the Job to be completed for up to the given timeout (in seconds) and returns
 	// a boolean indicating if the status was reached. If the job is Failed an error is returned.
-	WaitJobCompleted(name string, timeout uint) (bool, error)
+	WaitJobCompleted(name string, timeout int64) (bool, error)
 }
 
 // isCompleted returns if the job is completed or not. Returns an error if the job is failed.
@@ -31,7 +31,7 @@ func isCompleted(job *batchv1.Job) (bool, error) {
 	return false, nil
 }
 
-func (h *helpers) WaitJobCompleted(name string, timeout uint) (bool, error) {
+func (h *helpers) WaitJobCompleted(name string, timeout int64) (bool, error) {
 	deadline := time.Duration(timeout) * time.Second
 	selector := fields.Set{
 		"metadata.name": name,

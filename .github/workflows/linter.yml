@@ -22,7 +22,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.21.x
+          go-version-file: go.mod
           cache: false
       - name: Check module dependencies
         run: |
@@ -41,7 +41,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.21.x
+          go-version-file: go.mod
           cache: false
       - name: Retrieve golangci-lint version
         run: |
