@@ -94,12 +94,12 @@ linters:
       statements: 60
     forbidigo:
       forbid:
-        - '^(fmt\\.Print(|f|ln)|print|println)$'
-        # Forbid everything in os, except os.Signal and os.SyscalError
-        - '^os\.(.*)$(# Using anything except Signal and SyscallError from the os package is forbidden )?'
-        # Forbid everything in syscall except the uppercase constants
-        - '^syscall\.[^A-Z_]+$(# Using anything except constants from the syscall package is forbidden )?'
-        - '^logrus\.Logger$'
+        - pattern: '^(fmt\.Print(|f|ln)|print|println)$'
+        - pattern: '^os\.(.*)$'
+          msg: "Using anything except Signal and SyscallError from the os package is forbidden"
+        - pattern: '^syscall\.[^A-Z_]+$'
+          msg: "Using anything except constants from the syscall package is forbidden"
+        - pattern: '^logrus\.Logger$'
 
   exclusions:
     # We want to try and improve the comments in the k6 codebase, so individual
