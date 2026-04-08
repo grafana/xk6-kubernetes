@@ -70,7 +70,6 @@ linters:
     - sqlclosecheck
     - staticcheck
     - tparallel
-    - typecheck
     - unconvert
     - unparam
     - unused
