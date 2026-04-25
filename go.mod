@@ -4,7 +4,7 @@ go 1.25.8
 
 require (
 	go.k6.io/k6 v1.7.1
-	k8s.io/api v0.34.0
+	k8s.io/api v0.35.4
 	k8s.io/apimachinery v0.34.0
 	k8s.io/client-go v0.34.0
 )
