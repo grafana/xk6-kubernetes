@@ -11,7 +11,7 @@ require (
 
 require (
 	github.com/grafana/sobek v0.0.0-20260429085637-a66d4790012b
-	github.com/sirupsen/logrus v1.9.3
+	github.com/sirupsen/logrus v1.9.4
 	github.com/stretchr/testify v1.11.1
 )
 
