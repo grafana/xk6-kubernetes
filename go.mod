@@ -2,8 +2,6 @@ module github.com/grafana/xk6-kubernetes
 
 go 1.26.0
 
-toolchain go1.25.10
-
 require (
 	go.k6.io/k6 v1.7.1
 	k8s.io/api v0.36.0
@@ -67,7 +65,7 @@ require (
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/net v0.53.0 // indirect
 	golang.org/x/oauth2 v0.35.0 // indirect
-	golang.org/x/sys v0.43.0 // indirect
+	golang.org/x/sys v0.44.0 // indirect
 	golang.org/x/term v0.42.0 // indirect
 	golang.org/x/text v0.36.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
