@@ -2,6 +2,8 @@ module github.com/grafana/xk6-kubernetes
 
 go 1.26.0
 
+toolchain go1.26.4
+
 require (
 	go.k6.io/k6 v1.7.1
 	k8s.io/api v0.36.0
