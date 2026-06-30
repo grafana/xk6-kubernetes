@@ -8,12 +8,12 @@ import (
 	"path/filepath"
 
 	"github.com/grafana/sobek"
-	"go.k6.io/k6/js/common"
+	"go.k6.io/k6/v2/js/common"
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/xk6-kubernetes/pkg/api"
 
-	"go.k6.io/k6/js/modules"
+	"go.k6.io/k6/v2/js/modules"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
