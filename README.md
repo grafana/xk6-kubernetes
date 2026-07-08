@@ -60,7 +60,7 @@ import { Kubernetes } from 'k6/x/kubernetes';
 
 export default function () {
   const k = new Kubernetes({
-    config_map: '/path/to/kubeconfig',
+    config_path: '/path/to/kubeconfig',
   });
 }
 ```
