@@ -22,11 +22,11 @@ import (
 // UnstructuredOperations defines generic functions that operate on any kind of Kubernetes object
 type UnstructuredOperations interface {
 	Apply(manifest string) error
-	Create(obj map[string]interface{}) (map[string]interface{}, error)
+	Create(obj map[string]any) (map[string]any, error)
 	Delete(kind string, name string, namespace string) error
-	Get(kind string, name string, namespace string) (map[string]interface{}, error)
-	List(kind string, namespace string) ([]map[string]interface{}, error)
-	Update(obj map[string]interface{}) (map[string]interface{}, error)
+	Get(kind string, name string, namespace string) (map[string]any, error)
+	List(kind string, namespace string) ([]map[string]any, error)
+	Update(obj map[string]any) (map[string]any, error)
 }
 
 // StructuredOperations defines generic operations that handles runtime objects such as corev1.Pod.
@@ -35,16 +35,16 @@ type UnstructuredOperations interface {
 type StructuredOperations interface {
 	// Create creates a resource described in the runtime object given as input and returns the resource created.
 	// The resource must be passed by value (e.g corev1.Pod) and a value (not a reference) will be returned
-	Create(obj interface{}) (interface{}, error)
+	Create(obj any) (any, error)
 	// Delete deletes a resource given its kind, name and namespace
 	Delete(kind string, name string, namespace string) error
 	// Get retrieves a resource into the given placeholder given its kind, name and namespace
-	Get(kind string, name string, namespace string, obj interface{}) error
+	Get(kind string, name string, namespace string, obj any) error
 	// List retrieves a list of resources in the given slice given their kind and namespace
-	List(kind string, namespace string, list interface{}) error
+	List(kind string, namespace string, list any) error
 	// Update updates an existing resource and returns the updated version
 	// The resource must be passed by value (e.g corev1.Pod) and a value (not a reference) will be returned
-	Update(obj interface{}) (interface{}, error)
+	Update(obj any) (any, error)
 }
 
 // structured holds the
@@ -138,7 +138,7 @@ func (c *Client) Apply(manifest string) error {
 }
 
 // Create creates a resource in a kubernetes cluster from an object with its specification
-func (c *Client) Create(obj map[string]interface{}) (map[string]interface{}, error) {
+func (c *Client) Create(obj map[string]any) (map[string]any, error) {
 	uObj := &unstructured.Unstructured{
 		Object: obj,
 	}
@@ -166,7 +166,7 @@ func (c *Client) Create(obj map[string]interface{}) (map[string]interface{}, err
 }
 
 // Get returns an object given its kind, name and namespace
-func (c *Client) Get(kind string, name string, namespace string) (map[string]interface{}, error) {
+func (c *Client) Get(kind string, name string, namespace string) (map[string]any, error) {
 	resource, err := c.getResource(kind, namespace)
 	if err != nil {
 		return nil, err
@@ -184,7 +184,7 @@ func (c *Client) Get(kind string, name string, namespace string) (map[string]int
 }
 
 // List returns a list of objects given its kind and namespace
-func (c *Client) List(kind string, namespace string) ([]map[string]interface{}, error) {
+func (c *Client) List(kind string, namespace string) ([]map[string]any, error) {
 	resource, err := c.getResource(kind, namespace)
 	if err != nil {
 		return nil, err
@@ -195,7 +195,7 @@ func (c *Client) List(kind string, namespace string) ([]map[string]interface{}, 
 		return nil, err
 	}
 
-	list := []map[string]interface{}{}
+	list := []map[string]any{}
 	for _, uObj := range resp.Items {
 		list = append(list, uObj.UnstructuredContent())
 	}
@@ -214,7 +214,7 @@ func (c *Client) Delete(kind string, name string, namespace string) error {
 }
 
 // Update updates a resource in a kubernetes cluster from an object with its specification
-func (c *Client) Update(obj map[string]interface{}) (map[string]interface{}, error) {
+func (c *Client) Update(obj map[string]any) (map[string]any, error) {
 	uObj := &unstructured.Unstructured{
 		Object: obj,
 	}
@@ -248,7 +248,7 @@ func (c *Client) Structured() StructuredOperations {
 }
 
 // Creates a resources defined in the runtime object provided as input
-func (s *structured) Create(obj interface{}) (interface{}, error) {
+func (s *structured) Create(obj any) (any, error) {
 	uObj, err := utils.RuntimeToGeneric(&obj)
 	if err != nil {
 		return nil, err
@@ -269,7 +269,7 @@ func (s *structured) Create(obj interface{}) (interface{}, error) {
 	return result.Elem().Interface(), nil
 }
 
-func (s *structured) Get(kind string, name string, namespace string, obj interface{}) error {
+func (s *structured) Get(kind string, name string, namespace string, obj any) error {
 	gObj, err := s.client.Get(kind, name, namespace)
 	if err != nil {
 		return err
@@ -282,7 +282,7 @@ func (s *structured) Delete(kind string, name string, namespace string) error {
 	return s.client.Delete(kind, name, namespace)
 }
 
-func (s *structured) List(kind string, namespace string, objList interface{}) error {
+func (s *structured) List(kind string, namespace string, objList any) error {
 	objListType := reflect.ValueOf(objList).Elem().Kind().String()
 	if objListType != reflect.Slice.String() {
 		return fmt.Errorf("must provide an slice to return results but %s received", objListType)
@@ -309,7 +309,7 @@ func (s *structured) List(kind string, namespace string, objList interface{}) er
 	return nil
 }
 
-func (s *structured) Update(obj interface{}) (interface{}, error) {
+func (s *structured) Update(obj any) (any, error) {
 	uObj, err := utils.RuntimeToGeneric(&obj)
 	if err != nil {
 		return nil, err

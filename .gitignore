@@ -1,3 +1,5 @@
 .idea/
 .DS_Store
 k6
+/.golangci-base.yml
+/.golangci.yml
