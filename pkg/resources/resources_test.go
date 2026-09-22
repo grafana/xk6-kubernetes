@@ -14,31 +14,31 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-func buildUnstructuredPod() map[string]interface{} {
-	return map[string]interface{}{
+func buildUnstructuredPod() map[string]any {
+	return map[string]any{
 		"apiVersion": "v1",
 		"kind":       "Pod",
-		"metadata": map[string]interface{}{
+		"metadata": map[string]any{
 			"name":      "busybox",
 			"namespace": "testns",
 		},
-		"spec": map[string]interface{}{
-			"containers": []interface{}{
-				map[string]interface{}{
+		"spec": map[string]any{
+			"containers": []any{
+				map[string]any{
 					"name":    "busybox",
 					"image":   "busybox",
-					"command": []interface{}{"sh", "-c", "sleep 30"},
+					"command": []any{"sh", "-c", "sleep 30"},
 				},
 			},
 		},
 	}
 }
 
-func buildUnstructuredNamespace() map[string]interface{} {
-	return map[string]interface{}{
+func buildUnstructuredNamespace() map[string]any {
+	return map[string]any{
 		"apiVersion": "v1",
 		"kind":       "Namespace",
-		"metadata": map[string]interface{}{
+		"metadata": map[string]any{
 			"name": "testns",
 		},
 	}
@@ -105,7 +105,7 @@ func TestCreate(t *testing.T) {
 	t.Parallel()
 	testCases := []struct {
 		test     string
-		obj      map[string]interface{}
+		obj      map[string]any
 		kind     string
 		resource schema.GroupVersionResource
 		name     string
@@ -130,7 +130,6 @@ func TestCreate(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.test, func(t *testing.T) {
 			t.Parallel()
 			fake, _ := testutils.NewFakeDynamic()
@@ -218,7 +217,6 @@ func TestApply(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.test, func(t *testing.T) {
 			t.Parallel()
 			c, err := newForTest(tc.objects...)
@@ -258,7 +256,7 @@ func TestUpdate(t *testing.T) {
 
 	// set the status
 	pod := buildUnstructuredPod()
-	pod["status"] = map[string]interface{}{
+	pod["status"] = map[string]any{
 		"phase": string(corev1.PodFailed),
 	}
 
@@ -308,7 +306,6 @@ func TestDelete(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.test, func(t *testing.T) {
 			t.Parallel()
 
@@ -376,7 +373,6 @@ func TestGet(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.test, func(t *testing.T) {
 			t.Parallel()
 
@@ -451,7 +447,6 @@ func TestList(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.test, func(t *testing.T) {
 			t.Parallel()
 

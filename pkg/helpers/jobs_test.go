@@ -93,7 +93,6 @@ func TestWaitJobCompleted(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.test, func(t *testing.T) {
 			t.Parallel()
 

@@ -75,7 +75,7 @@ func (*RootModule) NewModuleInstance(vu modules.VU) modules.Instance {
 // of the JS module.
 func (mi *ModuleInstance) Exports() modules.Exports {
 	return modules.Exports{
-		Named: map[string]interface{}{
+		Named: map[string]any{
 			"Kubernetes": mi.newClient,
 		},
 	}
