@@ -183,7 +183,6 @@ func Test_WaitServiceReady(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.test, func(t *testing.T) {
 			t.Parallel()
 			objs := []runtime.Object{}
@@ -261,7 +260,6 @@ func Test_GetServiceIP(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.test, func(t *testing.T) {
 			t.Parallel()
 

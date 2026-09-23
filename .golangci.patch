@@ -1,0 +1,19 @@
+diff --git a/.golangci.yml b/.golangci.yml
+--- a/.golangci.yml
++++ b/.golangci.yml
+@@ -101,6 +101,15 @@ linters:
+           - gosec
+         path: _(test|gen)\.go
+       - linters:
++          - staticcheck
++        text: The entire proto file grpc/reflection/v1alpha/reflection.proto is marked as deprecated.
++      - linters:
++          - staticcheck
++        text: 'SA1019: k8s.io/api/core/v1.EndpointSubset is deprecated'
++      - linters:
++          - staticcheck
++        text: 'SA1019: k8s.io/api/core/v1.Endpoints is deprecated'
++      - linters:
+           - forbidigo
+         text: use of `os\.(SyscallError|Signal|Interrupt)` forbidden
+       - linters:
