@@ -6,9 +6,9 @@ toolchain go1.26.10
 
 require (
 	go.k6.io/k6/v2 v2.3.0
-	k8s.io/api v0.37.0
-	k8s.io/apimachinery v0.37.0
-	k8s.io/client-go v0.37.0
+	k8s.io/api v0.37.2
+	k8s.io/apimachinery v0.37.2
+	k8s.io/client-go v0.37.2
 )
 
 require (
